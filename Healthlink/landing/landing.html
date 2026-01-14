@@ -1,0 +1,830 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>HealthLink Dashboard</title>
+    <link rel="stylesheet" href="landing.css">
+</head>
+
+<body>
+    <div class="top-nav">
+        <div class="nav-left">
+            <div class="nav-item" onclick="handleNav('search')">
+                <a class="nav-text" href="/Healthlink/landing/options/dig.html" style="text-decoration: none;">Healthlink<br> Diagnostics</a>
+            </div>
+            <div class="nav-item" onclick="handleNav('search')">
+                 <a class="nav-text" href="/Healthlink/landing/options/sol.html" style="text-decoration: none;">Healthlink<br> Solutions</a>
+            
+            </div>
+        </div>
+
+        <div class="user-profile">
+            <img src="/Healthlink/Diagnostics/Patient/pictures/logo.png" alt="HealthLink Logo" class="logo-image"
+                height="80px" width="130px">
+            </a>
+
+        </div>
+    </div>
+
+    <div class="black-line">
+        <div class="black-line-links">
+            <a class="nav-item" href="/Healthlink/landing/tabs_landing/book.html"
+                style="text-decoration: none;">Book A
+                Test</a>
+            <a class="nav-item" href="/Healthlink/landing/tabs_landing/reports.html"
+                style="text-decoration: none;">Reports
+            </a>
+            <a class="nav-item" href="/Healthlink/landing/tabs_landing/pharmacy.html" style="text-decoration: none;">Pharmacy
+            </a>
+            <a class="nav-item" href="/Healthlink/landing/tabs_landing/partner.html"
+                style="text-decoration: none;">Become A
+                HealthLink Partner</a>
+            <a class="nav-item" href="/Healthlink/landing/tabs_landing/offers.html"
+                style="text-decoration: none;">My
+                Offers</a>
+            <a class="nav-item" href="/Healthlink/landing/tabs_landing/food_hand.html"
+                style="text-decoration: none;">Food
+                Handler</a>
+            <a class="nav-item" href="/Healthlink/landing/tabs_landing/corp.html"
+                style="text-decoration: none;">Corporate
+                Enquiry</a>
+            <a class="nav-item" href="/Healthlink/Diagnostics/Patient/tabs/newsletter.html" style="text-decoration: none;">News Letters</a>
+            <a class="nav-item" href="#about-us" style="text-decoration: none;">About Us</a>
+            <a class="nav-item" href="#contact-us" style="text-decoration: none;">Contact Us</a>
+        </div>
+    </div>
+
+
+    <!-- Main content starts -->
+    <div class="main-content">
+        <!-- Carousel with Navigation -->
+        <div class="carousel-container">
+            <div class="carousel-wrapper" id="carousel">
+                <div class="carousel-track" id="carouselTrack">
+                    <a href="/Healthlink/landing/tabs_landing/pathology.html" class="carousel-slide active">
+                        <img src="/Healthlink/Diagnostics/Patient/pictures/blood test.png" alt="HealthLink Services"
+                            class="carousel-image">
+                        <div class="carousel-content">
+                            <h2>Pathology</h2>
+                            <p>Comprehensive lab testing services</p>
+                        </div>
+                    </a>
+
+                    <a href="/Healthlink/landing/tabs_landing/cardio.html" class="carousel-slide active">
+                        <img src="/Healthlink/Diagnostics/Patient/pictures/cardiology.png" alt="Advanced Testing"
+                            class="carousel-image">
+                        <div class="carousel-content">
+                            <h2>Cardiology</h2>
+                            <p>Advanced heart care diagnostics</p>
+                        </div>
+                    </a>
+
+                    <a href="/Healthlink/landing/tabs_landing/sono.html" class="carousel-slide">
+                        <img src="/Healthlink/Diagnostics/Patient/pictures/ultrasound.png" alt="Home Collection"
+                            class="carousel-image">
+                        <div class="carousel-content">
+                              <h2>Sonography</h2>
+                            <p>State-of-the-art sonography for precise and painless internal imaging</p>
+                        </div>
+                    </a>
+
+                    <a href="/Healthlink/landing/tabs_landing/eeg.html" class="carousel-slide">
+                        <img src="/Healthlink/Diagnostics/Patient/pictures/eeg.png" alt="Expert Care"
+                            class="carousel-image">
+                        <div class="carousel-content">
+                            <h2>EEG/EMG</h2>
+                            <p>Neurological testing services</p>
+                        </div>
+                    </a>
+
+                    <a href="/Healthlink/landing/tabs_landing/portable.html" class="carousel-slide">
+                        <img src="/Healthlink/Diagnostics/Patient/pictures/xray.png" alt="Expert Care"
+                            class="carousel-image">
+                        <div class="carousel-content">
+                            <h2>X-ray & Portable X-ray</h2>
+                            <p>Your Health, Our Priority</p>
+                        </div>
+                    </a>
+                </div>
+
+                <!-- Carousel Dots -->
+                <div class="carousel-dots">
+                    <span class="dot active" onclick="currentSlide(1)"></span>
+                    <span class="dot" onclick="currentSlide(2)"></span>
+                    <span class="dot" onclick="currentSlide(3)"></span>
+                    <span class="dot" onclick="currentSlide(4)"></span>
+                    <span class="dot" onclick="currentSlide(5)"></span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Service Actions -->
+    <div class="service-actions">
+        <button class="service-btn call-btn" onclick="openLabBookingModal()">📞 Book via Call</button>
+        <div class="modal-overlay" id="labBookingModal">
+            <div class="modal">
+                <!-- Modal Header -->
+                <div class="modal-header">
+                    <h2 class="modal-title">Need help in booking a lab test?</h2>
+                    <button class="close-button" onclick="closeLabBookingModal()">&times;</button>
+                </div>
+
+                <!-- Modal Body -->
+                <div class="modal-body">
+                    <form id="labBookingForm" onsubmit="handleLabBookingSubmit(event)">
+                        <!-- Full Name -->
+                        <div class="form-group">
+                            <label class="form-label" for="fullName">
+                                Full name <span class="required">*</span>
+                            </label>
+                            <input type="text" id="fullName" name="fullName" class="form-input"
+                                placeholder="Enter full name" required>
+                        </div>
+
+                        <!-- Mobile Number -->
+                        <div class="form-group">
+                            <label class="form-label" for="mobileNumber">
+                                Enter Mobile Number <span class="required">*</span>
+                            </label>
+                            <input type="tel" id="mobileNumber" name="mobileNumber" class="form-input" placeholder="+91"
+                                value="+91" required>
+                        </div>
+
+                        <!-- City -->
+                        <div class="form-group">
+                            <label class="form-label" for="city">
+                                City <span class="required">*</span>
+                            </label>
+                            <select id="city" name="city" class="form-select" required>
+                                <option value="">Select a city</option>
+                                <option value="mumbai">Mumbai</option>
+                                <option value="delhi">Delhi</option>
+                                <option value="bangalore">Bangalore</option>
+                                <option value="hyderabad">Hyderabad</option>
+                                <option value="chennai">Chennai</option>
+                                <option value="kolkata">Kolkata</option>
+                                <option value="pune">Pune</option>
+                                <option value="ahmedabad">Ahmedabad</option>
+                                <option value="jaipur">Jaipur</option>
+                                <option value="lucknow">Lucknow</option>
+                                <option value="kanpur">Kanpur</option>
+                                <option value="nagpur">Nagpur</option>
+                                <option value="indore">Indore</option>
+                                <option value="thane">Thane</option>
+                                <option value="bhopal">Bhopal</option>
+                                <option value="visakhapatnam">Visakhapatnam</option>
+                                <option value="patna">Patna</option>
+                                <option value="vadodara">Vadodara</option>
+                            </select>
+                        </div>
+
+                        <!-- Consent Checkbox -->
+                        <div class="checkbox-group">
+                            <input type="checkbox" id="consent" name="consent" class="checkbox-input" required>
+                            <label for="consent" class="checkbox-label">
+                                I hereby affirm & authorise Healthlink to process the personal data as per the T&C.
+                            </label>
+                        </div>
+
+                        <!-- Submit Button -->
+                        <button type="submit" class="submit-button">
+                            Get a call back
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        
+        <script>
+            function openLabBookingModal() {
+                document.getElementById('labBookingModal').classList.add('active');
+                document.body.style.overflow = 'hidden';
+            }
+
+            function closeLabBookingModal() {
+                document.getElementById('labBookingModal').classList.remove('active');
+                document.body.style.overflow = 'auto';
+            }
+
+            // Close modal when clicking outside
+            document.getElementById('labBookingModal').addEventListener('click', function (e) {
+                if (e.target === this) {
+                    closeLabBookingModal();
+                }
+            });
+
+            // Close modal with Escape key
+            document.addEventListener('keydown', function (e) {
+                if (e.key === 'Escape' && document.getElementById('labBookingModal').classList.contains('active')) {
+                    closeLabBookingModal();
+                }
+            });
+
+            function handleLabBookingSubmit(event) {
+                event.preventDefault();
+
+                const formData = new FormData(event.target);
+                const data = {
+                    fullName: formData.get('fullName'),
+                    mobileNumber: formData.get('mobileNumber'),
+                    city: formData.get('city'),
+                    consent: formData.get('consent')
+                };
+
+                console.log('Lab booking form submitted:', data);
+
+                // Here you would typically send the data to your server
+                alert('Thank you! We will call you back shortly.');
+                closeLabBookingModal();
+
+                // Reset form
+                event.target.reset();
+                document.getElementById('mobileNumber').value = '+91';
+            }
+
+            // Auto-format mobile number
+            document.getElementById('mobileNumber').addEventListener('input', function (e) {
+                let value = e.target.value;
+                if (!value.startsWith('+91')) {
+                    e.target.value = '+91' + value.replace('+91', '');
+                }
+            });
+        </script>
+
+        <button class="service-btn whatsapp-btn" onclick="window.open('https://wa.me/8291271698', '_blank')">📱Book
+            via WhatsApp</button>
+        <!-- Hidden file input -->
+        <input type="file" id="prescriptionInput" style="display: none;" />
+
+        <!-- Your button -->
+        <button class=" service-btn upload-btn" onclick="document.getElementById('prescriptionInput').click()">
+            📃Upload Prescription
+        </button>
+    </div>
+
+    <!-- Featured Section with Modern Layout -->
+
+    <div class="featured-section">
+        <div class="section-header">
+            <div class="section-title">Choose Your Health Package</div>
+            <button class="view-all-btn" id="toggleBtn" onclick="togglePackages()">View All</button>
+        </div>
+
+        <section id="book-pack">
+            <div class="featured-grid" id="featuredGrid">
+                <a href="/Healthlink/landing/packages_landing/basic.html" class="featured-card basics">
+                    <div class="card-bg-pattern"></div>
+                    <div class="card-decoration"></div>
+                    <div class="card-decoration-2"></div>
+                    <div class="card-bg"></div>
+                    <div class="card-content">
+                        <div class="card-header">
+                            <div class="card-title">Best of 5 Basics Package</div>
+                        </div>
+                        <div class="card-description">
+                            A quick health check covering five vital parameters for overall wellness
+                        </div>
+                        <button class="card-cta">View Details →</button>
+                    </div>
+                </a>
+
+                <a href="/Healthlink/landing/packages_landing/smartsel.html" class="featured-card smart">
+                    <div class="card-bg-pattern"></div>
+                    <div class="card-decoration"></div>
+                    <div class="card-decoration-2"></div>
+                    <div class="card-bg"></div>
+                    <div class="card-content">
+                        <div class="card-header">
+                            <div class="card-title">Smart Selection Package</div>
+                        </div>
+                        <div class="card-description">
+                            Intelligent health screening with AI-powered recommendations tailored to your lifestyle
+                            and
+                            health goals.
+                        </div>
+                        <button class="card-cta">View Details →</button>
+                    </div>
+                </a>
+
+                <a href="/Healthlink/landing/packages_landing/advance.html" class="featured-card advance">
+                    <div class="card-bg-pattern"></div>
+                    <div class="card-decoration"></div>
+                    <div class="card-decoration-2"></div>
+                    <div class="card-bg"></div>
+                    <div class="card-content">
+                        <div class="card-header">
+                            <div class="card-title">Advanced Health Package</div>
+                        </div>
+                        <div class="card-description">
+                            Comprehensive health monitoring with advanced diagnostics and preventive care solutions.
+                        </div>
+                        <button class="card-cta">View Details →</button>
+                    </div>
+                </a>
+
+                <a href="/Healthlink/landing/packages_landing/allinone.html" class="featured-card allinone">
+                    <div class="card-bg-pattern"></div>
+                    <div class="card-decoration"></div>
+                    <div class="card-decoration-2"></div>
+                    <div class="card-bg"></div>
+                    <div class="card-content">
+                        <div class="card-header">
+                            <div class="card-title">All-in-One Package</div>
+                        </div>
+                        <div class="card-description">
+                            Complete healthcare solution covering all aspects of your wellness journey in one
+                            package.
+                        </div>
+                        <button class="card-cta">View Details →</button>
+                    </div>
+                </a>
+
+                <a href="/Healthlink/landing/packages_landing/fever.html" class="featured-card fever">
+                    <div class="card-bg-pattern"></div>
+                    <div class="card-decoration"></div>
+                    <div class="card-decoration-2"></div>
+                    <div class="card-bg"></div>
+                    <div class="card-content">
+                        <div class="card-header">
+                            <div class="card-title">Fever Profile</div>
+                        </div>
+                        <div class="card-description">
+                            Targeted health packages designed for specific conditions, age groups, and lifestyle
+                            needs.
+                        </div>
+                        <button class="card-cta">View Details →</button>
+                    </div>
+                </a>
+
+                <a href="/Healthlink/landing/packages_landing/food(male).html" class="featured-card pef">
+                    <div class="card-bg-pattern"></div>
+                    <div class="card-decoration"></div>
+                    <div class="card-decoration-2"></div>
+                    <div class="card-bg"></div>
+                    <div class="card-content">
+                        <div class="card-header">
+                            <div class="card-title">Perfect Natural Food Plan(Male)</div>
+                        </div>
+                        <div class="card-description">
+                            A tailored nutrition package designed to help men achieve optimal health and vitality
+                            through balanced dietary insights
+                        </div>
+                        <button class="card-cta">View Details →</button>
+                    </div>
+                </a>
+
+                <a href="/Healthlink/landing/packages_landing/food(female).html" class="featured-card pef">
+                    <div class="card-bg-pattern"></div>
+                    <div class="card-decoration"></div>
+                    <div class="card-decoration-2"></div>
+                    <div class="card-bg"></div>
+                    <div class="card-content">
+                        <div class="card-header">
+                            <div class="card-title">Perfect Natural Food Plan(Female)</div>
+                        </div>
+                        <div class="card-description">
+                            A customized nutrition package crafted to support women’s health, energy, and hormonal
+                            balance through smart dietary guidance
+                        </div>
+                        <button class="card-cta">View Details →</button>
+                    </div>
+                </a>
+
+                <a href="/Healthlink/landing/packages_landing/anc.html" class="featured-card anc">
+                    <div class="card-bg-pattern"></div>
+                    <div class="card-decoration"></div>
+                    <div class="card-decoration-2"></div>
+                    <div class="card-bg"></div>
+                    <div class="card-content">
+                        <div class="card-header">
+                            <div class="card-title">Antenetal(ANC) Profile</div>
+                        </div>
+                        <div class="card-description">
+                            Essential tests for a healthy pregnancy and safe motherhood.
+                        </div>
+                        <button class="card-cta">View Details →</button>
+                    </div>
+                </a>
+
+                <a href="/Healthlink/landing/packages_landing/pcod.html" class="featured-card pcod">
+                    <div class="card-bg-pattern"></div>
+                    <div class="card-decoration"></div>
+                    <div class="card-decoration-2"></div>
+                    <div class="card-bg"></div>
+                    <div class="card-content">
+                        <div class="card-header">
+                            <div class="card-title">PCOD Profile</div>
+                        </div>
+                        <div class="card-description">
+                            Specialized tests to manage PCOD and support hormonal health.
+                        </div>
+                        <button class="card-cta">View Details →</button>
+                    </div>
+                </a>
+
+                <a href="/Healthlink/landing/packages_landing/arthritis.html" class="featured-card arthritis">
+                    <div class="card-bg-pattern"></div>
+                    <div class="card-decoration"></div>
+                    <div class="card-decoration-2"></div>
+                    <div class="card-bg"></div>
+                    <div class="card-content">
+                        <div class="card-header">
+                            <div class="card-title">Arthritis Profile</div>
+                        </div>
+                        <div class="card-description">
+                            Detailed arthritis profile for joint health and inflammation control.
+                        </div>
+                        <button class="card-cta">View Details →</button>
+                    </div>
+                </a>
+
+                <a href="#" class="featured-card diabetes">
+                    <div class="card-bg-pattern"></div>
+                    <div class="card-decoration"></div>
+                    <div class="card-decoration-2"></div>
+                    <div class="card-bg"></div>
+                    <div class="card-content">
+                        <div class="card-header">
+                            <div class="card-title">Diabetes Profile</div>
+                        </div>
+                        <div class="card-description">
+                            Complete diabetes monitoring for effective sugar level management.
+                        </div>
+                        <button class="card-cta">View Details →</button>
+                    </div>
+                </a>
+
+                <a href="/Healthlink/landing/packages_landing/hyper.html" class="featured-card hyper">
+                    <div class="card-bg-pattern"></div>
+                    <div class="card-decoration"></div>
+                    <div class="card-decoration-2"></div>
+                    <div class="card-bg"></div>
+                    <div class="card-content">
+                        <div class="card-header">
+                            <div class="card-title">Hypertension Profile</div>
+                        </div>
+                        <div class="card-description">
+                            Focused checks to keep blood pressure under control and heart healthy
+                        </div>
+                        <button class="card-cta">View Details →</button>
+                    </div>
+                </a>
+
+                <!-- <a href="/Healthlink/landing/packages_landing/dialysis.html" class="featured-card dialysis">
+                    <div class="card-bg-pattern"></div>
+                    <div class="card-decoration"></div>
+                    <div class="card-decoration-2"></div>
+                    <div class="card-bg"></div>
+                    <div class="card-content">
+                        <div class="card-header">
+                            <div class="card-title">Dialysis Profile</div>
+                        </div>
+                        <div class="card-description">
+                            Essential tests to monitor kidney function and dialysis effectiveness.
+                        </div>
+                        <button class="card-cta">View Details →</button>
+                    </div>
+                </a>
+
+                <a href="#" class="featured-card maleinf">
+                    <div class="card-bg-pattern"></div>
+                    <div class="card-decoration"></div>
+                    <div class="card-decoration-2"></div>
+                    <div class="card-bg"></div>
+                    <div class="card-content">
+                        <div class="card-header">
+                            <div class="card-title">Male Infertility Profile</div>
+                        </div>
+                        <div class="card-description">
+                            Advanced tests to assess male fertility and reproductive health.</div>
+                        <button class="card-cta">View Details →</button>
+                    </div>
+                </a>
+
+                <a href="#" class="featured-card feinf">
+                    <div class="card-bg-pattern"></div>
+                    <div class="card-decoration"></div>
+                    <div class="card-decoration-2"></div>
+                    <div class="card-bg"></div>
+                    <div class="card-content">
+                        <div class="card-header">
+                            <div class="card-title">Female Infertility Profile</div>
+                        </div>
+                        <div class="card-description">
+                            In-depth evaluation for female fertility and reproductive wellness.
+                        </div>
+                        <button class="card-cta">View Details →</button>
+                    </div>
+                </a> -->
+            </div>
+    </div>
+    </section>
+
+
+    <header>
+        <section id="about-us">
+            <h1>About Us</h1>
+            <p>Learn more about our mission, vision, and the amazing team behind our work.</p>
+    </header>
+
+    <main class="container">
+        <section class="about-section">
+            <h2>About Healthlink</h2>
+            <p>Established in 2013, HealthLink Diagnostics & Solutions Pvt Ltd has been dedicated to providing
+                accurate, reliable, and affordable diagnostic services to our community and corporate partners. Over
+                the years, we have grown into a trusted healthcare partner for thousands of patients, doctors,
+                hospitals, and organizations seeking comprehensive wellness solutions for their teams.</p>
+
+            <p>
+                At HealthLink, we combine cutting-edge technology with highly qualified professionals to deliver
+                precise test results and actionable health insights you can rely on. Our modern labs, extensive
+                range of diagnostic tests, and unwavering commitment to quality have earned us a reputation for
+                excellence in patient care and corporate health management.
+            </p>
+
+            <p>
+                Your health is our priority — we ensure that every test is conducted with the utmost care,
+                confidentiality, and speed, empowering you and your doctor to make informed decisions. From routine
+                health check-ups and specialized testing to preventive care packages and tailor-made corporate
+                wellness programs, HealthLink is your one-stop solution for all diagnostic and employee health
+                needs.
+            </p>
+            <p>
+                We specialise in screening camps with a high fulfilment rate for brand promotions and fostering
+                meaningful engagement between Healthcare Professionals and Pharma brands. Also, we provide adherence
+                programs that support patients throughout clinical diagnosis, doctor consultations, and therapy
+                management.
+            </p>
+
+            Join the thousands who trust us for their personal and workplace health journey — because at
+            HealthLink, we are your trusted healthcare partner for life. Since our founding, we have grown into
+            a diverse team of experts committed to excellence, innovation, and putting our clients first,
+            whether individuals or businesses.
+
+            </p>
+
+        </section>
+
+        <section class="about-section">
+            <h2>Meet the Team</h2>
+            <div class="team">
+                <div class="team-member">
+                    <img src="/Healthlink/Diagnostics/Patient/pictures/director.jpg" alt="Team Member 1">
+                    <h3>Pranita Shewale</h3>
+                    <p>Director</p>
+                </div>
+                <div class="team-member">
+                    <img src="/Healthlink/Diagnostics/Patient/pictures/ceo.png" alt="Team Member 2">
+                    <h3>Sunil Shewale</h3>
+                    <p>Founder & CEO</p>
+                </div>
+                <div class="team-member">
+                    <img src="https://via.placeholder.com/100" alt="Team Member 3">
+                    <h3>Kiran Yewale</h3>
+                    <p>Director</p>
+                </div>
+                <div class="team-member">
+                    <img src="https://via.placeholder.com/100" alt="Team Member 4">
+                    <h3>Dr. Shilpa Semlani Jain</h3>
+                    <p>Pathologist</p>
+                    <p>(MD. Pathology)</p>
+                </div>
+                <div class="team-member">
+                    <img src="https://via.placeholder.com/100" alt="Team Member 4">
+                    <h3>Dr. Jayesh Jain</h3>
+                    <p>Radiologist</p>
+                    <p>(MD. Radiology)</p>
+                </div>
+                <div class="team-member">
+                    <img src="https://via.placeholder.com/100" alt="Team Member 4">
+                    <h3>Dr. Bharat Jain</h3>
+                    <p>Consultant Cardiologist</p>
+                    <p>(MD.Cardiology)</p>
+                </div>
+                <div class="team-member">
+                    <img src="https://via.placeholder.com/100" alt="Team Member 4">
+                    <h3>Dr. Suresh Tikone</h3>
+                    <p>M.B.B.S</p>
+                </div>
+            </div>
+        </section>
+        </section>
+    </main>
+
+    <header>
+        <section id="contact-us">
+            <h1>Contact Us</h1>
+            <p>We'd love to hear from you</p>
+    </header>
+
+    <main class="container">
+        <section class="contact-info">
+            <h2>Get in Touch</h2>
+
+            <div class="info-item">
+                <h3>Address</h3>
+                <p>Shop No. 6, Patel Building, Plot No. 223,<br> Dr Babasaheb Ambedkar Marg, near Samarth Hotel,<br>
+                    Hindmata, Radhika Saikripa Co-op Society, Dadar East<br> Mumbai, Maharashtra 400014</p>
+            </div>
+
+            <div class="info-item">
+                <h3>Phone</h3>
+                <p><a href="tel:+912345678900">+91 8291271698</a></p>
+            </div>
+
+            <div class="info-item">
+                <h3>Email</h3>
+                <p><a href="mailto:info@diagnosticscenter.com">info@diagnosticscenter.com</a></p>
+            </div>
+
+            <div class="social-links">
+                <h3>Follow Us</h3>
+                <a href="https://www.facebook.com/healthlink.diagnostics" target="_blank">🌐 Facebook</a>
+                <a href="#" target="_blank">🐦 Twitter</a>
+                <a href="#" target="_blank">📸 Instagram</a>
+                <a href="#" target="_blank">💼 LinkedIn</a>
+            </div>
+
+            <iframe
+                src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3772.2259357269313!2d72.8424586!3d19.009763299999996!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x3be7cee7aad52949%3A0x5b622dbbef93bc80!2sHealthlink%20Diagnostics%20%26%20Solutions%20Pvt.%20Ltd.!5e0!3m2!1sen!2sin!4v1750107268643!5m2!1sen!2sin"
+                width="600" height="450" style="border:0;" allowfullscreen="" loading="lazy"
+                referrerpolicy="no-referrer-when-downgrade"></iframe>
+
+        </section>
+        </section>
+        <script>
+            (function () { if (!window.chatbase || window.chatbase("getState") !== "initialized") { window.chatbase = (...arguments) => { if (!window.chatbase.q) { window.chatbase.q = [] } window.chatbase.q.push(arguments) }; window.chatbase = new Proxy(window.chatbase, { get(target, prop) { if (prop === "q") { return target.q } return (...args) => target(prop, ...args) } }) } const onLoad = function () { const script = document.createElement("script"); script.src = "https://www.chatbase.co/embed.min.js"; script.id = "XWGrMz8LGgPkzPa4nSKhg"; script.domain = "www.chatbase.co"; document.body.appendChild(script) }; if (document.readyState === "complete") { onLoad() } else { window.addEventListener("load", onLoad) } })();
+        </script>
+    </main>
+    <footer>
+        &copy; 2025 Healthlink Diagnostics & Pvt Ltd. All rights reserved.
+    </footer>
+
+    <script>
+        // Toggle packages view
+        function togglePackages() {
+            const featuredGrid = document.getElementById('featuredGrid');
+            const toggleBtn = document.getElementById('toggleBtn');
+            const allCards = featuredGrid.querySelectorAll('.featured-card');
+
+            // Check if currently showing all packages
+            const isShowingAll = toggleBtn.textContent === 'Show Less';
+
+            if (isShowingAll) {
+                // Hide packages beyond the first 4
+                allCards.forEach((card, index) => {
+                    if (index >= 4) {
+                        card.style.display = 'none';
+                    }
+                });
+                toggleBtn.textContent = 'View All';
+            } else {
+                // Show all packages
+                allCards.forEach(card => {
+                    card.style.display = 'block';
+                });
+                toggleBtn.textContent = 'Show Less';
+            }
+        }
+
+        // Initialize the page to show only first 4 packages
+        document.addEventListener('DOMContentLoaded', function () {
+            const featuredGrid = document.getElementById('featuredGrid');
+            const allCards = featuredGrid.querySelectorAll('.featured-card');
+
+            // Initially hide all cards beyond the first 4
+            allCards.forEach((card, index) => {
+                if (index >= 4) {
+                    card.style.display = 'none';
+                }
+            });
+        });
+
+        // Alternative version using CSS classes (more efficient for animations)
+        function togglePackagesWithClasses() {
+            const featuredGrid = document.getElementById('featuredGrid');
+            const toggleBtn = document.getElementById('toggleBtn');
+
+            // Toggle the 'show-all' class on the grid
+            featuredGrid.classList.toggle('show-all');
+
+            // Update button text
+            if (featuredGrid.classList.contains('show-all')) {
+                toggleBtn.textContent = 'Show Less';
+            } else {
+                toggleBtn.textContent = 'View All';
+            }
+        }
+
+        // If you want to use the CSS class method, add this CSS to your stylesheet:
+        /*
+        .featured-grid .featured-card:nth-child(n+5) {
+            display: none;
+        }
+        
+        .featured-grid.show-all .featured-card {
+            display: block;
+        }
+        */
+
+        // Carousel functionality
+        let currentSlideIndex = 0;
+        const slides = document.querySelectorAll('.carousel-slide');
+        const dots = document.querySelectorAll('.dot');
+        const totalSlides = slides.length;
+
+        function showSlide(index) {
+            const track = document.getElementById('carouselTrack');
+            const translateX = -(index * 20); // Each slide is 20% width (100% / 5 slides)
+            track.style.transform = `translateX(${translateX}%)`;
+
+            // Update dots
+            dots.forEach(dot => dot.classList.remove('active'));
+            if (dots[index]) {
+                dots[index].classList.add('active');
+            }
+
+            currentSlideIndex = index;
+        }
+
+        function nextSlide() {
+            currentSlideIndex = (currentSlideIndex + 1) % totalSlides;
+            showSlide(currentSlideIndex);
+        }
+
+        function currentSlide(index) {
+            showSlide(index - 1); // Convert to 0-based index
+            // Reset auto-advance timer when user manually navigates
+            clearInterval(autoSlideInterval);
+            autoSlideInterval = setInterval(nextSlide, 4000);
+        }
+
+        // Auto-advance slides every 4 seconds
+        let autoSlideInterval = setInterval(nextSlide, 4000);
+
+        // Pause auto-advance on hover
+        const carouselContainer = document.querySelector('.carousel-container');
+        carouselContainer.addEventListener('mouseenter', () => {
+            clearInterval(autoSlideInterval);
+        });
+
+        carouselContainer.addEventListener('mouseleave', () => {
+            autoSlideInterval = setInterval(nextSlide, 4000);
+        });
+
+        // Modal functionality
+        function openLabBookingModal() {
+            document.getElementById('labBookingModal').classList.add('active');
+        }
+
+        function closeLabBookingModal() {
+            document.getElementById('labBookingModal').classList.remove('active');
+        }
+
+        function handleLabBookingSubmit(event) {
+            event.preventDefault();
+            const formData = new FormData(event.target);
+            const data = Object.fromEntries(formData);
+            console.log('Form submitted:', data);
+            alert('Thank you! We will call you back soon.');
+            closeLabBookingModal();
+            event.target.reset();
+        }
+
+        // Navigation functionality
+        function handleAction(action) {
+            const btn = event.currentTarget;
+            btn.style.transform = 'scale(0.95)';
+            setTimeout(() => {
+                btn.style.transform = '';
+                alert(`Loading ${action}...`);
+            }, 150);
+        }
+
+        function handleNav(section) {
+            const navItem = event.currentTarget;
+            document.querySelectorAll('.nav-item').forEach(item => {
+                item.style.background = '';
+            });
+            navItem.style.background = 'rgba(127, 205, 205, 0.3)';
+        }
+
+        // Initialize on page load
+        document.addEventListener('DOMContentLoaded', function () {
+            showSlide(0); // Initialize first slide
+        });
+
+        // Close modal when clicking outside
+        document.getElementById('labBookingModal').addEventListener('click', function (e) {
+            if (e.target === this) {
+                closeLabBookingModal();
+            }
+        });
+    </script>
+</body>
+
+</html>

@@ -1,0 +1,902 @@
+ * {
+     margin: 0;
+     padding: 0;
+     box-sizing: border-box;
+ }
+
+ html,
+ body {
+     height: 100%;
+     font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+ }
+
+ body {
+     display: flex;
+     flex-direction: column;
+     min-height: 100vh;
+     background-color: #e2e2e2;
+     font-family: 'Segoe UI', sans-serif;
+ }
+
+ /* Page blur effect */
+        .page-blur {
+            filter: blur(0.2px);
+            pointer-events: none;
+            transition: filter 0.3s ease;
+        }
+        
+        /* Login Modal Styles */
+        .login-modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.8);
+            backdrop-filter: blur(10px);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+            opacity: 1;
+            transition: opacity 0.3s ease;
+        }
+
+        .login-modal-overlay.hidden {
+            display: none;
+            opacity: 0;
+        }
+
+        .login-modal {
+            background: linear-gradient(145deg, #ffffff, #f8f9fa);
+            border-radius: 20px;
+            padding: 40px;
+            width: 90%;
+            max-width: 450px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.2);
+            transform: translateY(0);
+            transition: transform 0.3s ease;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            position: relative;
+        }
+
+        .login-modal-header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+
+        .login-modal-title {
+            font-size: 28px;
+            font-weight: 700;
+            color: #2c3e50;
+            margin-bottom: 10px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .login-modal-subtitle {
+            color: #6c757d;
+            font-size: 16px;
+            margin: 0;
+        }
+
+        .login-buttons {
+            display: flex;
+            gap: 15px;
+            margin-top: 30px;
+        }
+
+        .login-btn {
+            flex: 1;
+            padding: 15px 25px;
+            border: none;
+            border-radius: 12px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-decoration: none;
+            text-align: center;
+            display: inline-block;
+        }
+
+        .login-btn-primary {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+
+        .login-btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(102, 126, 234, 0.3);
+        }
+
+        .login-btn-secondary {
+            background: #f8f9fa;
+            color: #6c757d;
+            border: 2px solid #e9ecef;
+        }
+
+        .login-btn-secondary:hover {
+            background: #e9ecef;
+            transform: translateY(-2px);
+        }
+
+        .login-close-btn {
+            position: absolute;
+            top: 20px;
+            right: 25px;
+            background: none;
+            border: none;
+            font-size: 28px;
+            color: #6c757d;
+            cursor: pointer;
+            transition: color 0.3s ease;
+        }
+
+        .login-close-btn:hover {
+            color: #495057;
+        }
+
+
+ .container {
+     max-width: 1200px;
+     margin: 0 auto;
+     padding: 0 20px;
+ }
+
+ /* Header Section */
+ .header {
+     background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+     padding: 60px 0;
+ }
+
+ .header-content {
+     display: grid;
+     grid-template-columns: 1fr 1fr;
+     gap: 40px;
+     align-items: center;
+ }
+
+ .header-text h1 {
+     font-size: 2.5rem;
+     color: #046004;
+     margin-bottom: 20px;
+     font-weight: 700;
+ }
+
+ .header-text p {
+     font-size: 1.1rem;
+     color: #495057;
+     margin-bottom: 30px;
+     line-height: 1.7;
+ }
+
+ .services-list {
+     display: grid;
+     grid-template-columns: 1fr 1fr;
+     gap: 15px;
+     margin-top: 20px;
+ }
+
+ .service-item {
+     display: flex;
+     align-items: center;
+     font-weight: 600;
+     color: #495057;
+ }
+
+ .service-item::before {
+     content: "•";
+     color: #046004;
+     font-size: 1.5rem;
+     margin-right: 10px;
+ }
+
+ .header-image {
+     position: relative;
+ }
+
+ .header-image img {
+     width: 400px;
+     height: 250px;
+     border-radius: 15px;
+     display: block;
+     margin: 0 auto;
+ }
+
+ /* Booking Form */
+ .booking-form {
+     background: white;
+     padding: 40px;
+     border-radius: 20px;
+     box-shadow: 0 20px 60px rgba(0, 0, 0, 0.1);
+     margin-top: 30px;
+ }
+
+ .booking-form h2 {
+     color: #046004;
+     font-size: 2rem;
+     margin-bottom: 30px;
+     text-align: center;
+ }
+
+ .form-grid {
+     display: grid;
+     grid-template-columns: 1fr 1fr;
+     gap: 20px;
+     margin-bottom: 20px;
+ }
+
+ .form-group {
+     display: flex;
+     flex-direction: column;
+ }
+
+ .form-group.full-width {
+     grid-column: 1 / -1;
+ }
+
+ .form-group label {
+     font-weight: 600;
+     color: #495057;
+     margin-bottom: 8px;
+ }
+
+ .form-group input,
+ .form-group select,
+ .form-group textarea {
+     padding: 15px;
+     border: 2px solid #e9ecef;
+     border-radius: 10px;
+     font-size: 1rem;
+     transition: all 0.3s ease;
+ }
+
+ .form-group input:focus,
+ .form-group select:focus,
+ .form-group textarea:focus {
+     outline: none;
+     border-color: #046004;
+     box-shadow: 0 0 0 3px rgba(255, 107, 107, 0.1);
+ }
+
+ .submit-btn {
+     background: linear-gradient(135deg, #108510, #046004);
+     color: white;
+     padding: 18px 50px;
+     border: none;
+     border-radius: 50px;
+     font-size: 1.1rem;
+     font-weight: 600;
+     cursor: pointer;
+     transition: all 0.3s ease;
+     margin: 20px auto;
+     display: block;
+ }
+
+ .submit-btn:hover {
+     transform: translateY(-2px);
+     box-shadow: 0 10px 30px rgba(255, 107, 107, 0.3);
+ }
+
+ /* Success Message */
+ .success-message {
+     background: #d4edda;
+     color: #155724;
+     padding: 15px;
+     border-radius: 10px;
+     margin-top: 20px;
+     text-align: center;
+     display: none;
+ }
+
+ /* Info Section */
+ .info-section {
+     background: #2c3e50;
+     color: white;
+     padding: 80px 0;
+     text-align: center;
+ }
+
+ .info-content {
+     max-width: 800px;
+     margin: 0 auto;
+ }
+
+ .info-content p {
+     font-size: 1.2rem;
+     line-height: 1.8;
+     margin-bottom: 30px;
+ }
+
+ .info-images {
+     display: grid;
+     grid-template-columns: repeat(3, 1fr);
+     gap: 20px;
+     margin-top: 40px;
+ }
+
+ .info-images img {
+     width: 100%;
+     border-radius: 15px;
+     transition: transform 0.3s ease;
+ }
+
+ .info-images img:hover {
+     transform: scale(1.05);
+ }
+
+
+ /* Services Section */
+ .services-section {
+     padding: 80px 0;
+     background: #e2e2e2;
+ }
+
+ .section-title {
+     text-align: center;
+     font-size: 2.5rem;
+     color: #2c3e50;
+     margin-bottom: 60px;
+     font-weight: 700;
+ }
+
+ .service-card {
+     display: grid;
+     grid-template-columns: 1fr 1fr;
+     gap: 40px;
+     align-items: center;
+     margin-bottom: 80px;
+     padding: 40px;
+     border-radius: 20px;
+     transition: all 0.3s ease;
+ }
+
+ .service-card:hover {
+     box-shadow: 0 20px 60px rgba(0, 0, 0, 0.1);
+     transform: translateY(-5px);
+ }
+
+ .service-card:nth-child(even) {
+     background: #f8f9fa;
+ }
+
+ .service-card:nth-child(even) .service-content {
+     order: 2;
+ }
+
+
+ .service-content h3 {
+     color: #046004;
+     font-size: 1.8rem;
+     margin-bottom: 20px;
+ }
+
+ .service-content p {
+     font-size: 1.1rem;
+     line-height: 1.7;
+     color: #495057;
+ }
+
+ .service-image img {
+     width: 400px;
+     height: 250px;
+     border-radius: 15px;
+     display: block;
+     margin: 0 auto;
+ }
+
+
+ /* Benefits Section */
+ .benefits-section {
+     background: #f8f9fa;
+     padding: 60px 0;
+     /* reduced padding for better balance */
+ }
+
+ .benefits-grid {
+     display: grid;
+     grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+     gap: 30px;
+     margin-top: 50px;
+     padding: 0 20px;
+     max-width: 1200px;
+     margin-left: auto;
+     margin-right: auto;
+     justify-content: center;
+ }
+
+ .benefit-card {
+     background: white;
+     padding: 35px 25px;
+     /* balanced padding */
+     border-radius: 16px;
+     /* slightly smaller radius for modern look */
+     text-align: center;
+     box-shadow: 0 6px 20px rgba(0, 0, 0, 0.06);
+     /* smoother shadow */
+     transition: all 0.3s ease;
+ }
+
+ .benefit-card:hover {
+     transform: translateY(-8px) scale(1.02);
+     /* subtle hover lift + scale */
+     box-shadow: 0 12px 30px rgba(0, 0, 0, 0.1);
+     /* smoother shadow */
+ }
+
+ .benefit-cards-row {
+     display: grid;
+     grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+     gap: 30px;
+     padding: 0 20px;
+     max-width: 1000px;
+     /* increase to allow 3 columns to fit */
+     margin: 50px auto;
+     /* centers the entire grid */
+     justify-items: center;
+     /* centers the card content inside each grid cell */
+ }
+
+
+ .benefit-card1 {
+     background: white;
+     padding: 35px 25px;
+     /* balanced padding */
+     border-radius: 16px;
+     /* slightly smaller radius for modern look */
+     text-align: center;
+     box-shadow: 0 6px 20px rgba(0, 0, 0, 0.06);
+     /* smoother shadow */
+     transition: all 0.3s ease;
+ }
+
+ .benefit-card1:hover {
+     transform: translateY(-8px) scale(1.02);
+     /* subtle hover lift + scale */
+     box-shadow: 0 12px 30px rgba(0, 0, 0, 0.1);
+     /* smoother shadow */
+ }
+
+ .benefit-card2 {
+     background: white;
+     padding: 35px 25px;
+     /* balanced padding */
+     border-radius: 16px;
+     /* slightly smaller radius for modern look */
+     text-align: center;
+     box-shadow: 0 6px 20px rgba(0, 0, 0, 0.06);
+     /* smoother shadow */
+     transition: all 0.3s ease;
+ }
+
+ .benefit-card2:hover {
+     transform: translateY(-8px) scale(1.02);
+     /* subtle hover lift + scale */
+     box-shadow: 0 12px 30px rgba(0, 0, 0, 0.1);
+     /* smoother shadow */
+ }
+
+ .benefit-card3 {
+     background: white;
+     padding: 35px 25px;
+     /* balanced padding */
+     border-radius: 16px;
+     /* slightly smaller radius for modern look */
+     text-align: center;
+     box-shadow: 0 6px 20px rgba(0, 0, 0, 0.06);
+     /* smoother shadow */
+     transition: all 0.3s ease;
+ }
+
+ .benefit-card3:hover {
+     transform: translateY(-8px) scale(1.02);
+     /* subtle hover lift + scale */
+     box-shadow: 0 12px 30px rgba(0, 0, 0, 0.1);
+     /* smoother shadow */
+ }
+
+ .benefit-card h4 {
+     font-size: 1.1rem;
+     /* slightly smaller */
+     margin-bottom: 12px;
+     color: #2c3e50;
+     font-weight: 600;
+ }
+
+ .benefit-card p {
+     color: #495057;
+     line-height: 1.6;
+     font-size: 0.95rem;
+     /* slight size adjustment */
+ }
+
+
+ /* Accreditations */
+ .accreditations {
+     padding: 60px 0;
+     background: white;
+     text-align: center;
+ }
+
+ .accred-title {
+     font-size: 2rem;
+     color: #2c3e50;
+     margin-bottom: 40px;
+ }
+
+ .accred-logos {
+     display: flex;
+     justify-content: center;
+     align-items: center;
+     gap: 60px;
+     flex-wrap: wrap;
+ }
+
+ .accred-logo {
+     transition: transform 0.3s ease;
+ }
+
+ .accred-logo:hover {
+     transform: scale(1.1);
+ }
+
+ /* Stats Section */
+ .stats-section {
+     background: linear-gradient(135deg, #108510, #046004);
+     color: white;
+     padding: 80px 0;
+ }
+
+ .stats-grid {
+     display: grid;
+     grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+     gap: 40px;
+     text-align: center;
+ }
+
+ .stat-item h3 {
+     font-size: 3rem;
+     margin-bottom: 10px;
+     font-weight: bold;
+ }
+
+ .stat-item p {
+     font-size: 1.1rem;
+     opacity: 0.9;
+ }
+
+ /* Footer */
+
+ .footer {
+     background: #2c3e50;
+     color: white;
+     padding: 60px 0 20px;
+     width: 100%;
+     text-align: center;
+ }
+
+ .footer-logo {
+     display: flex;
+     align-items: center;
+     justify-content: center;
+     gap: 10px;
+     margin-bottom: 20px;
+ }
+
+ .footer .container {
+     max-width: 1200px;
+     margin: 0 auto;
+     padding: 0 20px;
+ }
+
+ .logo-icon {
+     width: 40px;
+     height: 40px;
+     background: linear-gradient(45deg, #108510, #046004);
+     border-radius: 8px;
+     display: flex;
+     align-items: center;
+     justify-content: center;
+ }
+
+ .logo-text {
+     font-size: 1.8rem;
+     font-weight: 700;
+ }
+
+ .logo-thyro {
+     color: white;
+ }
+
+ .logo-care {
+     color: #046004;
+ }
+
+ .tagline {
+     color: #bdc3c7;
+     font-size: 0.9rem;
+     margin-bottom: 20px;
+ }
+
+ .contact-info {
+     color: #ffffff;
+     font-size: 1.1rem;
+     font-weight: 600;
+     margin-bottom: 20px;
+ }
+
+ .social-links {
+     display: flex;
+     justify-content: center;
+     gap: 20px;
+     margin-top: 20px;
+ }
+
+ .social-link {
+     width: 40px;
+     height: 40px;
+     background-color: #34495e;
+     border-radius: 50%;
+     display: flex;
+     align-items: center;
+     justify-content: center;
+     text-decoration: none;
+     color: white;
+     transition: all 0.3s ease;
+ }
+
+ .social-link:hover {
+     background-color: #046004;
+     transform: translateY(-2px);
+ }
+
+
+ /* Responsive Design */
+ @media (max-width: 768px) {
+     .header-content {
+         grid-template-columns: 1fr;
+         text-align: center;
+     }
+
+     .header-text h1 {
+         font-size: 2rem;
+     }
+
+     .form-grid {
+         grid-template-columns: 1fr;
+     }
+
+     .service-card {
+         grid-template-columns: 1fr;
+         text-align: center;
+     }
+
+     .service-card:nth-child(even) .service-content {
+         order: unset;
+     }
+
+     .info-images {
+         grid-template-columns: 1fr;
+     }
+
+     .accred-logos {
+         gap: 30px;
+     }
+
+     .services-list {
+         grid-template-columns: 1fr;
+     }
+
+     .section-title {
+         font-size: 2rem;
+     }
+ }
+
+ * {
+     margin: 0;
+     padding: 0;
+     box-sizing: border-box;
+ }
+
+ body {
+     font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+     background-color: #f8f9fa;
+     line-height: 1.6;
+ }
+
+ .container {
+     max-width: 1200px;
+     margin: 0 auto;
+     padding: 40px 20px;
+ }
+
+ .main-title {
+     text-align: center;
+     font-size: 2.5rem;
+     font-weight: 700;
+     color: #2c3e50;
+     margin-bottom: 60px;
+ }
+
+ .benefits-grid {
+     display: grid;
+     grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+     gap: 40px;
+     margin-bottom: 80px;
+ }
+
+ .benefit-card {
+     text-align: center;
+     padding: 20px;
+ }
+
+ .icon-circle {
+     width: 80px;
+     height: 80px;
+     border-radius: 50%;
+     background-color: #fff;
+     border: 2px solid #046004;
+     display: flex;
+     align-items: center;
+     justify-content: center;
+     margin: 0 auto 20px;
+     box-shadow: 0 4px 12px rgba(255, 107, 107, 0.1);
+ }
+
+ .icon {
+     width: 40px;
+     height: 40px;
+     stroke: #046004;
+     fill: none;
+     stroke-width: 2;
+ }
+
+ .benefit-title {
+     font-size: 1.1rem;
+     font-weight: 600;
+     color: #34495e;
+     margin-bottom: 8px;
+ }
+
+ .benefit-description {
+     font-size: 0.95rem;
+     color: #7f8c8d;
+     line-height: 1.5;
+ }
+
+ .accreditations {
+     margin-top: 60px;
+     text-align: center;
+ }
+
+ .accreditations-title {
+     font-size: 1.5rem;
+     font-weight: 600;
+     color: #2c3e50;
+     margin-bottom: 40px;
+ }
+
+ .accreditations-grid {
+     display: flex;
+     justify-content: center;
+     align-items: center;
+     gap: 130px;
+     flex-wrap: wrap;
+     padding: 0 40px;
+ }
+
+ .accreditation-logo {
+     height: 100px;
+     object-fit: contain;
+ }
+
+
+ .footer {
+     background: #2c3e50;
+     color: white;
+     padding: 60px 0 20px;
+     width: 100vw;
+     /* Full viewport width */
+     margin-left: calc(-50vw + 50%);
+     /* Extend to edges */
+     margin-top: 80px;
+     text-align: center;
+     position: relative;
+     left: 50%;
+     right: 50%;
+     margin-left: -50vw;
+     margin-right: -50vw;
+     margin-bottom: -170px;
+     
+ }
+
+ .footer-logo {
+     display: flex;
+     align-items: center;
+     justify-content: center;
+     gap: 10px;
+     margin-bottom: 20px;
+ }
+
+ .logo-icon {
+     width: 100px;
+     height: 60px;
+     background: linear-gradient(45deg, #ffffff, #ffffff);
+     border-radius: 8px;
+     display: flex;
+     align-items: center;
+     justify-content: center;
+ }
+
+ .logo-text {
+     font-size: 1.8rem;
+     font-weight: 700;
+ }
+
+ .logo-thyro {
+     color: #2c3e50;
+ }
+
+ .logo-care {
+     color: #046004;
+ }
+
+ .tagline {
+     color: #ffffff;
+     font-size: 0.9rem;
+     margin-bottom: 20px;
+ }
+
+ .contact-info {
+     color: #ffffff;
+     font-size: 1.1rem;
+     font-weight: 600;
+ }
+
+ .social-links {
+     display: flex;
+     justify-content: center;
+     gap: 20px;
+     margin-top: 20px;
+ }
+
+ .social-link {
+     width: 40px;
+     height: 40px;
+     background-color: #f8f9fa;
+     border-radius: 50%;
+     display: flex;
+     align-items: center;
+     justify-content: center;
+     text-decoration: none;
+     color: #7f8c8d;
+     transition: all 0.3s ease;
+ }
+
+ .social-link:hover {
+     background-color: #046004;
+     color: white;
+     transform: translateY(-2px);
+ }
+
+ @media (max-width: 768px) {
+     .main-title {
+         font-size: 2rem;
+     }
+
+     .benefits-grid {
+         grid-template-columns: 1fr;
+         gap: 30px;
+     }
+
+     .accreditations-grid {
+         gap: 30px;
+     }
+
+     .accreditation-logo {
+         height: 50px;
+     }
+ }

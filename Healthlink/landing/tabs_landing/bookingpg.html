@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Booking Confirmation - Medical Services</title>
+    <link rel="stylesheet" href="bookingpg.css">
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>Booking Confirmation</h1>
+            <p>Your appointment has been successfully booked</p>
+        </div>
+
+        <div class="content">
+            <!-- Progress Tracker -->
+            <div class="progress-section">
+                <h2>Booking Status</h2>
+                <div class="progress-tracker">
+                    <div class="progress-step active">
+                        <div class="step-circle">
+                            <span class="step-number">1</span>
+                        </div>
+                        <div class="step-label">Booked</div>
+                        <div class="step-description">Your appointment is confirmed</div>
+                    </div>
+                    
+                    <div class="progress-step">
+                        <div class="step-circle">
+                            <span class="step-number">2</span>
+                        </div>
+                        <div class="step-label">Confirmed by Lab</div>
+                        <div class="step-description">Lab will confirm your slot</div>
+                    </div>
+
+                    <div class="progress-step">
+                        <div class="step-circle">
+                            <span class="step-number">3</span>
+                        </div>
+                        <div class="step-label">Sample collected by the Lab</div>
+                        <div class="step-description">Lab is processing your sample</div>
+                    </div>
+                    
+                    <div class="progress-step">
+                        <div class="step-circle">
+                            <span class="step-number">4</span>
+                        </div>
+                        <div class="step-label">Test Completed</div>
+                        <div class="step-description">Tests will be conducted</div>
+                    </div>
+                    
+                    <div class="progress-step">
+                        <div class="step-circle">
+                            <span class="step-number">5</span>
+                        </div>
+                        <div class="step-label">Reports Uploaded</div>
+                        <div class="step-description">Reports will be available</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="booking-details">
+                <!-- Patient Information -->
+                <div class="details-section">
+                    <h2>Patient Information</h2>
+                    <div class="info-grid">
+                        <div class="info-item">
+                            <span class="label">Name:</span>
+                            <span class="value" id="patientName">-</span>
+                        </div>
+                        <div class="info-item">
+                            <span class="label">Age:</span>
+                            <span class="value" id="patientAge">-</span>
+                        </div>
+                        <div class="info-item">
+                            <span class="label">Gender:</span>
+                            <span class="value" id="patientGender">-</span>
+                        </div>
+                        <div class="info-item">
+                            <span class="label">Mobile:</span>
+                            <span class="value" id="patientMobile">-</span>
+                        </div>
+                        <div class="info-item full-width">
+                            <span class="label">Address:</span>
+                            <span class="value" id="patientAddress">-</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Appointment Details -->
+                <div class="details-section">
+                    <h2>Appointment Details</h2>
+                    <div class="info-grid">
+                        <div class="info-item">
+                            <span class="label">Date:</span>
+                            <span class="value" id="appointmentDate">-</span>
+                        </div>
+                        <div class="info-item">
+                            <span class="label">Time:</span>
+                            <span class="value" id="appointmentTime">-</span>
+                        </div>
+                        <div class="info-item">
+                            <span class="label">Visit Type:</span>
+                            <span class="value" id="visitType">-</span>
+                        </div>
+                        <div class="info-item">
+                            <span class="label">Booking ID:</span>
+                            <span class="value" id="bookingId">-</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Selected Tests -->
+                <div class="details-section">
+                    <h2>Selected Tests</h2>
+                    <div class="tests-container" id="selectedTests">
+                        <!-- Tests will be populated here -->
+                    </div>
+                    
+                    <div class="total-section">
+                        <div class="total-row">
+                            <span class="total-label">Grand Total:</span>
+                            <span class="total-amount" id="grandTotal">₹0</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Prescription Section (if uploaded) -->
+                <div class="details-section" id="prescriptionSection" style="display: none;">
+                    <h2>Uploaded Prescription</h2>
+                    <div class="prescription-info">
+                        <div class="prescription-file" id="prescriptionFile">
+                            <!-- Prescription file info will be shown here -->
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Additional Notes -->
+                <div class="details-section" id="notesSection" style="display: none;">
+                    <h2>Additional Notes</h2>
+                    <div class="notes-content" id="additionalNotes">
+                        <!-- Notes will be shown here -->
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="action-buttons">
+            <button class="btn-secondary" onclick="window.print()">Print Confirmation</button>
+            <button class="btn-primary" onclick="goToHome()">Book Another Test</button>
+        </div>
+    </div>
+
+    <script src="book.js></script>
+</body>
+</html>

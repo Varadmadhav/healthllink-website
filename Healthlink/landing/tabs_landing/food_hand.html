@@ -1,0 +1,297 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Healthlink Diagnostics  - Food Handler Health Checkup</title>
+    <link rel="stylesheet" href="handl.css">
+</head>
+<body>
+     <!-- Login Modal -->
+    <div class="login-modal-overlay" id="loginModal">
+        <div class="login-modal">
+            <button class="login-close-btn" onclick="closeModal()">&times;</button>
+            <div class="login-modal-header">
+                <h2 class="login-modal-title">Welcome to Healthlink</h2>
+                <p class="login-modal-subtitle">Please login to continue with partner registration</p>
+            </div>
+            
+            <div class="login-buttons">
+                <a href="/Healthlink/Diagnostics/Patient/frontend/signup.html" class="login-btn login-btn-primary">
+                    Login
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <div class="container">
+        <div class="header">
+            <div class="logo"><img src="/Healthlink/Diagnostics/Patient/pictures/logo.png"; height="100px";> </div>
+        </div>
+
+        <div class="main-card">
+            <div class="hero-section">
+                <div class="hero-content">
+                    <h1 class="hero-title">Why Regular Health Checkups for Food Handlers Matter!</h1>
+                    <ul class="hero-list">
+                        <li>Safeguard against potential contaminants</li>
+                        <li>Ensure fresh & hygienic food and water by handlers</li>
+                        <li>Reduce transmission of diseases among customers</li>
+                        <li>Follow food safety rules preventing your brand</li>
+                        <li>Maintain consumer confidence</li>
+                        <li>Assures business continuity through a well-maintained restaurant</li>
+                    </ul>
+                </div>
+                
+                <div class="form-section">
+                    <div class="form-title">GET INSTANT<br>✔ HYGIENE-FREE</div>
+                    <form>
+                        <div class="form-group">
+                            <input type="text" placeholder="Name" required>
+                        </div>
+                        <div class="form-group">
+                            <input type="email" placeholder="Email" required>
+                        </div>
+                        <div class="form-group">
+                            <input type="tel" placeholder="Mobile" required>
+                        </div>
+                        <div class="form-group">
+                            <input type="text" placeholder="City" required>
+                        </div>
+                        <div class="form-group">
+                            <input type="text" placeholder="Pincode" required>
+                        </div>
+                        <button type="submit" class="submit-btn">Submit</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <div class="services-section">
+            <div class="service-card">
+            <div class="service-card-bg"></div>    
+                <div class="service-title">Test Your<br>Eyesight & Vision</div>
+                <div class="service-subtitle">Check for clear vision</div>
+            </div>
+            <div class="service-card1">
+                <div class="service-title">Skin & Physical<br>Examination</div>
+                <div class="service-subtitle">Assess skin health</div>
+            </div>
+            <div class="service-card2">
+                <div class="service-title">Tests & Vaccination for Infectious<br>Diseases</div>
+                <div class="service-subtitle">Address potential infections</div>
+            </div>
+        </div>
+
+        <div class="examination-sections">
+            <div class="exam-card">
+                <div class="exam-content">
+                    <h3 class="exam-title"><span class="exam-number">1</span>Physical Examination</h3>
+                    <p class="exam-description">For restaurant or food handling this physical examination should be done to check is there any rash, wound on visible parts of hand or body should be treated.</p>
+                    <p class="exam-details">Height, Weight, BP - to ensure good physiological functioning of physical features.</p>
+                </div>
+                <div class="exam-image">
+                    <img src="/Healthlink/Diagnostics/Patient/pictures/physical.png" width='200' height='150' viewBox='0 0 200 150'%3E%3Crect width='200' height='150' fill='%23e8f5e8'/%3E%3Ctext x='100' y='75' text-anchor='middle' dy='0.3em' font-family='Arial' font-size='14' fill='%23666'%3EPhysical Exam%3C/text%3E%3C/svg%3E" alt="Physical Examination">
+                </div>
+            </div>
+
+            <div class="exam-card">
+                <div class="exam-content">
+                    <h3 class="exam-title"><span class="exam-number">2</span>Eye Examination</h3>
+                    <p class="exam-description">Considering any food handler is expected to quickly performing different procedures from cleaning process, and carefully avoid to damage any equipment & wrongly naming ingredients for items. This examination of eye checking look professional and efficiently function the business by giving the professional food efficiently.</p>
+                    <p class="exam-details">Note: Items - Preventing visual clarity to minimize the work safely.</p>
+                </div>
+                <div class="exam-image">
+                    <img src="/Healthlink/Diagnostics/Patient/pictures/eye.png" width='200' height='150' viewBox='0 0 200 150'%3E%3Crect width='200' height='150' fill='%23e3f2fd'/%3E%3Ctext x='100' y='75' text-anchor='middle' dy='0.3em' font-family='Arial' font-size='14' fill='%23666'%3EEye Examination%3C/text%3E%3C/svg%3E" alt="Eye Examination">
+                </div>
+            </div>
+
+            <div class="exam-card">
+                <div class="exam-content">
+                    <h3 class="exam-title"><span class="exam-number">3</span>Skin Examination</h3>
+                    <p class="exam-description">Skin examination is carried in Biggest Units, Hotels, Builders, and other food may have fungal infections, looking to build comprehensive the overall performance, security, and attraction. Skin Infections: It examines for skin allergies that may pose a risk to food handling, such as eczema and dermatitis.</p>
+                </div>
+                <div class="exam-image">
+                    <img src="/Healthlink/Diagnostics/Patient/pictures/skin2.png" width='200' height='150' viewBox='0 0 200 150'%3E%3Crect width='200' height='150' fill='%23fff3e0'/%3E%3Ctext x='100' y='75' text-anchor='middle' dy='0.3em' font-family='Arial' font-size='14' fill='%23666'%3ESkin Examination%3C/text%3E%3C/svg%3E" alt="Skin Examination">
+                </div>
+            </div>
+
+            <div class="exam-card">
+                <div class="exam-content">
+                    <h3 class="exam-title"><span class="exam-number">4</span>Vaccinations</h3>
+                    <p class="exam-description">In settings healthcare directly to your employees, we can to make employee to improve and better investment, accessibility, and accountability.</p>
+                    <p class="exam-details">Vaccine - Hepatitis A, Typhoid - Vaccination against blood-borne infections is advisable, Travelers' vaccines might also should more are you including risk food that may contain with vaccination required for international travel.</p>
+                </div>
+                <div class="exam-image">
+                    <img src="/Healthlink/Diagnostics/Patient/pictures/vaccination.png" width='200' height='150' viewBox='0 0 200 150'%3E%3Crect width='200' height='150' fill='%23f3e5f5'/%3E%3Ctext x='100' y='75' text-anchor='middle' dy='0.3em' font-family='Arial' font-size='14' fill='%23666'%3EVaccinations%3C/text%3E%3C/svg%3E" alt="Vaccinations">
+                </div>
+            </div>
+        </div>
+
+        <div class="pathology-section">
+            <h3 class="exam-title"><span class="exam-number">5</span>Pathology tests for infectious diseases</h3>
+            <p class="pathology-description">These tests are needed to confirm if someone has a communicable or infectious disease that the doctor suspects.</p>
+            
+            <h3 style="color: #333; margin: 20px 0 15px 0;">Test & Significance</h3>
+            <p style="color: #666; margin-bottom: 20px;">There tests help to identify the pathogens, viral attacks, providing necessary measures.</p>
+
+            <div class="test-list">
+                <div class="test-item">
+                    <div class="test-name">Complete urine Analysis</div>
+                    <div class="test-description">To check for urine infections such as E.coli, RTEC, E TEC and other bacteria.</div>
+                </div>
+                <div class="test-item">
+                    <div class="test-name">Stool Routine</div>
+                    <div class="test-description">To check for parasitic infections such as Entamoeba histolytica, worms, etc.</div>
+                </div>
+                <div class="test-item">
+                    <div class="test-name">Wt | Hepatitis B | Hepatitis C</div>
+                    <div class="test-description">To prevent the transmission of blood borne infections from handling food with hands with open wounds or cuts.</div>
+                </div>
+                <div class="test-item">
+                    <div class="test-name">Chest X-Ray</div>
+                    <div class="test-description">To check for respiratory disorders such as Tuberculosis - TB</div>
+                </div>
+                <div class="test-item">
+                    <div class="test-name">X-Ray Chest</div>
+                    <div class="test-description">To check for respiratory infections.</div>
+                </div>
+                <div class="test-item">
+                    <div class="test-name">Blood group</div>
+                    <div class="test-description">For maintaining potential health information in case of emergencies.</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="booking-section">
+            <h2 class="booking-title">Book A Health Checkup Now!</h2>
+            
+            <div class="package-grid">
+                <div class="package-card">
+                    <div class="package-title" span style="background-color: #2c5aa0; font-weight: bold; color: white;text-align: center;">Food Handler Basic</div>
+                    <ul class="package-tests">
+                        <li>Height, Weight, BP</li>
+                        <li>Complete Urine Analysis</li>
+                        <li>Stool Routine</li>
+                        <li>Sputum AFB</li>
+                        <li>CBC</li>
+                        <li>FSSAI Medical Fitness Certificate</li>
+                    </ul>
+                </div>
+                <div class="package-card">
+                    <div class="package-title" span style="background-color:  #2c5aa0; font-weight: bold; color: white;text-align: center;">Food Handler Standard</div>
+                    <ul class="package-tests">
+                        <li>Height, Weight, BP</li>
+                        <li>CBC</li>
+                        <li>Near - Far Vision, Colour Vision</li>
+                        <li>Allergy Check</li>
+                        <li>Skin Overview</li>
+                        <li>Typhoid Vaccine</li>
+                        <li>Complete Urine Analysis</li>
+                        <li>Stool Routine</li>
+                        <li>Widal</li>
+                        <li>Sputum AFB</li>
+                        <li>FSSAI Medical Fitness Certificate</li>
+                    </ul>
+                </div>
+                <div class="package-card">
+                    <div class="package-title" span style="background-color:  #2c5aa0; font-weight: bold; color: white;text-align: center;">Food Handler Advanced</div>
+                    <ul class="package-tests">
+                        <li>Height, Weight, BP</li>
+                        <li>Near - Far Vision, Colour Vision</li>
+                        <li>Allergy Check</li>
+                        <li>Skin Overview</li>
+                        <li>Typhoid Vaccine</li>
+                        <li>Hepatitis B Vaccine</li>
+                        <li>Complete Urine Analysis</li>
+                        <li>Stool Routine</li>
+                        <li>Widal</li>
+                        <li>HIV</li>
+                        <li>Sputum AFB</li>
+                        <li>Blood group</li>
+                        <li>CBC</li>
+                        <li>FSSAI Medical Fitness Certificate</li>
+                    </ul>
+                </div>
+                <div class="package-card">
+                    <div class="package-title" span style="background-color: #2c5aa0; font-weight: bold; color: white;text-align: center;">Food Handler Advanced +</div>
+                    <ul class="package-tests">
+                        <li>Height, Weight, BP</li>
+                        <li>Near - Far Vision, Colour Vision</li>
+                        <li>Allergy Check</li>
+                        <li>Skin Overview</li>
+                        <li>Typhoid Vaccine</li>
+                        <li>Hepatitis B Vaccine</li>
+                        <li>Complete Urine Analysis</li>
+                        <li>Stool Routine</li>
+                        <li>Widal</li>
+                        <li>HIV</li>
+                        <li>HCV</li>
+                        <li>Hbsag</li>
+                        <li>Sputum AFB</li>
+                        <li>Blood group</li>
+                        <li>CBC</li>
+                        <li>FSSAI Medical Fitness Certificate</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+        <div class="footer-cta">
+            <div class="cta-title">Looking for a Health Evaluation of FOOD HANDLERS ?</div>
+            <div class="cta-subtitle">Contact us at thyrocare@gmail.com</div>
+            <button class="cta-button" onclick="window.location.href='/Diagnostics/Patient/frontend/main.html#contact-us'">CONTACT US</button>
+
+        </div>
+    </div>
+
+    <script>
+        // Form submission handler
+        document.querySelector('form').addEventListener('submit', function(e) {
+            e.preventDefault();
+            alert('Thank you for your interest! We will contact you soon.');
+        });
+        // Smooth scrolling for internal navigation
+        document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+            anchor.addEventListener('click', function (e) {
+                e.preventDefault();
+                document.querySelector(this.getAttribute('href')).scrollIntoView({
+                    behavior: 'smooth'
+                });
+            });
+        });
+    
+        // Show modal on page load
+        window.addEventListener('load', function() {
+            showModal();
+        });
+
+        function showModal() {
+            const modal = document.getElementById('loginModal');
+            const pageContent = document.getElementById('pageContent');
+            
+            modal.classList.remove('hidden');
+            pageContent.classList.add('page-blur');
+        }
+
+        function closeModal() {
+            // Redirect to main page
+            window.location.href = '/Healthlink/landing/landing.html';
+        }
+
+        // Close modal when clicking outside of it
+        document.getElementById('loginModal').addEventListener('click', function(e) {
+            if (e.target === this) {
+                closeModal();
+            }zz
+        });
+
+        // Close modal with Escape key
+        document.addEventListener('keydown', function(e) {
+            if (e.key === 'Escape') {
+                closeModal();
+            }
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,619 @@
+ * {
+     margin: 0;
+     padding: 0;
+     box-sizing: border-box;
+ }
+
+ body {
+     font-family: Arial, sans-serif;
+     background: linear-gradient(135deg, #e3f2fd 0%, #f8f9fa 100%);
+     line-height: 1.6;
+ }
+
+ /* Page blur effect */
+ .page-blur {
+     filter: blur(0.2px);
+     pointer-events: none;
+     transition: filter 0.3s ease;
+ }
+
+ /* Login Modal Styles */
+ .login-modal-overlay {
+     position: fixed;
+     top: 0;
+     left: 0;
+     width: 100%;
+     height: 100%;
+     background: rgba(0, 0, 0, 0.8);
+     backdrop-filter: blur(10px);
+     display: flex;
+     justify-content: center;
+     align-items: center;
+     z-index: 1000;
+     opacity: 1;
+     transition: opacity 0.3s ease;
+ }
+
+ .login-modal-overlay.hidden {
+     display: none;
+     opacity: 0;
+ }
+
+ .login-modal {
+     background: linear-gradient(145deg, #ffffff, #f8f9fa);
+     border-radius: 20px;
+     padding: 40px;
+     width: 90%;
+     max-width: 450px;
+     box-shadow: 0 20px 60px rgba(0, 0, 0, 0.2);
+     transform: translateY(0);
+     transition: transform 0.3s ease;
+     border: 1px solid rgba(255, 255, 255, 0.2);
+     position: relative;
+ }
+
+ .login-modal-header {
+     text-align: center;
+     margin-bottom: 30px;
+ }
+
+ .login-modal-title {
+     font-size: 28px;
+     font-weight: 700;
+     color: #2c3e50;
+     margin-bottom: 10px;
+     background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+     -webkit-background-clip: text;
+     -webkit-text-fill-color: transparent;
+     background-clip: text;
+ }
+
+ .login-modal-subtitle {
+     color: #6c757d;
+     font-size: 16px;
+     margin: 0;
+ }
+
+ .login-buttons {
+     display: flex;
+     gap: 15px;
+     margin-top: 30px;
+ }
+
+ .login-btn {
+     flex: 1;
+     padding: 15px 25px;
+     border: none;
+     border-radius: 12px;
+     font-size: 16px;
+     font-weight: 600;
+     cursor: pointer;
+     transition: all 0.3s ease;
+     text-decoration: none;
+     text-align: center;
+     display: inline-block;
+ }
+
+ .login-btn-primary {
+     background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+     color: white;
+ }
+
+ .login-btn-primary:hover {
+     transform: translateY(-2px);
+     box-shadow: 0 8px 25px rgba(102, 126, 234, 0.3);
+ }
+
+ .login-btn-secondary {
+     background: #f8f9fa;
+     color: #6c757d;
+     border: 2px solid #e9ecef;
+ }
+
+ .login-btn-secondary:hover {
+     background: #e9ecef;
+     transform: translateY(-2px);
+ }
+
+ .login-close-btn {
+     position: absolute;
+     top: 20px;
+     right: 25px;
+     background: none;
+     border: none;
+     font-size: 28px;
+     color: #6c757d;
+     cursor: pointer;
+     transition: color 0.3s ease;
+ }
+
+ .login-close-btn:hover {
+     color: #495057;
+ }
+
+ .container {
+     max-width: 1200px;
+     margin: 0 auto;
+     padding: 20px;
+ }
+
+ .header {
+     text-align: center;
+     margin-bottom: 40px;
+     margin-right: 10px;
+ }
+
+ .logo {
+     font-size: 24px;
+     font-weight: bold;
+     color: #000000;
+     margin-bottom: 40px;
+     height: 60px;
+     /* adjust logo size */
+     margin-right: 10px;
+     /* space between logo and text */
+ }
+
+ .main-card {
+     background: white;
+     border-radius: 15px;
+     padding: 30px;
+     box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+     margin-bottom: 30px;
+ }
+
+ .hero-section {
+     display: flex;
+     align-items: center;
+     gap: 30px;
+     margin-bottom: 40px;
+ }
+
+ .hero-content {
+     flex: 1;
+ }
+
+ .hero-title {
+     color: #088d1c;
+     font-size: 24px;
+     font-weight: bold;
+     margin-bottom: 15px;
+ }
+
+ .hero-list {
+     list-style: none;
+     margin-bottom: 20px;
+ }
+
+ .hero-list li {
+     color: #666;
+     margin-bottom: 8px;
+     padding-left: 20px;
+     position: relative;
+ }
+
+ .hero-list li:before {
+     content: "✓";
+     color: #4caf50;
+     font-weight: bold;
+     position: absolute;
+     left: 0;
+ }
+
+ .hero-image {
+     flex: 0 0 200px;
+ }
+
+ .hero-image img {
+     width: 100%;
+     border-radius: 10px;
+ }
+
+ .form-section {
+     flex: 0 0 300px;
+     background: #f8f9fa;
+     padding: 25px;
+     border-radius: 10px;
+ }
+
+ .form-title {
+     text-align: center;
+     color: #088d1c;
+     font-weight: bold;
+     margin-bottom: 20px;
+ }
+
+ .form-group {
+     margin-bottom: 15px;
+ }
+
+ .form-group input {
+     width: 100%;
+     padding: 12px;
+     border: 1px solid #ddd;
+     border-radius: 5px;
+     font-size: 14px;
+ }
+
+ .submit-btn {
+     width: 100%;
+     background: #088d1c;
+     color: rgb(255, 255, 255);
+     padding: 12px;
+     border: none;
+     border-radius: 5px;
+     font-size: 16px;
+     font-weight: bold;
+     cursor: pointer;
+     transition: background 0.3s;
+ }
+
+ .submit-btn:hover {
+     background: #51e868;
+ }
+
+ .services-section {
+     display: grid;
+     grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+     gap: 20px;
+     margin-bottom: 40px;
+ }
+
+ .service-card {
+     position: relative;
+     height: 200px;
+     /* adjust height */
+     border-radius: 10px;
+     overflow: hidden;
+     box-shadow: 0 4px 15px rgba(0, 0, 0, 0.08);
+     text-align: center;
+     display: flex;
+     align-items: center;
+     justify-content: center;
+     background-color: #000;
+     /* fallback */
+     flex-direction: column;
+     /* THIS LINE: stack vertically */
+ }
+
+
+ .service-card::before {
+     content: "";
+     position: absolute;
+     top: 0;
+     left: 0;
+     width: 100%;
+     height: 100%;
+     background-image: url('/Healthlink/Diagnostics/Patient/pictures/eye.png');
+     /* replace with your image path */
+     background-size: cover;
+     background-position: center;
+     filter: blur(8px);
+     opacity: 0.7;
+     z-index: 1;
+ }
+
+ .service-card::after {
+     content: "";
+     position: absolute;
+     top: 0;
+     left: 0;
+     width: 100%;
+     height: 100%;
+     background-color: rgba(0, 0, 0, 0.3);
+     /* overlay for text contrast */
+     z-index: 2;
+ }
+
+ .service-card1 {
+     position: relative;
+     height: 200px;
+     /* adjust height */
+     border-radius: 10px;
+     overflow: hidden;
+     box-shadow: 0 4px 15px rgba(0, 0, 0, 0.08);
+     text-align: center;
+     display: flex;
+     align-items: center;
+     justify-content: center;
+     background-color: #000;
+     /* fallback */
+     flex-direction: column;
+     /* THIS LINE: stack vertically */
+ }
+
+
+ .service-card1::before {
+     content: "";
+     position: absolute;
+     top: 0;
+     left: 0;
+     width: 100%;
+     height: 100%;
+     background-image: url('/HEalthlink/Diagnostics/Patient/pictures/skin2.png');
+     /* replace with your image path */
+     background-size: cover;
+     background-position: center;
+     filter: blur(2px);
+     opacity: 0.7;
+     z-index: 1;
+ }
+
+ .service-card1::after {
+     content: "";
+     position: absolute;
+     top: 0;
+     left: 0;
+     width: 100%;
+     height: 100%;
+     background-color: rgba(0, 0, 0, 0.3);
+     /* overlay for text contrast */
+     z-index: 2;
+ }
+
+ .service-card2 {
+     position: relative;
+     height: 200px;
+     /* adjust height */
+     border-radius: 10px;
+     overflow: hidden;
+     box-shadow: 0 4px 15px rgba(0, 0, 0, 0.08);
+     text-align: center;
+     display: flex;
+     align-items: center;
+     justify-content: center;
+     background-color: #000;
+     /* fallback */
+     flex-direction: column;
+     /* THIS LINE: stack vertically */
+ }
+
+
+ .service-card2::before {
+     content: "";
+     position: absolute;
+     top: 0;
+     left: 0;
+     width: 100%;
+     height: 100%;
+     background-image: url('/Healthlink/Diagnostics/Patient/pictures/vaccination.png');
+     /* replace with your image path */
+     background-size: cover;
+     background-position: center;
+     filter: blur(2px);
+     opacity: 0.7;
+     z-index: 1;
+ }
+
+ .service-card2::after {
+     content: "";
+     position: absolute;
+     top: 0;
+     left: 0;
+     width: 100%;
+     height: 100%;
+     background-color: rgba(0, 0, 0, 0.3);
+     /* overlay for text contrast */
+     z-index: 2;
+ }
+
+
+
+ .service-title,
+ .service-subtitle {
+     position: relative;
+     z-index: 3;
+     color: #fff;
+ }
+
+ .service-title {
+     font-size: 18px;
+     font-weight: bold;
+     margin-bottom: 10px;
+ }
+
+ .service-subtitle {
+     font-size: 14px;
+ }
+
+
+ .examination-sections {
+     display: grid;
+     gap: 25px;
+     margin-bottom: 40px;
+ }
+
+ .exam-card {
+     background: white;
+     border-radius: 15px;
+     padding: 25px;
+     box-shadow: 0 6px 20px rgba(0, 0, 0, 0.1);
+     display: flex;
+     align-items: center;
+     gap: 20px;
+ }
+
+ .exam-content {
+     flex: 1;
+ }
+
+ .exam-number {
+     background: #088d1c;
+     color: white;
+     width: 30px;
+     height: 30px;
+     border-radius: 50%;
+     display: inline-flex;
+     align-items: center;
+     justify-content: center;
+     font-weight: bold;
+     margin-right: 10px;
+ }
+
+ .exam-title {
+     color: #088d1c;
+     font-size: 18px;
+     font-weight: bold;
+     margin-bottom: 10px;
+ }
+
+ .exam-description {
+     color: #666;
+     line-height: 1.6;
+     margin-bottom: 15px;
+ }
+
+ .exam-details {
+     color: #555;
+     font-size: 14px;
+ }
+
+ .exam-image {
+     flex: 0 0 200px;
+ }
+
+ .exam-image img {
+     width: 100%;
+     border-radius: 10px;
+ }
+
+ .pathology-section {
+     background: white;
+     border-radius: 15px;
+     padding: 30px;
+     box-shadow: 0 6px 20px rgba(0, 0, 0, 0.1);
+     margin-bottom: 30px;
+ }
+
+ .pathology-title {
+     color: #088d1c;
+     font-size: 20px;
+     font-weight: bold;
+     margin-bottom: 15px;
+ }
+
+ .pathology-description {
+     color: #666;
+     margin-bottom: 20px;
+ }
+
+ .test-list {
+     display: grid;
+     grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+     gap: 15px;
+     margin-bottom: 20px;
+ }
+
+ .test-item {
+     background: #f8f9fa;
+     padding: 15px;
+     border-radius: 8px;
+     border-left: 4px solid #51e868;
+ }
+
+ .test-name {
+     font-weight: bold;
+     color: #333;
+     margin-bottom: 5px;
+ }
+
+ .test-description {
+     color: #666;
+     font-size: 14px;
+ }
+
+ .booking-section {
+     text-align: center;
+     margin-bottom: 30px;
+ }
+
+ .booking-title {
+     color: #ff0909;
+     font-size: 24px;
+     font-weight: bold;
+     margin-bottom: 20px;
+ }
+
+ .package-grid {
+     display: grid;
+     grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+     gap: 20px;
+     margin-bottom: 30px;
+ }
+
+ .package-card {
+     background: linear-gradient(135deg, #b0edb9 0%, #55c566e7 100%);
+     color: rgb(0, 0, 0);
+     padding: 20px;
+     border-radius: 10px;
+     text-align: center;
+     font-weight: bold;
+
+ }
+
+ .package-title {
+     font-weight: bold;
+     margin-bottom: 15px;
+     margin-top: 20px;
+ }
+
+ .package-tests {
+     list-style: none;
+     font-size: 14px;
+ }
+
+ .package-tests li {
+     margin-bottom: 5px;
+ }
+
+ .footer-cta {
+     background: #2c5aa0;
+     color: white;
+     padding: 20px;
+     border-radius: 10px;
+     text-align: center;
+
+ }
+
+ .cta-title {
+     font-size: 18px;
+     font-weight: bold;
+     margin-bottom: 10px;
+ }
+
+ .cta-subtitle {
+     font-size: 14px;
+     opacity: 0.9;
+ }
+
+ .cta-button {
+     background: #088d1c;
+     color: rgb(255, 255, 255);
+     padding: 10px 20px;
+     border: none;
+     border-radius: 5px;
+     font-weight: bold;
+     cursor: pointer;
+     margin-top: 10px;
+ }
+
+ @media (max-width: 768px) {
+     .hero-section {
+         flex-direction: column;
+     }
+
+     .exam-card {
+         flex-direction: column;
+         text-align: center;
+     }
+
+     .exam-image {
+         flex: none;
+     }
+ }
+
+ a {
+     text-decoration: none;
+     color: inherit;
+     /* optional — keeps the color same as parent */
+ }

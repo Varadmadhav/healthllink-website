@@ -1,0 +1,353 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Healthlink Diagnostics - Corporate Health Check Ups</title>
+    <link rel="stylesheet" href="corp.css">
+</head>
+<body>
+     <!-- Login Modal -->
+    <div class="login-modal-overlay" id="loginModal">
+        <div class="login-modal">
+            <button class="login-close-btn" onclick="closeModal()">&times;</button>
+            <div class="login-modal-header">
+                <h2 class="login-modal-title">Welcome to Healthlink</h2>
+                <p class="login-modal-subtitle">Please login to continue with partner registration</p>
+            </div>
+            
+            <div class="login-buttons">
+                <a href="/Healthlink/Diagnostics/Patient/frontend/signup.html" class="login-btn login-btn-primary">
+                    Login
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Header Section -->
+    <section class="header">
+        <div class="container">
+            <div class="header-content">
+                <div class="header-text">
+                    <h1>Corporate Health Check Ups For Your Employees</h1>
+                    <p>Healthlink Diagnostics Technologies Limited provides comprehensive healthcare benefits to ensure that your employees have access to the medical care they need.</p>
+                    
+                    <div class="services-list">
+                        <div class="service-item">Blood Test For Employees</div>
+                        <div class="service-item">Pre-Employment Health Check Up</div>
+                        <div class="service-item">Annual Health Check Ups</div>
+                        <div class="service-item">Pre Policy Medical Check Up</div>
+                        <div class="service-item">Corporate Health Camps</div>
+                    </div>
+                </div>
+                
+                <div class="header-image">
+                    <img src="/Healthlink/Diagnostics/Patient/pictures/emp grp.png" alt="Corporate Health Camps" width="100px" height="300px" style="border-radius: 15px;">            
+                </div>
+            </div>
+            
+            <!-- Booking Form -->
+            <div class="booking-form">
+                <h2>Book a Health Check Up</h2>
+                <form id="bookingForm">
+                    <div class="form-grid">
+                        <div class="form-group">
+                            <label>Name</label>
+                            <input type="text" name="name" placeholder="Your name" required>
+                        </div>
+                        <div class="form-group">
+                            <label>Surname</label>
+                            <input type="text" name="surname" placeholder="Your Surname" required>
+                        </div>
+                        <div class="form-group">
+                            <label>Phone number</label>
+                            <input type="tel" name="phone" placeholder="Your phone number" required>
+                        </div>
+                        <div class="form-group">
+                            <label>E-mail</label>
+                            <input type="email" name="email" placeholder="Your E-mail id" required>
+                        </div>
+                        <div class="form-group">
+                            <label>Name of organisation</label>
+                            <input type="text" name="organization" placeholder="Name of organisation" required>
+                        </div>
+                        <div class="form-group">
+                            <label>Department name</label>
+                            <input type="text" name="department" placeholder="Department name">
+                        </div>
+                        <div class="form-group">
+                            <label>Pick a Service</label>
+                            <select name="service" required>
+                                <option value="">Pick a Service</option>
+                                <option value="annual">Annual Health Check Up</option>
+                                <option value="preemployment">Pre-Employment Health Check</option>
+                                <option value="camps">Corporate Health Camps</option>
+                                <option value="drug">Drug Testing</option>
+                                <option value="prepolicy">Pre-Policy Medical Check</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label>Mention other services</label>
+                            <input type="text" name="otherServices" placeholder="Mention other services">
+                        </div>
+                    </div>
+                    <button type="submit" class="submit-btn">Submit</button>
+                    <div class="success-message" id="successMessage">
+                        Thank you! Your booking request has been submitted. We will contact you soon.
+                    </div>
+                </form>
+            </div>
+        </div>
+    </section>
+
+    <!-- Info Section -->
+    <section class="info-section">
+        <div class="container">
+            <div class="info-content">
+                <p>Regular health check ups should be considered an important employee benefit as it ensures employee well being and increases workplace productivity.</p>
+                <p>Healthlink Diagnostics corporate health initiatives include corporate healthcare plans, regular corporate health camps, and preventive care packages designed to empower your team members to prioritise their well-being.</p>
+                
+                <div class="info-images">
+                 <img src="/Healthlink/Diagnostics/Patient/pictures/blood test.png" alt="Blood Test">
+                <img src="/Healthlink/Diagnostics/Patient/pictures/consulting.png" alt="Consulting">
+                <img src="/Healthlink/Diagnostics/Patient/pictures/dr grp.png" alt="Drs Group">
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Services Section -->
+    <section class="services-section">
+        <div class="container">
+            <h2 class="section-title">Take a look at our Corporate Health Check Up Offerings</h2>
+            
+            <div class="service-card">
+                <div class="service-content">
+                    <h3>Annual Health Checks</h3>
+                    <p>Our Annual Health Check Up Programs are tailored to provide a comprehensive health screening for corporates. From vital organ function assessments to blood profiles and specialised tests, our programs cover a spectrum of health indicators.</p>
+                </div>
+                <div class="service-image">
+                <img src="/Healthlink/Diagnostics/Patient/pictures/health check.png" alt="Annual Health Checks" width="40px" height="60px" style="border-radius: 15px;">
+                </div>
+            </div>
+
+            <div class="service-card">
+                <div class="service-content">
+                    <h3>Drug Testing</h3>
+                    <p>Drug testing is a very important pre-employment health check up. Our Drug Testing for Employees program is designed to support employers in promoting a safe and drug-free workplace.</p>
+                </div>
+                <div class="service-image">
+                <img src="/Healthlink/Diagnostics/Patient/pictures/drug test.png" alt="Drug Testing" width="40px" height="60px" style="border-radius: 15px;">
+            </div>
+
+                </div>
+            </div>
+
+            <div class="service-card">
+                <div class="service-content">
+                    <h3>Pre-Employment Health Checks</h3>
+                    <p>Our Pre-Employment Health Checks are designed to help corporates with their hiring process. These pre-employment screenings provide insights into the health of prospective employees helping organisations in maintaining a healthy workforce.</p>
+                </div>
+                <div class="service-image">
+                <img src="/Healthlink/Diagnostics/Patient/pictures/pre emp.png" alt="Pre-Employment Health Checks" width="40px" height="60px" style="border-radius: 15px;">
+            
+                </div>
+            </div>
+
+            <div class="service-card">
+                <div class="service-content">
+                    <h3>Corporate Health Camps</h3>
+                    <p>Corporate Health Camps will be set up in your office premises throughout the day. It's a great way to check for employees' health without disrupting their day-to-day office work. They can visit the camp as per their work schedule.</p>
+                </div>
+                <div class="service-image">
+                <img src="/Healthlink/Diagnostics/Patient/pictures/health camp.png" alt="Corporate Health Camps" width="40px" height="60px" style="border-radius: 15px;">            
+                </div>
+            </div>
+
+            <div class="service-card">
+                <div class="service-content">
+                    <h3>Pre-Policy Medical Checks</h3>
+                    <p>Our Pre-Policy Health Checks for Insurance providers offer a thorough and efficient solution, enabling insurance providers to make informed decisions while ensuring individuals are adequately covered.</p>
+                </div>
+                <div class="service-image">
+                <img src="/Healthlink/Diagnostics/Patient/pictures/pre policy.png" alt="Pre-Policy Medical Checks" width="40px" height="60px" style="border-radius: 15px;">
+                </div>
+            </div>
+
+            <div class="service-card">
+                <div class="service-content">
+                    <h3>Marketing Tie-Ups for Pharmaceutical Industry</h3>
+                    <p>We specialise in screening camps with a high fulfilment rate for brand promotions and fostering meaningful engagement between Healthcare Professionals and Pharma brands. Also, we provide adherence programs that support patients throughout clinical diagnosis, doctor consultations, and therapy management.</p>
+                </div>
+                <div class="service-image">
+                <img src="/Healthlink/Diagnostics/Patient/pictures/marketing.png" alt="Marketing Tie-Ups for Pharmaceutical Industry" width="40px" height="60px" style="border-radius: 15px;">
+            
+                </div>
+            </div>
+        </div>
+
+    <div class="container">
+        <h1 class="main-title">Benefits of Healthlink Diagnostics Corporate Health Check Ups</h1>
+        
+        <div class="benefits-grid">
+            <div class="benefit-card">
+                <div class="icon-circle">
+                    <svg class="icon" viewBox="0 0 24 24">
+                        <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+                        <circle cx="12" cy="7" r="4"></circle>
+                    </svg>
+                </div>
+                <div class="benefit-title">Dedicated Key Account Manager</div>
+            </div>
+
+            <div class="benefit-card">
+                <div class="icon-circle">
+                    <svg class="icon" viewBox="0 0 24 24">
+                        <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                        <polyline points="14,2 14,8 20,8"></polyline>
+                        <line x1="16" y1="13" x2="8" y2="13"></line>
+                        <line x1="16" y1="17" x2="8" y2="17"></line>
+                        <polyline points="10,9 9,9 8,9"></polyline>
+                    </svg>
+                </div>
+                <div class="benefit-title">Doctor curated tests and profiles for employee wellness</div>
+            </div>
+
+            <div class="benefit-card">
+                <div class="icon-circle">
+                    <svg class="icon" viewBox="0 0 24 24">
+                        <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path>
+                        <polyline points="9,22 9,12 15,12 15,22"></polyline>
+                    </svg>
+                </div>
+                <div class="benefit-title">We conduct corporate health camps inside your office premises with minimal investment</div>
+            </div>
+
+            <div class="benefit-card">
+                <div class="icon-circle">
+                    <svg class="icon" viewBox="0 0 24 24">
+                        <circle cx="12" cy="12" r="3"></circle>
+                        <path d="M12 1v6m0 6v6m11-7h-6m-6 0H1"></path>
+                    </svg>
+                </div>
+                <div class="benefit-title">Pick and choose employee health check up plan that best suits your industry</div>
+            </div>
+            </div>
+            <div class="benefit-cards-row">   
+            <div class="benefit-card1">
+                <div class="icon-circle">
+                    <svg class="icon" viewBox="0 0 24 24">
+                        <path d="M9 12l2 2 4-4"></path>
+                        <path d="M21 12c-1 0-3-1-3-3s2-3 3-3 3 1 3 3-2 3-3 3"></path>
+                        <path d="M3 12c1 0 3-1 3-3s-2-3-3-3-3 1-3 3 2 3 3 3"></path>
+                        <path d="M12 3c0 1-1 3-3 3s-3-2-3-3 1-3 3-3 3 2 3 3"></path>
+                        <path d="M12 21c0-1 1-3 3-3s3 2 3 3-1 3-3 3-3-2-3-3"></path>
+                    </svg>
+                </div>
+                <div class="benefit-title">Wide range of employee wellness packages that can also be customized</div>
+            </div>
+
+            <div class="benefit-card2">
+                <div class="icon-circle">
+                    <svg class="icon" viewBox="0 0 24 24">
+                        <circle cx="12" cy="12" r="10"></circle>
+                        <polyline points="12,6 12,12 16,14"></polyline>
+                    </svg>
+                </div>
+                <div class="benefit-title">Get reports in 6 hours post samples reach the lab</div>
+            </div>
+
+            <div class="benefit-card3">
+                <div class="icon-circle">
+                    <svg class="icon" viewBox="0 0 24 24">
+                        <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"></path>
+                    </svg>
+                </div>
+                <div class="benefit-title">All the samples will be tested in ISO and NABL partnered accredited laboratories</div>
+            </div>
+        </div>
+
+        <section class="accreditations">
+    <h2 class="accreditations-title">Our Accreditations</h2>
+    <div class="accreditations-grid">
+        
+        <!-- Left Side: NABL Logo with Caption -->
+        <div class="accreditation-item" style="text-align: center;">
+            <img src="/Healthlink/Diagnostics/Patient/pictures/nabl.png" alt="NABL Accredited" class="accreditation-logo">
+            <div>Partnered with NABL</div>
+        </div>
+
+        <!-- Right Side: ISO Badge -->
+        <div class="accreditation-item" style="text-align: center;">
+             <img src="/Healthlink/Diagnostics/Patient/pictures/iso.png" alt="ISO Certified" class="accreditation-logo">
+            <div>ISO Certified</div>
+        </div>
+
+    </div>
+</section>
+
+       <footer class="footer">
+        <div class="footer-logo">
+            <div class="logo-icon">
+                <img src="/Healthlink/Diagnostics/Patient/pictures/logo.png"; width="100px";  alt="Healthlink Diagnostics Logo" class="logo-image">
+            </div>
+            
+        </div>
+        <div class="tagline">Your Trusted Healthcare Partner For Life</div>
+        <div class="contact-info">Call: +91 8291271698</div>
+        
+        <div class="social-links">
+            <a href="#" class="social-link">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M24 4.557c-.883.392-1.832.656-2.828.775 1.017-.609 1.798-1.574 2.165-2.724-.951.564-2.005.974-3.127 1.195-.897-.957-2.178-1.555-3.594-1.555-3.179 0-5.515 2.966-4.797 6.045-4.091-.205-7.719-2.165-10.148-5.144-1.29 2.213-.669 5.108 1.523 6.574-.806-.026-1.566-.247-2.229-.616-.054 2.281 1.581 4.415 3.949 4.89-.693.188-1.452.232-2.224.084.626 1.956 2.444 3.379 4.6 3.419-2.07 1.623-4.678 2.348-7.29 2.04 2.179 1.397 4.768 2.212 7.548 2.212 9.142 0 14.307-7.721 13.995-14.646.962-.695 1.797-1.562 2.457-2.549z"/>
+                </svg>
+            </a>
+            <a href="#" class="social-link">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M22.46 6c-.77.35-1.6.58-2.46.69.88-.53 1.56-1.37 1.88-2.38-.83.5-1.75.85-2.72 1.05C18.37 4.5 17.26 4 16 4c-2.35 0-4.27 1.92-4.27 4.29 0 .34.04.67.11.98C8.28 9.09 5.11 7.38 3 4.79c-.37.63-.58 1.37-.58 2.15 0 1.49.75 2.81 1.91 3.56-.71 0-1.37-.2-1.95-.5v.03c0 2.08 1.48 3.82 3.44 4.21a4.22 4.22 0 0 1-1.93.07 4.28 4.28 0 0 0 4 2.98 8.521 8.521 0 0 1-5.33 1.84c-.34 0-.68-.02-1.02-.06C3.44 20.29 5.7 21 8.12 21 16 21 20.33 14.46 20.33 8.79c0-.19 0-.37-.01-.56.84-.6 1.56-1.36 2.14-2.23z"/>
+                </svg>
+            </a>
+            <a href="#" class="social-link">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433c-1.144 0-2.063-.926-2.063-2.065 0-1.138.92-2.063 2.063-2.063 1.14 0 2.064.925 2.064 2.063 0 1.139-.925 2.065-2.064 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003z"/>
+                </svg>
+            </a>
+    </div>
+</footer>
+<script>
+      // Show modal on page load
+        window.addEventListener('load', function() {
+            showModal();
+        });
+
+        function showModal() {
+            const modal = document.getElementById('loginModal');
+            const pageContent = document.getElementById('pageContent');
+            
+            modal.classList.remove('hidden');
+            pageContent.classList.add('page-blur');
+        }
+
+        function closeModal() {
+            // Redirect to main page
+            window.location.href = '/Healthlink/landing/landing.html';
+        }
+
+        // Close modal when clicking outside of it
+        document.getElementById('loginModal').addEventListener('click', function(e) {
+            if (e.target === this) {
+                closeModal();
+            }
+        });
+
+        // Close modal with Escape key
+        document.addEventListener('keydown', function(e) {
+            if (e.key === 'Escape') {
+                closeModal();
+            }
+        });
+</script>
+</body>
+</html>
+
+   

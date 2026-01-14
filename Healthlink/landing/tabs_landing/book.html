@@ -1,0 +1,1937 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Book a Test - Medical Services</title>
+    <link rel="stylesheet" href="book.css">
+</head>
+
+<body>
+       <!-- Login Modal -->
+    <div class="login-modal-overlay" id="loginModal">
+        <div class="login-modal">
+            <button class="login-close-btn" onclick="closeModal()">&times;</button>
+            <div class="login-modal-header">
+                <h2 class="login-modal-title">Welcome to Healthlink</h2>
+                <p class="login-modal-subtitle">Please login to continue with partner registration</p>
+            </div>
+            
+            <div class="login-buttons">
+                <a href="/Healthlink/Diagnostics/Patient/frontend/signup.html" class="login-btn login-btn-primary">
+                    Login
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <div class="container">
+        <div class="header">
+            <h1>Book Your Appointment</h1>
+        </div>
+    </div>
+    </div>
+
+    <div class="content">
+        <div class="services-section">
+            <h2>Available Tests</h2>
+
+            <div class="service-category">
+                <h3>Cardiology</h3>
+                <ul class="service-list">
+                    <li>• ECG - Electrocardiogram</li>
+                    <li>• 2D Echo - Echocardiography</li>
+                    <p>Only at 9am by Appointment(Mon to Sat)</p>
+                    <li>• TMT - Treadmill Test</li>
+                     <p>From 9am to 12pm by Appointment(Mon to Sat)</p>
+                </ul>
+            </div>
+
+            <div class="service-category">
+                <h3>Radiology</h3>
+                <ul class="service-list">
+                    <li>• X-ray Imaging</li>
+                    <li>• Sonography/Ultrasound</li>
+                    <p>Only at 5pm by Appointment(Mon to Sat)</p>
+                    <li>• Color Doppler Study</li>
+                    <p>Only at 5pm by Appointment(Mon to Sat)</p>
+                </ul>
+
+                <h6>NOTE: Apppointment should be booked 24 hours prior.</h6>
+                
+            </div>
+
+              <div class="service-category">
+                <h3>Pathology</h3>
+                <ul class="service-list">
+                    <li>All Blood Tests</li>
+                    <p>Mon to Sat : 8am to 9pm</p>
+                    <p>Sun : 9am to 12pm</p>
+                </ul>
+
+                <h6>NOTE: Free Home Visit For All Blood Collection.</h6>
+                
+            </div>
+
+
+            <div class="service-category">
+                <h3>Portable Services</h3>
+                <ul class="service-list">
+                    <li>• X-ray</li>
+                    <li>• ECG</li>
+                </ul>
+            </div>
+        </div>
+
+        <div class="booking-form">
+            <h2>Book Your Appointment</h2>
+
+            <form id="bookingForm" method="post" action="">
+                <div class="form-group">
+                    <label for="patientName">Name *</label>
+                    <input type="text" id="patientName" name="patientName" required>
+                </div>
+
+                <div class="form-group">
+                    <label for="age">Age *</label>
+                    <input type="number" id="age" name="age" min="1" max="120" required>
+                </div>
+
+                <div class="form-group">
+                    <label for="gender">Gender *</label>
+                    <select id="gender" name="gender" required>
+                        <option value="">Select Gender</option>
+                        <option value="male">Male</option>
+                        <option value="female">Female</option>
+                        <option value="other">Other</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label for="address">Address *</label>
+                    <textarea id="address" name="address" rows="3" required
+                        placeholder="Enter your complete address"></textarea>
+                </div>
+
+                <div class="form-group">
+                    <label for="pincode">Pincode *</label>
+                    <input type="text" id="pincode" name="pincode" pattern="[0-9]{6}" maxlength="6" required
+                        placeholder="Enter 6-digit pincode">
+                </div>
+
+                <div class="form-group">
+                    <label for="mobile">Mobile Number *</label>
+                    <input type="tel" id="mobile" name="mobile" pattern="[0-9]{10}" maxlength="10" required
+                        placeholder="Enter 10-digit mobile number">
+                </div>
+
+                <div class="form-group">
+                    <label for="email">Email Address (Optional)</label>
+                    <input type="email" id="email" name="email" placeholder="Enter your email address">
+                </div>
+
+                <div class="form-group">
+                    <label for="visitType">Visit Type *</label>
+                    <div class="radio-group">
+                        <label class="radio-item">
+                            <input type="radio" name="visitType" value="center" required>
+                            <span class="radio-label">Center Visit</span>
+                        </label>
+                        <label class="radio-item">
+                            <input type="radio" name="visitType" value="home" required>
+                            <span class="radio-label">Home Visit</span>
+                        </label>
+                    </div>
+                </div>
+
+                <div class="option-section">
+                    <h3>Choose One Option *</h3>
+                    <p style="text-align: center; color: #ffffff; margin-bottom: 15px;">Select either a specific
+                        department OR upload your prescription</p>
+
+                    <div class="option-group">
+                        <div class="option-card" onclick="selectOption('department')">
+                            <input type="radio" name="bookingOption" value="department" id="optionDepartment">
+                            <h4>Select Department</h4>
+                            <p>Choose from our available departments</p>
+                        </div>
+
+                        <div class="option-card" onclick="selectOption('prescription')">
+                            <input type="radio" name="bookingOption" value="prescription" id="optionPrescription">
+                            <h4>Upload Prescription</h4>
+                            <p>Upload your doctor's prescription</p>
+                        </div>
+                    </div>
+
+                    <head>
+                        <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css"
+                            rel="stylesheet" />
+                        <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+                        <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+                    </head>
+
+                    
+                        <div class="conditional-field" id="departmentField">
+                            <label for="department">
+                                <span style="font-size: 0.9em; color: #ffffff;">
+                                    Select Test(s) * (Hold Ctrl/Cmd to select multiple)
+                                </span>
+                            </label>
+                            <select id="department" name="department" multiple size="12"
+                                style="height: auto; min-height: 250px;">
+                                <option value="ecg" data-price="400">ECG</option>
+                                <option value="echocardiography" data-price="1500">Echocardiography</option>
+                                <option value="eeg" data-price="2500">EEG</option>
+                                <option value="eeg_sleep_deprived_veeg" data-price="2200">EEG Sleep Deprived VEEG
+                                </option>
+                                <option value="emg" data-price="3500">EMG</option>
+                                <option value="emg_ncv" data-price="3500">EMG + NCV</option>
+                                <option value="emg_ncv_rns" data-price="3800">EMG + NCV + RNS</option>
+                                <option value="emg_ncv_lower_limbs" data-price="3500">EMG / NCV (Lower Limbs)</option>
+                                <option value="emg_bera" data-price="3500">EMG BERA</option>
+                                <option value="emg_ncv_both_limbs" data-price="4500">EMG NCV (Both Upper & Lower Limbs)
+                                </option>
+                                <option value="emg_ncv_upper_limb_1" data-price="3500">EMG NCV (Upper Limb) 1</option>
+                                <option value="emg_ncv_upper_limbs" data-price="3500">EMG NCV (Upper Limbs)</option>
+                                <option value="emg_vep" data-price="3500">EMG VEP (Visual Evoked Potential)</option>
+                                <option value="genetic_blood_karyotyping" data-price="4350">Genetic Blood Karyotyping
+                                </option>
+                                <option value="hbv_dna_quantification" data-price="6720">HBV-DNA Quantification (Viral
+                                    load) - [Serum or plasma]</option>
+                                <option value="jak2_mutation_detection" data-price="6200">JAK2 (V617F) Mutation
+                                    Detection</option>
+                                <option value="leukodystrphy_test" data-price="20000">Leukodystrphy Test</option>
+                                <option value="pap_procedure_consultation" data-price="470">Pap with Procedure &
+                                    Consultation</option>
+
+                                <!-- Blood Chemistry Tests -->
+                                <option value="acid_phosphatase_prostatic" data-price="600">Acid Phosphatase, prostatic
+                                    fraction - [Serum]</option>
+                                <option value="acid_phosphatase_total" data-price="600">Acid Phosphatase, total -
+                                    [Serum]</option>
+                                <option value="acid_phosphatase_total_prostatic" data-price="600">Acid phosphatase,
+                                    total and prostatic fraction - [Serum]</option>
+                                <option value="albumin_csf" data-price="380">Albumin - [CSF]</option>
+                                <option value="albumin_serum" data-price="170">Albumin - [Serum]</option>
+                                <option value="albumin_urine_24h" data-price="380">Albumin - [Urine, 24 hours]</option>
+                                <option value="albumin_urine_spot" data-price="380">Albumin - [Urine, spot]</option>
+                                <option value="albumin_urine_qualitative" data-price="50">Albumin, urine (Qualitative) -
+                                    [Urine, spot]</option>
+                                <option value="albumin_microalbumin_creatinine_ratio" data-price="650">
+                                    Albumin-Microalbumin/Creatinine ratio (Urine)</option>
+                                <option value="alkaline_phosphatase_serum" data-price="170">Alkaline Phosphatase -
+                                    [Serum]</option>
+                                <option value="alkaline_phosphatase_bone_fraction" data-price="1700">Alkaline
+                                    phosphatase with bone fraction - [Serum]</option>
+                                <option value="ammonia_plasma" data-price="1020">Ammonia - [Plasma]</option>
+                                <option value="amylase_serum" data-price="720">Amylase - [Serum]</option>
+                                <option value="apolipoproteins_a1_b" data-price="800">Apolipoproteins A1/B - [Serum]
+                                </option>
+                                <option value="ascitic_fluid_routine" data-price="700">Ascitic fluid, Routine
+                                    examination (Basic) - [Ascitic fluid]</option>
+                                <option value="aso_quantitative" data-price="550">ASO (Quantitative) - [Serum]</option>
+                                <option value="baxa_cotinine" data-price="800">BAXA Cotinine - [Urine, spot]</option>
+                                <option value="bence_jones_proteins" data-price="550">Bence Jones Proteins (Qualitative)
+                                    - [Urine, spot]</option>
+                                <option value="bicarbonate_serum" data-price="310">Bicarbonate - [Serum]</option>
+                                <option value="bile_acid" data-price="2035">Bile Acid</option>
+                                <option value="bilirubin_total_direct_indirect" data-price="200">Bilirubin (Total,
+                                    Direct, Indirect), serum - [Serum]</option>
+                                <option value="blood_sugar_f_pg" data-price="160">Blood Sugar ( F & PG )</option>
+                                <option value="blood_sugar_f_pp" data-price="120">Blood Sugar ( F & PP)</option>
+                                <option value="blood_sugar_pg" data-price="100">Blood Sugar (PG)</option>
+                                <option value="blood_sugar_fasting" data-price="60">Blood Sugar Fasting</option>
+                                <option value="blood_sugar_post_prandial" data-price="60">Blood Sugar Post Prandial
+                                </option>
+                                <option value="blood_sugar_random" data-price="60">Blood Sugar Random</option>
+                                <option value="body_fluid_routine" data-price="700">Body fluid, Routine examination,
+                                    (Basic) - [Body fluid]</option>
+                                <option value="bun_blood_urea_nitrogen" data-price="170">BUN (Blood Urea Nitrogen)
+                                </option>
+                                <option value="c3_complement_3" data-price="720">C3 - Complement 3, serum - [Serum]
+                                </option>
+                                <option value="c4_complement_4" data-price="720">C4 - Complement 4, serum - [Serum]
+                                </option>
+                                <option value="calcium_serum" data-price="170">Calcium - [Serum]</option>
+                                <option value="calcium_urine_24h" data-price="250">Calcium - [Urine, 24 hours]</option>
+                                <option value="chlorides_24hrs_urine" data-price="180">Chlorides - [24hrs urine]
+                                </option>
+                                <option value="chlorides_serum" data-price="180">Chlorides - [Serum]</option>
+                                <option value="chlorides_spot_urine" data-price="180">Chlorides - [Spot urine]</option>
+                                <option value="cholesterol_total" data-price="200">Cholesterol (Total) - [Serum]
+                                </option>
+                                <option value="cholesterol_hdl_direct" data-price="200">Cholesterol-HDL , direct -
+                                    [Serum]</option>
+                                <option value="cholesterol_ldl_direct" data-price="350">Cholesterol-LDL, Direct -
+                                    [Serum]</option>
+                                <option value="ck_mb" data-price="700">CK-MB (MB fraction of Creatinine Kinase) -
+                                    [Serum]</option>
+                                <option value="copper_serum" data-price="2010">Copper - [Serum]</option>
+                                <option value="cpk_total" data-price="460">CPK - Creatinine Phospha Kinase (Total) -
+                                    [Serum]</option>
+                                <option value="creatinine_serum" data-price="170">Creatinine - [Serum]</option>
+                                <option value="creatinine_spot_urine" data-price="200">Creatinine - [Spot urine]
+                                </option>
+                                <option value="creatinine_24hrs_urine" data-price="200">Creatinine - [ urine, 24 hrs]
+                                </option>
+                                <option value="creatinine_clearance_test" data-price="420">Creatinine Clearance Test -
+                                    [Serum, urine]</option>
+                                <option value="crp_c_reactive_protein" data-price="500">CRP-C Reactive Protein - [Serum]
+                                </option>
+                                <option value="csf_routine" data-price="700">CSF, Routine examination, (Basic) - [CSF]
+                                </option>
+                                <option value="d_dimer_quantification" data-price="1600">D-Dimer Quantification -
+                                    [Plasma]</option>
+                                <option value="drug_of_abuse_6_drugs" data-price="3200">Drug Of Abuse 6 Drugs (
+                                    Qualitative)</option>
+                                <option value="electrolytes_serum" data-price="500">Electrolytes - [Serum]</option>
+                                <option value="electrolytes_urine_24h" data-price="600">Electrolytes - [Urine, 24 hours]
+                                </option>
+                                <option value="electrolytes_urine_spot" data-price="600">Electrolytes - [Urine, spot]
+                                </option>
+                                <option value="estimated_gfr" data-price="350">Estimated GFR (eGFR)</option>
+                                <option value="fecal_calprotectin" data-price="2700">Fecal Calprotectin</option>
+                                <option value="folic_acid_serum" data-price="1350">Folic acid, Serum - [Serum]</option>
+                                <option value="gamma_gt_ggtp" data-price="345">Gamma GT (GGTP) - [Serum]</option>
+                                <option value="glucose_csf" data-price="50">Glucose (CSF)</option>
+                                <option value="glucose_body_fluid" data-price="50">Glucose - [Body fluid]</option>
+                                <option value="glucose_plasma_urine" data-price="50">Glucose - [Plasma, Urine]</option>
+                                <option value="glycosylated_haemoglobin_hba1c" data-price="520">Glycosylated Haemoglobin
+                                    (HbA1c) - [Blood]</option>
+                                <option value="gtc_5_samples" data-price="300">GTC-Glucose Tolerance Curve (5 samples) -
+                                    [Plasma, Urine]</option>
+                                <option value="gtc_extended_8_samples" data-price="400">GTC-Glucose Tolerance Curve,
+                                    Extended (8 samples) - [Plasma, Urine]</option>
+                                <option value="hbsag_screening" data-price="1020">HBsAg, Screening - [Serum]</option>
+                                <option value="hdl_cholesterol_direct" data-price="200">HDL Cholesterol , direct -
+                                    [Serum]</option>
+                                <option value="high_sensitivity_crp" data-price="710">High Sensitivity CRP - [Serum]
+                                </option>
+                                <option value="iga_csf" data-price="2020">IgA - [CSF]</option>
+                                <option value="iga_serum" data-price="2020">IgA - [Serum]</option>
+                                <option value="igg_csf" data-price="920">IgG - [CSF]</option>
+                                <option value="igg_serum" data-price="720">IgG - [Serum]</option>
+                                <option value="igm_csf" data-price="720">IgM - [CSF]</option>
+                                <option value="igm_serum" data-price="720">IgM - [serum]</option>
+                                <option value="ionised_calcium" data-price="450">Ionised calcium - [Serum]</option>
+                                <option value="iron_studies" data-price="630">Iron Studies</option>
+                                <option value="lap_leucocyte_alkaline_phosphatase" data-price="1500">LAP (Leucocyte
+                                    Alkaline Phosphatase ) score - [Blood]</option>
+                                <option value="ldh_lactate_dehydrogenase" data-price="325">LDH-Lactate Dehydrogenase -
+                                    [Serum]</option>
+                                <option value="ldl_cholesterol_direct" data-price="400">LDL Cholesterol -Direct -
+                                    [Serum]</option>
+                                <option value="lic_deformity_questionary" data-price="110">Lic Deformity Questionary
+                                </option>
+                                <option value="lipase_level" data-price="780">Lipase level - [Serum]</option>
+                                <option value="lipid_profile_mini" data-price="600">Lipid Profile ( Mini )</option>
+                                <option value="lipids_total" data-price="600">Lipids, total - [Serum]</option>
+                                <option value="lipoprotein_a" data-price="1250">Lipoprotein(a) - [Serum]</option>
+                                <option value="lithium_level" data-price="645">Lithium level - [Serum]</option>
+                                <option value="magnesium_serum" data-price="580">Magnesium - [Serum]</option>
+                                <option value="microalbumin_urine_spot" data-price="650">Microalbumin - [Urine, spot]
+                                </option>
+                                <option value="microalbumin_urine_24h" data-price="650">Microalbumin-[Urine, 24 hours]
+                                </option>
+                                <option value="pericardial_fluid_routine" data-price="860">Pericardial fluid, Routine
+                                    examination (Basic) - [Pericardial fluid]</option>
+                                <option value="peritoneal_fluid_routine" data-price="860">Peritoneal fluid, Routine
+                                    examination (Basic) - [Peritoneal fluid]</option>
+                                <option value="phosphorus_urine_24hrs" data-price="230">Phosphorus - [urine, 24 hrs]
+                                </option>
+                                <option value="phosphorus_inorganic_serum" data-price="170">Phosphorus, inorganic -
+                                    [Serum]</option>
+                                <option value="phosphorus_inorganic_urine_spot" data-price="230">Phosphorus, inorganic -
+                                    [Urine, spot]</option>
+                                <option value="pleural_fluid_routine" data-price="910">Pleural fluid, Routine
+                                    examination (Basic) - [Pleural fluid]</option>
+                                <option value="potassium_serum" data-price="180">Potassium - [Serum]</option>
+                                <option value="potassium_urine_24h" data-price="270">Potassium - [Urine, 24 hours]
+                                </option>
+                                <option value="potassium_urine_spot" data-price="270">Potassium - [Urine, spot]</option>
+                                <option value="protein_electrophoresis" data-price="1000">Protein Electrophoresis -
+                                    [Serum]</option>
+                                <option value="proteins_ascitic_fluid" data-price="380">Proteins - [Ascitic fluid]
+                                </option>
+                                <option value="proteins_csf" data-price="380">Proteins - [CSF]</option>
+                                <option value="proteins_serum" data-price="340">Proteins - [Serum]</option>
+                                <option value="proteins_urine_24h" data-price="380">Proteins - [Urine, 24 hours]
+                                </option>
+                                <option value="ra_rheumatoid_factor" data-price="660">RA-Rhuematoid Arthritis,
+                                    Rheumatoid factor (RF), IgG (Quantitative) - [Serum]</option>
+                                <option value="sgot_ast" data-price="170">SGOT (AST) - [Serum]</option>
+                                <option value="sgpt_alt" data-price="170">SGPT (ALT) - [Serum]</option>
+                                <option value="sodium_serum" data-price="180">Sodium - [Serum]</option>
+                                <option value="sodium_urine_24h" data-price="270">Sodium - [Urine, 24h]</option>
+                                <option value="sodium_urine_spot" data-price="270">Sodium - [Urine, spot]</option>
+                                <option value="sugar_urine" data-price="50">Sugar, urine - [Urine, spot]</option>
+                                <option value="tibc_direct" data-price="550">TIBC (Direct) - [Serum]</option>
+                                <option value="triglycerides" data-price="200">Triglycerides - [Serum]</option>
+                                <option value="troponin_i_quantitative" data-price="1900">Troponin - I (Quantitative)
+                                </option>
+                                <option value="urea_serum" data-price="170">Urea - [Serum]</option>
+                                <option value="urea_urine_24hrs" data-price="270">Urea - [Urine, 24hrs]</option>
+                                <option value="urea_clearance_test" data-price="380">Urea Clearance test - [Serum and
+                                    Urine]</option>
+                                <option value="uric_acid_serum" data-price="170">Uric Acid - [Serum]</option>
+                                <option value="uric_acid_urine_24hrs" data-price="300">Uric Acid - [Urine,24Hrs]
+                                </option>
+                                <option value="urine_spot_protein_creatinine" data-price="500">Urine Spot Protein
+                                    Creatinine</option>
+                                <option value="venous_blood_gas" data-price="1200">Venous Blood Gas (VBG)</option>
+                                <option value="vma_vanillylmandelic_acid" data-price="3800">VMA-Vanillylmandelic Acid -
+                                    [Urine, 24 hrs]</option>
+                                <option value="xray_left_foot_lat" data-price="400">Xray Left Foot Lat</option>
+
+                                <!-- Specialized Tests -->
+                                <option value="ace_angiotensin_converting_enzyme" data-price="1400">ACE-Angiotensin
+                                    Converting Enzyme - [Serum]</option>
+                                <option value="acetyl_choline_receptor_antibodies" data-price="3640">Acetyl Choline
+                                    Receptor Antibodies (ACHR Abs) - [Serum]</option>
+                                <option value="acth_adreno_corticotropic_hormone" data-price="1770">ACTH-Adreno
+                                    corticotropic hormone - [Plasma]</option>
+                                <option value="afp_alpha_feto_protein_amniotic" data-price="1100">AFP-Alpha Feto Protein
+                                    - [Amniotic fluid]</option>
+                                <option value="afp_alpha_feto_protein_serum" data-price="1000">AFP-Alpha Feto Protein -
+                                    [Serum]</option>
+                                <option value="ana_anti_nuclear_antibody" data-price="1100">ANA-Anti Nuclear Antibody by
+                                    IFA (With titre) - [Serum]</option>
+                                <option value="anti_hav_igg_total" data-price="1235">Anti HAV-IgG/total Antibody to
+                                    Hepatitis A Virus - [Serum]</option>
+                                <option value="anti_hav_igm" data-price="1235">Anti HAV-IgM Antibody to Hepatitis `A~
+                                    Virus - [Serum]</option>
+                                <option value="anti_hbcag_igm" data-price="1235">Anti HBcAg-IgM antibodies to Hepatitis
+                                    B Core Ag - [Serum]</option>
+                                <option value="anti_hbcag_total" data-price="1235">Anti HBcAg-Total antibodies to
+                                    Hepatitis B Core Ag - [Serum]</option>
+                                <option value="anti_hbeag" data-price="1125">Anti HBeAg-Antibodies to Hepatitis B
+                                    envelope Antigen - [Serum]</option>
+
+                                <!-- Additional Specialized Tests -->
+                                <option value="anti_hbsag_total_quantitative" data-price="1285">Anti HBsAg-Total antibodies
+                                    to Hepatitis B Surface Antigen (Quantitative)</option>
+                                <option value="anti_hcv_total_abs" data-price="1200">Anti HCV-Total Abs to Hepatitis C Virus
+                                    - [Serum]</option>
+                                <option value="anti_hev_igg" data-price="1650">Anti HEV-IgG Antibodies to Hepatitis E Virus
+                                    - [Serum]</option>
+                                <option value="anti_hev_igm" data-price="1650">Anti HEV-IgM Antibodies to Hepatitis E Virus
+                                    - [Serum]</option>
+                                <option value="beta_hcg" data-price="800">Beta HCG - [Serum]</option>
+                                <option value="beta_2_microglobulin" data-price="1500">Beta-2-microglobulin - [Urine, spot]
+                                </option>
+                                <option value="beta2_glycoprotein_igm" data-price="1300">Beta2 Glycoprotein IgM</option>
+                                <option value="beta2_glycoprotein_igg" data-price="1300">Beta2 Glycoprotein-IgG</option>
+                                <option value="c_peptide_fasting" data-price="1350">C-Peptide (Fasting sample) - [Serum]
+                                </option>
+                                <option value="c_peptide_pp" data-price="1350">C-Peptide (PP sample) - [Serum]</option>
+                                <option value="ca_125" data-price="1450">CA-125 (Cancer Antigen-125), - [Serum]</option>
+                                <option value="ca_15_3" data-price="1395">CA-15.3 (Cancer Antigen 15.3), - [Serum]</option>
+                                <option value="ca_19_9" data-price="1415">CA-19.9 (Cancer Antigen 19.9) - [Serum]</option>
+                                <option value="cardiolipin_antibody_igg" data-price="965">Cardiolipin Antibody-IgG -
+                                    [Serum]</option>
+                                <option value="cardiolipin_antibody_igm" data-price="860">Cardiolipin Antibody-IgM -
+                                    [Serum]</option>
+                                <option value="cea_carcino_embryonic_antigen" data-price="935">CEA-Carcino Embryonic
+                                    Antigen - [Serum]</option>
+                                <option value="cortisol" data-price="800">Cortisol - [Serum]</option>
+                                <option value="cotinine_nicotine" data-price="1930">Cotinine/Nicotine - [Serum]</option>
+                                <option value="covid_antibody" data-price="500">Covid Antibody</option>
+                                <option value="cyclosporin_a_peak" data-price="3265">Cyclosporin A, Peak level (C2) -
+                                    [Blood]</option>
+                                <option value="dhea" data-price="3210">DHEA-DihydroepiAndrostenedione - [Serum]</option>
+                                <option value="dheas" data-price="1350">DHEAS-DihydroepiAndrostenedione Sulphate - [Serum]
+                                </option>
+                                <option value="digoxin" data-price="1500">Digoxin (Lanoxin) - [Serum]</option>
+                                <option value="e3_unconjugated_estriol" data-price="1180">E3-Unconjugated Estriol - [Serum]
+                                </option>
+                                <option value="estradiol_e2" data-price="670">Estradiol (E2) - [Serum]</option>
+                                <option value="fdp_fibrinogen_degradation" data-price="1800">FDP-Fibrinogen Degradation
+                                    Products - [Plasma]</option>
+                                <option value="ferritin" data-price="980">Ferritin - [Serum]</option>
+                                <option value="filaria_antibody" data-price="1200">Filaria Antibody</option>
+                                <option value="free_psa" data-price="1020">Free PSA (Prostate Specific Antigen-Free
+                                    molecule) - [Serum]</option>
+                                <option value="free_t3" data-price="315">Free T3 (Free Tri-iodothyronine) - [Serum]
+                                </option>
+                                <option value="free_t3_t4" data-price="645">Free T3 + Free T4</option>
+                                <option value="free_t4" data-price="330">Free T4 (Free Thyroxine) - [Serum]</option>
+                                <option value="fsh" data-price="550">FSH - Follicle Stimulating Hormone - [Serum]</option>
+                                <option value="galactomannan" data-price="5700">Galactomannan</option>
+                                <option value="hbcab_total" data-price="1235">HBcAb-Total antibodies to Hepatitis B Core
+                                    antigen - [Serum]</option>
+                                <option value="hbeab" data-price="1125">HBeAb-Antibodies to Hepatitis B envelope Antigen -
+                                    [Serum]</option>
+                                <option value="hbeag" data-price="1125">HBeAg - Hepatits B Envelope Antigen - [Serum]
+                                </option>
+                                <option value="hbsab_total" data-price="1285">HBsAb-Total antibodies to Hepatitis B Surface
+                                    Ag - [Serum]</option>
+                                <option value="hbsag_confirmation_quantification" data-price="1395">HbsAg Confirmation and
+                                    Quantification</option>
+                                <option value="hbsag_cmia_method" data-price="1285">HBSAG(AUSTRALIA ANTIGEN) BY CMIA METHOD
+                                </option>
+                                <option value="hbsag_spot_test" data-price="300">HbsAg, Spot test - [Serum]</option>
+                                <option value="hiv_duo_antigen_antibody" data-price="800">HIV-DUO antigen & antibody
+                                    screen(IV th Gen) - [Serum]</option>
+                                <option value="homocysteine_serum" data-price="1400">Homocysteine - [Serum]</option>
+                                <option value="homocysteine_urine" data-price="1300">Homocysteine - [Urine, spot]</option>
+                                <option value="ige" data-price="1150">IgE - [Serum]</option>
+                                <option value="insulin_random" data-price="1000">Insulin Random</option>
+                                <option value="insulin_fasting" data-price="1000">Insulin, fasting - [Serum]</option>
+                                <option value="insulin_post_prandial" data-price="1000">Insulin, post prandial - [Serum]
+                                </option>
+                                <option value="intact_pth" data-price="1900">Intact PTH - [Serum]</option>
+                                <option value="lh_luteinizing_hormone" data-price="550">LH-Luteinizing Hormone - [Serum]
+                                </option>
+                                <option value="liver_blot" data-price="3800">Liver Blot</option>
+                                <option value="microsomal_tpo_antibody" data-price="1280">Microsomal (TPO) Antibody Titre -
+                                    [Serum]</option>
+                                <option value="oligoclonal_band" data-price="5350">Oligoclonal band - [CSF, serum]</option>
+                                <option value="progesterone_p4" data-price="650">Progesterone (P4) - [serum]</option>
+                                <option value="prolactin" data-price="580">Prolactin - [serum]</option>
+                                <option value="psa_total" data-price="950">PSA-Prostate specific antigen, total - [Serum]
+                                </option>
+                                <option value="pth_intact_molecule" data-price="1900">PTH-Para Thyroid Hormone (Intact
+                                    Molecule) - [Serum]</option>
+                                <option value="quadruple_test" data-price="3745">Quadruple Test</option>
+                                <option value="rbc_folate" data-price="2410">RBC Folate - [Blood, serum]</option>
+                                <option value="renin_activity_plasma" data-price="5460">Renin Activity, plasma (PRA) -
+                                    [Plasma]</option>
+                                <option value="rubella_igm" data-price="805">Rubella (German Measles) -IgM Antibodies -
+                                    [Serum]</option>
+                                <option value="rubella_igg" data-price="805">Rubella (German Measles)-IgG Antibodies -
+                                    [Serum]</option>
+                                <option value="spike_protein_antibody" data-price="4199">Spike Protein Antibody Test
+                                </option>
+                                <option value="t3_t4_tsh" data-price="550">T3 + T4 + TSH</option>
+                                <option value="t3_total" data-price="270">T3,Total (Tri iodothyronine) - [Serum]</option>
+                                <option value="t4_total" data-price="250">T4,Total (Thyroxine) - [Serum]</option>
+                                <option value="testosterone_total" data-price="800">Testosterone (Total) - [Serum]</option>
+                                <option value="thyroglobulin" data-price="1605">Thyroglobulin - [Serum]</option>
+                                <option value="total_p1np" data-price="2140">Total P1NP</option>
+                                <option value="toxoplasma_igg" data-price="750">Toxoplasma-IgG (Quantitative) - [Serum]
+                                </option>
+                                <option value="toxoplasma_igm" data-price="750">Toxoplasma-IgM antibodies - [Serum]
+                                </option>
+                                <option value="tpo_microsomal_antibody" data-price="1280">TPO (Microsomal) Antibody Titre -
+                                    [Serum]</option>
+                                <option value="tsh_ultrasensitive" data-price="380">TSH-Ultrasensitive(Thyroid Stimulating
+                                    Hormone) - [Serum]</option>
+                                <option value="vitamin_b12" data-price="1100">Vitamin B12 (Cyanocobalamin) - [Serum]
+                                </option>
+                                <option value="vitamin_d3" data-price="1300">Vitamin D3 (25 Hydroxy Cholecalciferol) -
+                                    [Serum]</option>
+
+                                <!-- Urine and Body Fluid Tests -->
+                                <option value="bile_salt_pigments" data-price="50">Bile salt & pigments, (Qualitative) -
+                                    [Urine, spot]</option>
+                                <option value="cannabis_thc_quantitative" data-price="800">Cannabis (THC) (Marijuana)
+                                    (Quantitative) - [Urine, spot]</option>
+                                <option value="cannabis_thc_qualitative" data-price="800">Cannabis (THC) (Marijuana)
+                                    (Qualitative) - [Urine, spot]</option>
+                                <option value="cocaine_qualitative" data-price="770">Cocaine (Qualitative) - [Urine, spot]
+                                </option>
+                                <option value="faeces_routine_examination" data-price="110">Faeces, Routine Examination
+                                    (Basic) - [Stool]</option>
+                                <option value="fructose_semen" data-price="325">Fructose - [Semen]</option>
+                                <option value="hanging_drop_v_cholerae" data-price="430">Hanging drop for V. cholerae -
+                                    [Stool]</option>
+                                <option value="occult_blood_stool" data-price="100">Occult blood - [Stool]</option>
+                                <option value="occult_blood_urine" data-price="100">Occult blood - [Urine ]</option>
+                                <option value="opiates_morphine" data-price="750">Opiates (Morphine) (Qualitative) -
+                                    [Urine]</option>
+                                <option value="pcp_phencyclidine" data-price="750">PCP-Phencyclidine Phosphate, urine
+                                    (Qualitative) - [Urine]</option>
+                                <option value="ph_pleural_fluid" data-price="50">pH (Pleural Fluid)</option>
+                                <option value="ph_gastric_lavage" data-price="50">pH - [Gastric Lavage]</option>
+                                <option value="ph_stool" data-price="50">pH - [Stool]</option>
+                                <option value="ph_urine" data-price="50">pH - [Urine]</option>
+                                <option value="pregnancy_test" data-price="200">Pregnancy test - [Urine]</option>
+                                <option value="reducing_substances_stool" data-price="325">Reducing substances - [Stool]
+                                </option>
+                                <option value="reducing_substances_urine" data-price="325">Reducing substances - [Urine]
+                                </option>
+                                <option value="routine_examination_urine" data-price="110">Routine Examination, urine -
+                                    [Urine]</option>
+                                <option value="semen_test1" data-price="750">SEMEN TEST1</option>
+                                <option value="semen_fructose_level" data-price="325">Semen, fructose level - [Semen]
+                                </option>
+                                <option value="semen_routine_examination" data-price="1000">Semen, Routine examination -
+                                    [Semen]</option>
+                                <option value="stool_hanging_drop" data-price="430">Stool, Hanging drop preparation -
+                                    [Stool]</option>
+                                <option value="stool_occult_blood" data-price="100">Stool, occult blood - [Stool]</option>
+                                <option value="stool_reducing_substances_ph" data-price="325">Stool, reducing substances
+                                    and pH - [Stool]</option>
+                                <option value="stool_routine_examination" data-price="120">Stool, Routine Examination,
+                                    (Basic) - [Stool]</option>
+                                <option value="urine_routine_examination_spot" data-price="110">Urine, Routine Examination
+                                    - [Urine, spot]</option>
+
+                                <!-- Hematology Tests -->
+                                <option value="abo_rh_typing" data-price="150">ABO & Rh typing (Blood grouping) - [Blood]
+                                </option>
+                                <option value="absolute_basophils_count" data-price="225">Absolute Basophils Count -
+                                    [Blood]</option>
+                                <option value="absolute_eosinophils_count" data-price="225">Absolute Eosinophils Count -
+                                    [Blood]</option>
+                                <option value="absolute_reticulocyte_count" data-price="320">Absolute Reticulocyte Count -
+                                    [Blood]</option>
+                                <option value="aptt_activated_partial_thromboplastin" data-price="700">aPTT- Activated
+                                    Partial Thromboplastin - [Plasma]</option>
+                                <option value="basophils_count_absolute" data-price="100">Basophils Count, absolute -
+                                    [Blood]</option>
+                                <option value="bleeding_clotting_time" data-price="100">Bleeding & Clotting time - [NA]
+                                </option>
+                                <option value="blood_group_abo_rh" data-price="150">Blood Group (ABO & Rh typing) - [Blood]
+                                </option>
+                                <option value="blood_picture" data-price="315">Blood picture - [Serum]</option>
+                                <option value="cbc_esr" data-price="330">CBC + ESR</option>
+                                <option value="cbc_esr_mp" data-price="430">CBC + ESR + MP</option>
+                                <option value="cbc_mp" data-price="330">CBC + MP</option>
+                                <option value="cbc_complete_blood_count" data-price="230">CBC-Complete Blood Count
+                                    (Haemogram) - [Blood]</option>
+                                <option value="cell_count_csf" data-price="300">Cell count - [CSF]</option>
+                                <option value="clotting_time_ct" data-price="50">Clotting time (CT)</option>
+                                <option value="coombs_test_direct" data-price="700">Coomb~s test (Direct) or Direct
+                                    antiglobulin test (DAT) - [Blood]</option>
+                                <option value="coombs_test_indirect" data-price="775">Coomb~s test (Indirect) or Indirect
+                                    antiglobulin test (IAT) - [Serum]</option>
+                                <option value="eosinophil_detection_urine" data-price="100">Eosinophil detection - [Urine,
+                                    spot]</option>
+                                <option value="eosinophils_count_absolute" data-price="100">Eosinophils Count, Absolute -
+                                    [Blood]</option>
+                                <option value="esr_automated" data-price="100">ESR (Automated) - [Blood]</option>
+                                <option value="fibrinogen_plasma" data-price="1100">Fibrinogen - [Plasma]</option>
+                                <option value="g6pd_qualitative" data-price="650">G6PD-Qualitative - [Blood]</option>
+                                <option value="g6pd_quantitative" data-price="800">G6PD-Quantitative - [Blood]</option>
+                                <option value="haematocrit_pcv" data-price="100">Haematocrit (PCV-Packed Cell Volume) -
+                                    [Blood]</option>
+                                <option value="haemoglobin" data-price="100">Haemoglobin - [Blood]</option>
+                                <option value="haemogram_cbc" data-price="230">Haemogram (CBC) - [Blood]</option>
+                                <option value="le_cell_detection" data-price="450">LE Cell Detection - [Blood]</option>
+                                <option value="leucocyte_wbc_blood" data-price="100">Leucocyte (WBC) : Total and
+                                    Differential Counts - [Blood]</option>
+                                <option value="leucocyte_wbc_body_fluid" data-price="100">Leucocyte (WBC) : Total and
+                                    Differential Counts - [Body Fluid]</option>
+                                <option value="lupus_lac" data-price="2300">Lupus - LAC (Lupus Anticoagulants) (screening
+                                    and confirmation) - [Plasma]</option>
+                                <option value="lymphocyte_count_absolute" data-price="100">Lymphocyte Count, absolute -
+                                    [Blood]</option>
+                                <option value="malarial_antibody_igg" data-price="550">Malarial Antibody, IgG - [Blood]
+                                </option>
+                                <option value="malarial_antigen" data-price="600">Malarial Antigen (Vivax & Falciparum) -
+                                    [Blood]</option>
+                                <option value="malarial_parasite" data-price="100">Malarial Parasite - [Blood]</option>
+                                <option value="mch_mean_corpuscular_haemoglobin" data-price="100">MCH-Mean Corpuscular
+                                    Haemoglobin - [Blood]</option>
+                                <option value="mchc_mean_corpuscular_haemoglobin_concentration" data-price="100">MCHC-Mean
+                                    Corpuscular Haemoglobin Concentration - [Blood]</option>
+                                <option value="mcv_mean_corpuscular_volume" data-price="100">MCV-Mean Corpuscular Volume -
+                                    [Blood]</option>
+                                <option value="microfilaria_detection" data-price="220">Microfilaria detection - [Blood]
+                                </option>
+                                <option value="monocyte_count_absolute" data-price="100">Monocyte Count, Absolute - [Blood]
+                                </option>
+                                <option value="mpv_mean_platelet_volume" data-price="100">MPV-Mean Platelet Volume -
+                                    [Blood]</option>
+                                <option value="pcv_packed_cell_volume" data-price="100">PCV-Packed Cell Volume
+                                    (Haematocrit) - [Blood]</option>
+                                <option value="pdw_platelet_distribution_width" data-price="100">PDW-Platelet Distribution
+                                    Width - [Blood]</option>
+                                <option value="peripheral_smear_examination" data-price="160">Peripheral smear examination
+                                    by pathologist - [Blood]</option>
+                                <option value="platelet_thrombocyte_count" data-price="100">Platelet (Thrombocyte) count -
+                                    [Blood]</option>
+                                <option value="prothrombin_time_pt" data-price="370">Prothrombin Time (PT) - [Plasma]
+                                </option>
+                                <option value="pttk_partial_thromboplastin_time" data-price="710">PTTk-Partial
+                                    Thromboplastin Time - [Plasma]</option>
+                                <option value="rbc_red_blood_cell_count" data-price="100">RBC-Red Blood Cell (Erythrocyte)
+                                    count - [Blood]</option>
+                                <option value="rdw_red_cell_distribution_width" data-price="100">RDW - Red Cell
+                                    Distribution width - [Blood]</option>
+                                <option value="reticulocyte_count_automated" data-price="210">Reticulocyte count,
+                                    automated - [Blood]</option>
+                                <option value="rh_anti_d_antibody_titre" data-price="600">Rh (Anti D) Antibody titre -
+                                    [Serum]</option>
+                                <option value="sickling_test" data-price="220">Sickling test - [Blood]</option>
+                                <option value="tt_thrombin_time_plasma" data-price="1000">TT -Thrombin time , plasma -
+                                    [Plasma]</option>
+                                <option value="wbc_leucocyte_total_differential_counts" data-price="100">WBC (Leucocyte)
+                                    : Total and Differential Counts, blood - [Blood]</option>
+                                <option value="cytology_aspirates" data-price="2500">Cytology - [Aspirates]</option>
+                                <option value="cytology_sputum" data-price="2500">Cytology - [Sputum]</option>
+                                <option value="cytology_urine" data-price="2500">Cytology - [Urine]</option>
+                                <option value="fnac_cytological_examination" data-price="1000">FNAC - cytological
+                                    examination - [FNAC fluid]</option>
+                                <option value="fnac_procedure_charges" data-price="1500">FNAC procedure charges - [Walk
+                                    in patient]</option>
+                                <option value="histopathology_cervical_biopsy_6000" data-price="6000">Histopathology -
+                                    Cervical Biopsy</option>
+                                <option value="histopathology_cervical_biopsy_2500" data-price="2500">Histopathology -
+                                    Cervical Biopsy</option>
+                                <option value="histopathology_endometrial_biopsy" data-price="2500">Histopathology -
+                                    Endometrial Biopsy</option>
+                                <option value="histopathology_large_specimen" data-price="4000">Histopathology- Large
+                                    specimen - [Tissue]</option>
+                                <option value="histopathology_large_complex_specimen" data-price="4500">Histopathology-
+                                    Large and Complex specimen - [Tissue]</option>
+                                <option value="histopathology_medium_specimen" data-price="3500">Histopathology- Medium
+                                    specimen - [Tissue]</option>
+                                <option value="histopathology_small_specimen" data-price="2500">Histopathology- Small
+                                    specimen - [Tissue]</option>
+                                <option value="pap_smears_cytological_examination" data-price="420">PAP Smears for
+                                    cytological examination - [Pap smear]</option>
+                                <option value="pr_progesterone_receptor_immunohistochemistry" data-price="6600">
+                                    PR-Progesterone receptor by Immunohistochemistry - [Tissue]</option>
+                                <option value="afb_culture_conventional_lj_medium" data-price="720">AFB, Culture by
+                                    conventional LJ medium - [Serum]</option>
+                                <option value="afb_smear_examination_fluorescent_microscopy" data-price="400">AFB, smear
+                                    examination by Fluorescent Microscopy - [Any specimen]</option>
+                                <option value="afb_smear_examination_zn_stain" data-price="320">AFB, smear examination
+                                    by ZN stain - [Any specimen]</option>
+                                <option value="afb_smear_examination_zn_stain_3_samples" data-price="900">AFB, smear
+                                    examination by ZN stain (3 samples) - [Sputum or urine]</option>
+                                <option value="afb_susceptibility_1st_line_sirep" data-price="7400">AFB,
+                                    Susceptibility-1st line [SIREP] - [Pure culture]</option>
+                                <option value="afb_susceptibility_2nd_line_5_drugs" data-price="6000">AFB,
+                                    Susceptibility-2nd line (5 Drugs) - [Pure culture]</option>
+                                <option value="afb_susceptibility_10_drugs_panel" data-price="7900">AFB,
+                                    susceptibility:10 drugs panel - [Pure culture]</option>
+                                <option value="afb_susceptibility_amikacin" data-price="1550">
+                                    AFB,susceptibility-Amikacin - [Pure culture]</option>
+                                <option value="afb_susceptibility_augmentin" data-price="1550">
+                                    AFB,susceptibility-Augmentin - [Pure culture]</option>
+                                <option value="afb_susceptibility_capreomycin" data-price="1550">
+                                    AFB,susceptibility-Capreomycin - [Pure culture]</option>
+                                <option value="afb_susceptibility_ciprofloxacin" data-price="1550">
+                                    AFB,susceptibility-Ciprofloxacin - [Pure culture]</option>
+                                <option value="afb_susceptibility_clarithromycin" data-price="1550">
+                                    AFB,susceptibility-Clarithromycin - [Pure culture]</option>
+                                <option value="afb_susceptibility_clofazimine" data-price="1550">
+                                    AFB,susceptibility-Clofazimine - [Pure culture]</option>
+                                <option value="afb_susceptibility_cycloserine" data-price="1550">
+                                    AFB,susceptibility-Cycloserine - [Pure culture]</option>
+                                <option value="afb_susceptibility_erythromycin_1" data-price="1550">
+                                    AFB,susceptibility-Erythromycin - [Pure culture]</option>
+                                <option value="afb_susceptibility_erythromycin_2" data-price="1550">
+                                    AFB,susceptibility-Erythromycin - [Pure culture]</option>
+                                <option value="afb_susceptibility_ethambutol" data-price="1550">
+                                    AFB,susceptibility-Ethambutol - [Pure culture]</option>
+                                <option value="afb_susceptibility_ethionamide" data-price="1550">
+                                    AFB,susceptibility-Ethionamide - [Pure culture]</option>
+                                <option value="afb_susceptibility_isoniazid" data-price="1550">
+                                    AFB,susceptibility-Isoniazid - [Pure culture]</option>
+                                <option value="afb_susceptibility_kanamycin" data-price="1550">
+                                    AFB,susceptibility-Kanamycin - [Pure culture]</option>
+                                <option value="afb_susceptibility_levofloxacin_1" data-price="1550">
+                                    AFB,susceptibility-Levofloxacin - [Pure culture]</option>
+                                <option value="afb_susceptibility_levofloxacin_2" data-price="1550">
+                                    AFB,susceptibility-Levofloxacin - [Pure culture]</option>
+                                <option value="afb_susceptibility_ofloxacin" data-price="1550">
+                                    AFB,susceptibility-Ofloxacin - [Pure culture]</option>
+                                <option value="afb_susceptibility_pas" data-price="1550">AFB,susceptibility-PAS - [Pure
+                                    culture]</option>
+                                <option value="afb_susceptibility_prothionamide" data-price="1550">
+                                    AFB,susceptibility-Prothionamide - [Pure culture]</option>
+                                <option value="afb_susceptibility_pyrazinamide" data-price="1550">
+                                    AFB,susceptibility-Pyrazinamide - [Pure culture]</option>
+                                <option value="afb_susceptibility_rifampicin" data-price="1550">
+                                    AFB,susceptibility-Rifampicin - [Pure culture]</option>
+                                <option value="afb_susceptibility_roxithromycin" data-price="1550">
+                                    AFB,susceptibility-Roxithromycin - [Pure culture]</option>
+                                <option value="afb_susceptibility_sparfloxacin" data-price="1550">
+                                    AFB,susceptibility-Sparfloxacin - [Pure culture]</option>
+                                <option value="afb_susceptibility_streptomycin" data-price="1550">
+                                    AFB,susceptibility-Streptomycin - [Pure culture]</option>
+                                <option value="alberts_stain_c_diphtheriae" data-price="400">Albert~s Stain for
+                                    C.diphtheriae - [Throat or Nasopharyngeal swab]</option>
+                                <option value="anaerobic_culture" data-price="1600">Anaerobic culture</option>
+                                <option value="c_s_aerobic_catheter_tip" data-price="1000">C & S AEROBIC (Catheter Tip)
+                                </option>
+                                <option value="c_s_aerobic_bacteria_automated_urine" data-price="1100">C & S for aerobic
+                                    bacteria (Automated) - [Urine]</option>
+                                <option value="c_s_aerobic_bacteria_manual_body_fluid" data-price="1000">C & S for
+                                    aerobic bacteria (Manual) - [Body Fluid]</option>
+                                <option value="c_s_aerobic_bacteria_manual_cervical_vaginal_swab" data-price="1000">C &
+                                    S for aerobic bacteria (Manual) - [Cervical/ Vaginal Swab]</option>
+                                <option value="c_s_aerobic_bacteria_manual_csf" data-price="1000">C & S for aerobic
+                                    bacteria (Manual) - [CSF]</option>
+                                <option value="c_s_aerobic_bacteria_manual_eye_ear_swab" data-price="1000">C & S for
+                                    aerobic bacteria (Manual) - [Eye / Ear Swab]</option>
+                                <option value="c_s_aerobic_bacteria_manual_nasal_swab" data-price="1000">C & S for
+                                    aerobic bacteria (Manual) - [Nasal Swab]</option>
+                                <option value="c_s_aerobic_bacteria_manual_pus" data-price="1000">C & S for aerobic
+                                    bacteria (Manual) - [Pus]</option>
+                                <option value="c_s_aerobic_bacteria_manual_semen" data-price="1000">C & S for aerobic
+                                    bacteria (Manual) - [Semen]</option>
+                                <option value="c_s_aerobic_bacteria_manual_sputum" data-price="1000">C & S for aerobic
+                                    bacteria (Manual) - [Sputum]</option>
+                                <option value="c_s_aerobic_bacteria_manual_stool" data-price="1000">C & S for aerobic
+                                    bacteria (Manual) - [Stool]</option>
+                                <option value="c_s_aerobic_bacteria_manual_throat_swab" data-price="1000">C & S for
+                                    aerobic bacteria (Manual) - [Throat Swab]</option>
+                                <option value="c_s_aerobic_bacteria_manual_urethral_discharge" data-price="1000">C & S
+                                    for aerobic bacteria (Manual) - [Urethral Discharge]</option>
+                                <option value="c_s_aerobic_bacteria_automated_blood" data-price="1000">C & S for Aerobic
+                                    bacteria, Automated - [Blood]</option>
+                                <option value="c_s_aerobic_bacteria_automated_body_fluid" data-price="1000">C & S for
+                                    Aerobic bacteria, Automated - [Body Fluid]</option>
+                                <option value="c_s_aerobic_bacteria_automated_csf" data-price="1000">C & S for Aerobic
+                                    bacteria, Automated - [CSF]</option>
+                                <option value="fungal_culture_serum" data-price="900">Fungal cuture - [Serum]</option>
+                                <option value="fungal_identification_automated" data-price="820">Fungal identification
+                                    (Automated) - [Pure culture]</option>
+                                <option value="fungal_stain_aspirate" data-price="460">Fungal stain - [Aspirate]
+                                </option>
+                                <option value="fungal_stain_body_fluid" data-price="460">Fungal stain - [Body fluid]
+                                </option>
+                                <option value="fungal_stain_csf" data-price="460">Fungal stain - [CSF]</option>
+                                <option value="fungal_stain_hair" data-price="460">Fungal stain - [Hair]</option>
+                                <option value="fungal_stain_nail" data-price="460">Fungal stain - [Nail]</option>
+                                <option value="fungal_stain_pus" data-price="460">Fungal stain - [Pus]</option>
+                                <option value="fungal_stain_semen" data-price="460">Fungal stain - [semen]</option>
+                                <option value="fungal_stain_skin" data-price="460">Fungal stain - [skin]</option>
+                                <option value="fungal_stain_sputum" data-price="460">Fungal stain - [Sputum]</option>
+                                <option value="fungal_stain_swab" data-price="460">Fungal stain - [Swab]</option>
+                                <option value="fungal_stain_urine_spot" data-price="460">Fungal stain - [Urine, spot]
+                                </option>
+                                <option value="fungal_susceptibility_yeast_automated" data-price="2100">Fungal
+                                    Susceptibility - For Yeast Only (Automated) - [Pure culture]</option>
+                                <option value="grams_staining" data-price="400">Gram`s staining - [Any specimen]
+                                </option>
+                                <option value="koh_mount" data-price="100">KOH mount - [Serum]</option>
+                                <option value="rapid_culture_blood" data-price="950">Rapid culture, blood - [Heparin
+                                    blood]</option>
+                                <option value="routine_examination_sputum_basic" data-price="700">Routine examination,
+                                    Sputum, Basic - [Sputum]</option>
+                                <option value="routine_examination_stool_basic" data-price="100">Routine Examination,
+                                    stool (Basic) - [Stool]</option>
+                                <option value="routine_examination_synovial_fluid_basic" data-price="700">Routine
+                                    examination, synovial fluid (Basic) - [Synovial Fluid]</option>
+                                <option value="sputum_routine_basic" data-price="700">Sputum Routine, Basic - [Sputum]
+                                </option>
+                                <option value="tuberculosis_mtb_dna_detection_real_time_pcr" data-price="2500">
+                                    Tuberculosis (MTB), DNA detection by Real time PCR - [Blood]</option>
+                                <option value="uibc" data-price="330">UIBC - [Serum]</option>
+                                <option value="water_culture_analysis_bacteriological" data-price="1100">Water culture
+                                    analysis, bacteriological - [Water]</option>
+                                <option value="cmv_avidity_test" data-price="1160">CMV-Avidity test - [Serum]</option>
+                                <option value="cmv_dna_detection_qualitative" data-price="4020">CMV-DNA detection
+                                    (Qualitative test) - [Plasma]</option>
+                                <option value="cmv_dna_viral_load_quantitative" data-price="7220">CMV-DNA Viral load
+                                    (Quantitative test) - [Plasma]</option>
+                                <option value="covid_19_srl_dr_avinash_phadke_lab" data-price="600">Covid 19 (SRL DR
+                                    AVINASH PHADKE LAB)</option>
+                                <option value="covid_19_srl_dr_avinash_phadke_lab_home_visit" data-price="800">Covid 19
+                                    (SRL DR AVINASH PHADKE LAB) Home Visit</option>
+                                <option value="covid_antibody_igg" data-price="750">Covid Antibody IgG</option>
+                                <option value="gene_xpert" data-price="2400">Gene Xpert</option>
+                                <option value="hiv_1_rna_detection_qualitative" data-price="3200">HIV-1-RNA Detection
+                                    (Qualitative) - [Plasma]</option>
+                                <option value="hlab_pcr" data-price="3400">HLAB PCR</option>
+                                <option value="anti_hcv_screening" data-price="450">Anti HCV- Screening</option>
+                                <option value="apa_igg_phosphalipid_antibody" data-price="800">APA - IgG Phosphalipid
+                                    antibody - [Serum]</option>
+                                <option value="apa_igm_phosphalipid_antibody" data-price="800">APA - IgM Phosphalipid
+                                    antibody - [Serum]</option>
+                                <option value="chikungunya_test" data-price="1000">Chikungunya test - [Serum]</option>
+                                <option value="cmv_igg_antibodies_cyto_megalo_virus" data-price="700">CMV-IgG Antibodies
+                                    to Cyto Megalo Virus - [Serum]</option>
+                                <option value="cmv_igm_antibodies_cyto_megalo_virus" data-price="700">CMV-IgM Antibodies
+                                    to Cyto Megalo Virus - [Serum]</option>
+                                <option value="dengue_antigen" data-price="600">Dengue Antigen</option>
+                                <option value="gamma_interferon_tb_quantiferon_tb_gold" data-price="2850">Gamma
+                                    Interferon for TB (Quantiferon TB Gold) - [Blood]</option>
+                                <option value="helicobacter_pylori_iga_antibodies" data-price="2300">Helicobacter Pylori
+                                    - IgA antibodies - [Serum]</option>
+                                <option value="helicobacter_pylori_igg_antibodies" data-price="2300">Helicobacter Pylori
+                                    - IgG antibodies - [Serum]</option>
+                                <option value="helicobacter_pylori_igm_antibodies" data-price="2300">Helicobacter Pylori
+                                    - IgM antibodies - [Serum]</option>
+                                <option value="hiv_i_ii_antibody_spot_test" data-price="350">HIV I & II antibody (Spot
+                                    test) - [Serum]</option>
+                                <option value="hiv_i_ii_antibodies_screening" data-price="530">HIV I / II Antibodies
+                                    Screening</option>
+                                <option value="hiv_1_specific_2_indicative_western_blot_test" data-price="2400">HIV-1
+                                    specific & 2 indicative, western blot test - [Serum]</option>
+                                <option value="hsv_1_igg_antibodies_herpes_simplex_virus_1" data-price="720">HSV 1 IgG
+                                    antibodies to Herpes Simplex Virus 1 - [Serum]</option>
+                                <option value="hsv_1_igm_antibodies_herpes_simplex_virus_1" data-price="720">HSV 1 IgM
+                                    antibodies to Herpes Simplex Virus 1 - [Serum]</option>
+                                <option value="hsv_1_2_igg_antibodies_herpes_simplex_virus_1_2" data-price="720">HSV 1&2
+                                    IgG antibodies to Herpes Simplex Virus 1 & 2 - [Serum]</option>
+                                <option value="hsv_1_2_igm_antibodies_herpes_simplex_virus_1_2" data-price="720">HSV 1&2
+                                    IgM antibodies to Herpes Simplex Virus 1 &2 - [Serum]</option>
+                                <option value="leptospira_igg_antibody" data-price="1120">Leptospira - IgG antibody -
+                                    [Serum]</option>
+                                <option value="leptospira_igm_antibody" data-price="1120">Leptospira - IgM Antibody -
+                                    [Serum]</option>
+                                <option value="leptospira_detection" data-price="2600">Leptospira detection - [Blood,
+                                    Urine]</option>
+                                <option value="mantoux_test_tuberculin_skin_test" data-price="100">Mantoux test
+                                    (Tuberculin skin test) - [Skin test]</option>
+                                <option value="phosphalipid_antibody_apa_igg" data-price="800">Phosphalipid antibody
+                                    (APA)- IgG - [Serum]</option>
+                                <option value="phosphalipid_antibody_apa_igm" data-price="800">Phosphalipid antibody
+                                    (APA)- IgM - [Serum]</option>
+                                <option value="quantiferon_tb_gold_gamma_interferon_tb" data-price="2200">Quantiferon TB
+                                    Gold (Gamma Interferon for TB) - [Blood]</option>
+                                <option value="rpr_vdrl" data-price="200">RPR (VDRL) - [Serum]</option>
+                                <option value="rubella_german_measles_avidity_test" data-price="1420">Rubella (German
+                                    Measles), Avidity test - [Serum]</option>
+                                <option value="swine_flue" data-price="5500">Swine Flue</option>
+                                <option value="tb_gold_quantiferon_gamma_interferon_tb" data-price="2200">TB Gold
+                                    (Quantiferon) (Gamma Interferon for TB) - [Blood]</option>
+                                <option value="tpha_treponema_pallidum_haemagglutination_assay" data-price="820">
+                                    TPHA-Treponema Pallidum Haemagglutination Assay - [Serum]</option>
+                                <option value="troponin_i" data-price="1820">Troponin-I - [Serum]</option>
+                                <option value="troponin_t" data-price="1820">Troponin-T - [Blood]</option>
+                                <option value="tuberculin_skin_test_mantoux_test" data-price="100">Tuberculin skin test
+                                    (Mantoux test) - [Skin test]</option>
+                                <option value="typhi_dot" data-price="450">Typhi Dot</option>
+                                <option value="vdrl_rpr" data-price="150">VDRL (RPR) - [Serum]</option>
+                                <option value="western_blot_test_hiv_1_specific_2_indicative_csf" data-price="2400">
+                                    Western Blot Test for HIV-1 specific & 2 indicative - [CSF]</option>
+                                <option value="widal_test" data-price="180">Widal test - [Serum]</option>
+                                <option value="17_hydroxy_progesterone" data-price="1850">17 Hydroxy-progesterone -
+                                    [Serum]</option>
+                                <option value="17_ketogenic_steroids_corticosteroids" data-price="3500">17 Ketogenic
+                                    steroids (Corticosteroids) - [Urine, 24 hours]</option>
+                                <option value="17_ketosteroids" data-price="3500">17 Ketosteroids - [Urine, 24 hours]
+                                </option>
+                                <option value="5_hiaa_hydroxy_indole_acetic_acid" data-price="3500">5-HIAA (Hydroxy
+                                    Indole Acetic Acid) - [Urine, 24 hours]</option>
+                                <option value="a4_androstenedione" data-price="2090">A4-Androstenedione - [Serum]
+                                </option>
+                                <option value="abnormal_haemoglobin_studies_hb_variants" data-price="1010">Abnormal
+                                    Haemoglobin studies(Hb variants), - [Blood]</option>
+                                <option value="acetaminophane_paracetamol" data-price="1100">Acetaminophane
+                                    (Paracetamol) - [Serum]</option>
+                                <option value="acetone_serum" data-price="800">Acetone - [Serum]</option>
+                                <option value="acetone_urine_spot" data-price="90">Acetone - [Urine, spot]</option>
+                                <option value="acid_load_test" data-price="600">Acid load test - [Serum]</option>
+                                <option value="activated_protein_c_apc_resistance_test" data-price="4000">Activated
+                                    protein C (APC) resistance test - [Plasma]</option>
+                                <option value="adenosine_deaminase_ada" data-price="1120">Adenosine Deaminase (ADA) -
+                                    [Serum]</option>
+                                <option value="adenovirus_igg_antibody" data-price="1700">Adenovirus, IgG antibody -
+                                    [Serum]</option>
+                                <option value="adenovirus_igm_antibody" data-price="1700">Adenovirus, IgM antibody -
+                                    [Serum]</option>
+                                <option value="adh_antidiuretic_hormone_vasopressin" data-price="3850">ADH-Antidiuretic
+                                    hormone (Vasopressin) - [Plasma]</option>
+                                <option value="adrenaline_epinephrine" data-price="3500">Adrenaline (Epinephrine) -
+                                    [Plasma]</option>
+                                <option value="afb_rapid_culture_sputum" data-price="950">AFB, Rapid Culture (Sputum)
+                                </option>
+                                <option value="ala_amino_leveulinic_acid_quantitative" data-price="3100">ALA-Amino
+                                    leveulinic acid (Quantitative) - [Urine, 24 hours]</option>
+                                <option value="alcohol_quantitative_serum" data-price="1500">Alcohol Quantitative -
+                                    [Serum]</option>
+                                <option value="alcohol_quantitative_urine_spot" data-price="1500">Alcohol Quantitative -
+                                    [Urine, spot]</option>
+                                <option value="aldolase" data-price="1300">Aldolase - [Serum]</option>
+                                <option value="aldosterone" data-price="2150">Aldosterone - [Serum]</option>
+                                <option value="allergen_aspergillus_fumigatus" data-price="1500">ALLERGEN - ASPERGILLUS
+                                    FUMIGATUS - [SERUM]</option>
+                                <option value="allergen_gluten" data-price="1500">ALLERGEN - GLUTEN - [SERUM]</option>
+                                <option value="alpha_1_antitrypsin" data-price="2200">Alpha-1-antitrypsin - [Serum]
+                                </option>
+                                <option value="aluminium_blood" data-price="2700">Aluminium - [Blood]</option>
+                                <option value="aluminium_urine_24_hours" data-price="2700">Aluminium - [Urine, 24 hours]
+                                </option>
+                                <option value="amino_acids_qualitative_serum" data-price="8025">Amino acids
+                                    (Qualitative) - [Serum]</option>
+                                <option value="amino_acids_qualitative_urine_spot" data-price="4000">Amino acids
+                                    (Qualitative) - [Urine, spot]</option>
+                                <option value="amino_levulinic_acid_ala_quantitative" data-price="3100">Amino levulinic
+                                    acid(ALA) (Quantitative) - [Urine, 24 hours]</option>
+                                <option value="amoebiasis_antibodies_igg_iha_amoebiasis" data-price="1100">Amoebiasis
+                                    Antibodies-IgG (IHA for Amoebiasis) - [Serum]</option>
+                                <option value="anca_mpo_p_anca" data-price="1250">ANCA-MPO (p-ANCA) - [Serum]</option>
+                                <option value="anca_pr3_c_anca" data-price="1250">ANCA-PR3 (c-ANCA) - [Serum]</option>
+                                <option value="androstenedione_a4" data-price="2040">Androstenedione (A4) - [Serum]
+                                </option>
+                                <option value="anti_dnase_b" data-price="2355">Anti DNase B - [Serum]</option>
+                                <option value="anti_hdv_total_antibodies_hepatitis_delta_virus" data-price="1800">Anti
+                                    HDV-Total antibodies to Hepatitis Delta Virus - [Serum]</option>
+                                <option value="anti_mullerian_harmone_amh" data-price="2200">Anti Mullerian Harmone
+                                    (AMH)</option>
+                                <option value="anti_thrombin_iii_activity_functional" data-price="3800">Anti thrombin
+                                    III activity (Functional) - [Plasma]</option>
+                                <option value="anti_thrombin_iii_antigen" data-price="3800">Anti thrombin III Antigen -
+                                    [Plasma]</option>
+                                <option value="apc_activated_protein_c_resistance_test" data-price="3500">APC-Activated
+                                    protein C resistance test - [Plasma]</option>
+                                <option value="arsenic_blood" data-price="3000">Arsenic - [Blood]</option>
+                                <option value="arsenic_urine_24_hours" data-price="3000">Arsenic - [Urine, 24 hours]
+                                </option>
+                                <option value="arsenic_urine_spot" data-price="3000">Arsenic - [Urine, spot]</option>
+                                <option value="asab_anti_sperm_antibody_total" data-price="1500">ASAB - Anti Sperm
+                                    Antibody (Total) - [Semen]</option>
+                                <option value="asca_iga_antibodies_saccharomyces_cerevisiae" data-price="2100">ASCA-IgA
+                                    antibodies to Saccharomyces cerevisiae - [Serum]</option>
+                                <option value="asca_igg_antibodies_saccharomyces_cerevisiae" data-price="2100">ASCA-IgG
+                                    antibodies to Saccharomyces cerevisiae - [Serum]</option>
+                                <option value="asma_smooth_muscle_antibody_with_titre" data-price="3100">ASMA- Smooth
+                                    Muscle Antibody with titre - [Serum]</option>
+                                <option value="asma_smooth_muscle_antibody" data-price="1700">ASMA-Smooth Muscle
+                                    Antibody - [Serum]</option>
+                                <option value="aspergillosis_antibody" data-price="3400">Aspergillosis Antibody -
+                                    [Serum]</option>
+                                <option value="bcr_abl_gene_rearrangement_philadelphia_chromosome" data-price="6500">
+                                    bcr-abl gene rearrangement (Philadelphia Chromosome) (t9:22 translocation) - [Blood]
+                                </option>
+                                <option value="benzodiazapine_qualitative" data-price="750">Benzodiazapine (Qualitative)
+                                    - [Urine, spot]</option>
+                                <option value="benzodiazapine_quantitative" data-price="750">Benzodiazapine
+                                    (Quantitative) - [Urine, spot]</option>
+                                <option value="bgp_bone_g1a_protein_osteocalcin" data-price="2100">BGP-Bone G1a protein
+                                    (Osteocalcin) - [Plasma]</option>
+                                <option value="brucella_igg_antibody" data-price="1200">Brucella-IgG antibody - [Serum]
+                                </option>
+                                <option value="brucella_igm_antibody" data-price="1200">Brucella-IgM antibody - [Serum]
+                                </option>
+                                <option value="c1_esterase_inhibitor" data-price="4850">C1 esterase inhibitor - [nA]
+                                </option>
+                                <option value="ca_cyfra_21_1_lung_cancer_marker" data-price="3200">CA (Cyfra) 21-1 (Lung
+                                    Cancer Marker) - [Serum]</option>
+                                <option value="ca_242" data-price="2400">CA-242 - [Serum]</option>
+                                <option value="ca_72_4" data-price="2500">CA-72-4 - [Serum]</option>
+                                <option value="cadmium_blood" data-price="3400">Cadmium - [Blood]</option>
+                                <option value="calcitonin" data-price="2500">Calcitonin - [Serum]</option>
+                                <option value="calcium_ionised" data-price="450">Calcium, ionised - [Serum]</option>
+                                <option value="calculus_stone_analysis_gall_bladder_stone" data-price="1000">
+                                    Calculus(Stone) analysis - [Gall bladder stone]</option>
+                                <option value="calculus_stone_analysis_renal_calculi" data-price="1000">Calculus(Stone)
+                                    analysis - [Renal calculi]</option>
+                                <option value="calculus_stone_analysis_automated_ftir_gall_bladder_stone"
+                                    data-price="1400">Calculus(Stone) analysis by automated FTIR - [Gall bladder stone]
+                                </option>
+                                <option value="calculus_stone_analysis_automated_ftir_renal_calculi" data-price="1400">
+                                    Calculus(Stone) analysis by automated FTIR - [Renal calculi]</option>
+                                <option value="carbamazepine_tegretol_serum" data-price="800">Carbamazepine (Tegretol) -
+                                    [Serum]</option>
+                                <option value="catecholamines_adrenaline_nor_adrenaline_plasma" data-price="3200">
+                                    Catecholamines (Adrenaline+Nor Adrenaline) - [Plasma]</option>
+                                <option value="ccp_antibody_cyclic_citrullinated_peptide_serum" data-price="1700">
+                                    CCP-Antibody to Cyclic Citrullinated Peptide - [Serum]</option>
+                                <option value="cd4_count_blood" data-price="1200">CD4 count - [Blood]</option>
+                                <option value="cd4_cd8_counts_blood" data-price="1600">CD4/CD8 Counts - [Blood]</option>
+                                <option value="centromere_antibody_serum" data-price="2700">Centromere Antibody -
+                                    [Serum]</option>
+                                <option value="ceruloplasmin_copper_oxidase_serum" data-price="1250">Ceruloplasmin
+                                    (Copper Oxidase) - [Serum]</option>
+                                <option value="ch_50_complement_total_serum" data-price="4500">CH-50 (Complement, total)
+                                    - [Serum]</option>
+                                <option value="chlamydia_trachomatis_dna_fluid" data-price="3400">Chlamydia Trachomatis
+                                    DNA - [Fluid]</option>
+                                <option value="chlamydia_trachomatis_iga_antibodies_serum" data-price="2200">Chlamydia
+                                    Trachomatis-IgA Antibodies - [Serum]</option>
+                                <option value="chlamydia_trachomatis_igg_antibodies_serum" data-price="2200">Chlamydia
+                                    Trachomatis-IgG Antibodies - [Serum]</option>
+                                <option value="chlamydia_trachomatis_igm_antibodies" data-price="2200">Chlamydia
+                                    Trachomatis-IgM Antibodies</option>
+                                <option value="cholera_stool" data-price="400">Cholera - [Stool]</option>
+                                <option value="cholinesterase_pseudo_serum" data-price="1000">Cholinesterase (Pseudo) -
+                                    [Serum]</option>
+                                <option value="chromium_blood" data-price="3500">Chromium - [Blood]</option>
+                                <option value="chromogranin_a_serum" data-price="7400">Chromogranin A - [Serum]</option>
+                                <option value="clostridium_difficile_toxin_a_b_stool" data-price="1600">Clostridium
+                                    Difficile Toxin A and B - [Stool]</option>
+                                <option value="cobalt_blood" data-price="2950">Cobalt - [Blood]</option>
+                                <option value="cobalt_urine_24_hours" data-price="3200">Cobalt - [Urine, 24 hours]
+                                </option>
+                                <option value="cobalt_urine_spot" data-price="3200">Cobalt - [Urine, spot]</option>
+                                <option value="cocaine_quantitative_urine_spot" data-price="1220">Cocaine (Quantitative)
+                                    - [Urine, spot]</option>
+                                <option value="cold_agglutinin_serum" data-price="600">Cold agglutinin - [Serum]
+                                </option>
+                                <option value="copper_24hrs_urine" data-price="2200">Copper - [24hrs urine]</option>
+                                <option value="copper_spot_urine" data-price="1800">Copper - [Spot urine]</option>
+                                <option value="copper_oxidase_ceruloplasmin_serum" data-price="1000">Copper Oxidase
+                                    (Ceruloplasmin) - [Serum]</option>
+                                <option value="cortisol_random" data-price="800">CORTISOL (Random)</option>
+                                <option value="coxiella_burnetii_igg_q_fever_serum" data-price="4000">Coxiella Burnetii,
+                                    IgG (Q fever) - [Serum]</option>
+                                <option value="coxiella_burnetii_igm_q_fever_serum" data-price="4000">Coxiella Burnetii,
+                                    IgM (Q fever) - [Serum]</option>
+                                <option value="coxsackie_antibody_igg_serum" data-price="1800">Coxsackie antibody-IgG -
+                                    [Serum]</option>
+                                <option value="coxsackie_antibody_igm_serum" data-price="1800">Coxsackie antibody-IgM -
+                                    [Serum]</option>
+                                <option value="cryoglobulins_qualitative_serum" data-price="1150">Cryoglobulins
+                                    (Qualitative) - [Serum]</option>
+                                <option value="cryptococcus_antigen_qualitative_csf" data-price="2800">Cryptococcus
+                                    Antigen, Qualitative - [CSF]</option>
+                                <option value="cryptococcus_antigen_qualitative_serum" data-price="2000">Cryptococcus
+                                    Antigen, Qualitative - [Serum]</option>
+                                <option value="cryptococcus_antigen_quantification_csf" data-price="2100">Cryptococcus
+                                    Antigen, Quantification - [CSF]</option>
+                                <option value="cryptococcus_antigen_quantification_serum" data-price="2100">Cryptococcus
+                                    Antigen, Quantification - [Serum]</option>
+                                <option value="crystals_synovial_fluids_synovial_fluid" data-price="130">Crystals,
+                                    Synovial fluids - [Synovial fluid]</option>
+                                <option value="csf_electrophoresis_csf" data-price="4000">CSF electrophoresis - [CSF]
+                                </option>
+                                <option value="cyclosporin_a_trough_level_c0_blood" data-price="2200">Cyclosporin A
+                                    Trough level (C0) - [Blood]</option>
+                                <option value="cysticercus_igg_antibodies_serum" data-price="1700">Cysticercus - IgG
+                                    antibodies - [Serum]</option>
+                                <option value="dengue_igg_antibodies_serum" data-price="400">Dengue-IgG antibodies -
+                                    [Serum]</option>
+                                <option value="dengue_igm_antibodies_serum" data-price="400">Dengue-IgM antibodies -
+                                    [Serum]</option>
+                                <option value="dht_di_hydro_testosterone_serum" data-price="2650">DHT-Di hydro
+                                    testosterone - [Serum]</option>
+                                <option value="diazepam_benzadiazepine_qualitative_urine_spot" data-price="750">Diazepam
+                                    (Benzadiazepine) (Qualitative) - [Urine, spot]</option>
+                                <option value="diazepam_benzadiazepine_quantitative_urine_spot" data-price="1000">
+                                    Diazepam (Benzadiazepine)(Quantitative) - [Urine, spot]</option>
+                                <option value="dilantin_phenytoin_eptoin_serum" data-price="1000">Dilantin (Phenytoin)
+                                    (Eptoin) - [Serum]</option>
+                                <option value="diphtheria_igg_antibodies_serum" data-price="2000">Diphtheria - IgG
+                                    antibodies - [Serum]</option>
+                                <option value="dna_double_strand_antibody_quantitative_serum" data-price="1500">DNA
+                                    (Double Strand) Antibody (Quantitative) - [Serum]</option>
+                                <option value="dpd_deoxypyridinoline_pyrilinks_d_urine" data-price="2000">
+                                    DPD-Deoxypyridinoline (Pyrilinks D) - [Urine]</option>
+                                <option value="ebv_dna_detection_blood" data-price="4250">EBV DNA detection - [Blood]
+                                </option>
+                                <option value="ebv_vca_igg_antibodies_viral_capsid_antigen_epstein_barr_virus_serum"
+                                    data-price="1600">EBV(VCA)-IgG antibodies to Viral Capsid Antigen of Epstein Barr
+                                    Virus - [Serum]</option>
+                                <option value="ebv_vca_igm_antibodies_viral_capsid_antigen_epstein_barr_virus_serum"
+                                    data-price="1600">EBV(VCA)-IgM antibodies to Viral Capsid Antigen of Epstein Barr
+                                    Virus - [Serum]</option>
+                                <option value="echinococcus_hydatid_cyst_igg_serum" data-price="1400">Echinococcus
+                                    (Hydatid Cyst) - IgG, serum - [Serum]</option>
+                                <option value="echovirus_antibody_igg_serum" data-price="2500">Echovirus antibody-IgG -
+                                    [Serum]</option>
+                                <option value="echovirus_antibody_igm_serum" data-price="2500">Echovirus antibody-IgM -
+                                    [Serum]</option>
+                                <option value="endomysial_antibody_serum" data-price="2200">Endomysial Antibody -
+                                    [Serum]</option>
+                                <option value="epo_erythropoietin_serum" data-price="2220">EPO-Erythropoietin - [Serum]
+                                </option>
+                                <option value="erythropoietin_epo_serum" data-price="1220">Erythropoietin (EPO) -
+                                    [Serum]</option>
+                                <option value="ethanol_qualitative_analyse_same_day_serum" data-price="900">Ethanol,
+                                    Qualitative (Analyse same day) - [Serum]</option>
+                                <option value="ethanol_quantitative_analyse_same_day_serum" data-price="900">Ethanol,
+                                    Quantitative (Analyse same day) - [Serum]</option>
+                                <option value="factor_ix_activity_functional_plasma" data-price="4000">Factor IX
+                                    activity (functional) - [Plasma]</option>
+                                <option value="factor_v_activity_functional_plasma" data-price="5500">Factor V ,
+                                    Activity (functional) - [Plasma]</option>
+                                <option value="factor_v_leiden_mutant_detection_blood" data-price="5100">Factor V
+                                    leiden, mutant detection - [Blood]</option>
+                                <option value="factor_viii_activity_plasma" data-price="3500">Factor VIII activity -
+                                    [Plasma]</option>
+                                <option value="factor_xiii_13_activity_plasma" data-price="2500">Factor-XIII (13),
+                                    activity - [Plasma]</option>
+                                <option value="foetal_haemoglobin_hbf_blood" data-price="500">Foetal Haemoglobin (HbF),
+                                    blood - [Blood]</option>
+                                <option value="free_lite_chains_free_kappa_free_lambda_serum" data-price="5000">Free
+                                    Lite Chains (Free Kappa and Free Lambda) - [Serum]</option>
+                                <option value="free_testosterone_serum" data-price="1600">Free Testosterone - [Serum]
+                                </option>
+                                <option value="fructosamine_serum" data-price="1150">Fructosamine - [Serum]</option>
+                                <option value="gall_bladder_stone_analysis" data-price="1000">Gall Bladder stone
+                                    analysis</option>
+                                <option value="gardinal_phenobarbitone_serum" data-price="700">Gardinal (Phenobarbitone)
+                                    , - [Serum]</option>
+                                <option value="gastric_parietal_cell_antibody_total_serum" data-price="1700">Gastric
+                                    Parietal Cell Antibody, total - [Serum]</option>
+                                <option value="gastrin_post_prandial_serum" data-price="1600">Gastrin (Post prandial) -
+                                    [Serum]</option>
+                                <option value="gastrin_serum" data-price="1600">Gastrin - [Serum]</option>
+                                <option value="gbm_igg_antibody_serum" data-price="1600">GBM - IgG Antibody - [Serum]
+                                </option>
+                                <option value="german_measles_rubella_igg_antibody_serum" data-price="450">German
+                                    Measles(Rubella), IgG antibody - [Serum]</option>
+                                <option value="german_measles_rubella_igm_antibody_serum" data-price="450">German
+                                    Measles(Rubella), IgM antibody - [Serum]</option>
+                                <option value="growth_hormone_hgh_serum" data-price="700">Growth Hormone (HGH) - [Serum]
+                                </option>
+                                <option value="haemoglobin_variants_blood" data-price="1150">Haemoglobin variants -
+                                    [Blood]</option>
+                                <option value="haemoglobin_free_urine_spot" data-price="300">Haemoglobin, free - [Urine,
+                                    spot]</option>
+                                <option value="haemosiderin_urine_spot" data-price="1600">Haemosiderin - [Urine, spot]
+                                </option>
+                                <option value="hams_test_pnh_confirmatory_test_serum_blood" data-price="1100">Ham's test
+                                    (PNH confirmatory test) - [Serum, Blood]</option>
+                                <option value="hanta_virus_igm_antibodies_serum" data-price="1300">Hanta Virus - IgM
+                                    antibodies - [Serum]</option>
+                                <option value="haptoglobin_serum" data-price="1800">Haptoglobin - [Serum]</option>
+                                <option value="hav_igm_antibodies_hepatitis_a_virus_serum" data-price="950">HAV-IgM
+                                    Antibodies to Hepatitis `A~ Virus - [Serum]</option>
+                                <option value="hbcab_igm_antibodies_hepatitis_b_core_antigen_serum" data-price="880">
+                                    HBcAb-IgM antibodies to Hepatitis B Core Antigen - [Serum]</option>
+                                <option value="hbf_haemoglobin_f_foetal_haemoglobin_blood" data-price="500">HbF -
+                                    Haemoglobin F, (Foetal Haemoglobin) - [Blood]</option>
+                                <option value="hbv_dna_detection_qualitative_serum_plasma" data-price="3800">HBV-DNA
+                                    Detection (Qualitative) - [Serum or plasma]</option>
+                                <option value="hbv_dna_genotyping_serum" data-price="6700">HBV-DNA Genotyping - [Serum]
+                                </option>
+                                <option value="hco3_plasma" data-price="270">HCO3 - [Plasma]</option>
+                                <option value="hcv_genotyping_serum_plasma" data-price="13000">HCV-Genotyping - [Serum,
+                                    Plasma]</option>
+                                <option value="hcv_igm_antibody_serum" data-price="870">HCV-IgM antibody - [Serum]
+                                </option>
+                                <option value="hcv_rna_detection_qualitative_plasma_serum" data-price="3900">HCV-RNA
+                                    Detection (Qualitative) - [Plasma or serum]</option>
+                                <option value="hcv_rna_quantification_viral_load_plasma_serum" data-price="6800">HCV-RNA
+                                    Quantification (Viral load) - [Plasma or serum]</option>
+                                <option value="herpes_simplex_ii_antibody_serum" data-price="1420">Herpes Simplex II
+                                    Antibody - [Serum]</option>
+                                <option value="hev_igm_antibodies_hepatitis_e_virus_serum" data-price="1100">HEV-IgM
+                                    Antibodies to Hepatitis E Virus - [Serum]</option>
+                                <option value="hgh_human_growth_hormone_serum" data-price="700">HGH- Human Growth
+                                    Hormone - [Serum]</option>
+                                <option value="hiaa_5_hydroxy_indole_acetic_acid_urine_24_hours" data-price="2400">HIAA
+                                    (5) (Hydroxy Indole Acetic Acid) - [Urine, 24 hours]</option>
+                                <option value="histone_antibody_serum" data-price="1400">Histone antibody - [Serum]
+                                </option>
+                                <option value="hiv_1_rna_quantification_viral_load_plasma" data-price="5110">HIV-1-RNA
+                                    Quantification (Viral load) - [Plasma]</option>
+                                <option value="hiv_i_drug_resistance_test_plasma" data-price="21000">HIV-I drug
+                                    resistance test - [Plasma]</option>
+                                <option value="hiv_p24_antigen_with_confirmation_serum" data-price="1200">HIV-p24
+                                    antigen (with confirmation) - [Serum]</option>
+                                <option value="hiv_proviral_dna_blood_plasma" data-price="2800">HIV-proviral DNA -
+                                    [Blood, plasma]</option>
+                                <option value="hla_b27_blood" data-price="2200">HLA-B27 - [Blood]</option>
+                                <option value="homogentisic_acid_alkaptanuria_urine_spot" data-price="800">Homogentisic
+                                    acid (Alkaptanuria) - [Urine, spot]</option>
+                                <option value="hpv_dna_vaginal_swab" data-price="2700">HPV-DNA - [Vaginal swab]</option>
+                                <option value="hsv_dna_detection_type_1_2_virus_csf" data-price="3700">HSV-DNA detection
+                                    for type 1 and 2 virus - [CSF]</option>
+                                <option value="hsv_dna_detection_type_1_2_virus_serum" data-price="3700">HSV-DNA
+                                    detection for type 1 and 2 virus - [Serum]</option>
+                                <option value="htlv_1_2_antibodies_serum_plasma" data-price="3100">HTLV 1 and 2,
+                                    antibodies - [Serum, plasma]</option>
+                                <option value="igd_blood" data-price="2700">IgD - [Blood]</option>
+                                <option value="igf_bp_3_serum" data-price="2300">IGF BP-3 - [Serum]</option>
+                                <option value="igf_1_somatomedin_c_serum" data-price="1900">IGF-1 (Somatomedin C) -
+                                    [Serum]</option>
+                                <option value="il_6_serum" data-price="3300">IL-6 - [Serum]</option>
+                                <option value="immunofixation_qualitative_urine_24_hrs" data-price="6100">Immunofixation
+                                    ,Qualitative - ( Urine, 24 hrs)</option>
+                                <option value="immunofixation_quantative_serum" data-price="7200">Immunofixation
+                                    ,Quantative - ( Serum )</option>
+                                <option value="immunofixation_quantative_urine_24_hrs" data-price="8000">Immunofixation
+                                    ,Quantative - ( Urine,24 Hrs )</option>
+                                <option value="india_ink_preparation_csf" data-price="380">India Ink Preparation, CSF -
+                                    [CSF]</option>
+                                <option value="infectious_mononucleosis_test_serum" data-price="700">Infectious
+                                    Mononucleosis test - [Serum]</option>
+                                <option value="inhibin_a_serum" data-price="1400">Inhibin A - [Serum]</option>
+                                <option value="inhibin_b_serum" data-price="1800">Inhibin B - [Serum]</option>
+                                <option value="insulin_antibody_serum" data-price="2675">Insulin antibody - [Serum]
+                                </option>
+                                <option value="insulin_like_growth_factor_igf_1_somatomedin_c_serum" data-price="3150">
+                                    Insulin Like Growth Factor (IGF)-1 (Somatomedin C) - [Serum]</option>
+                                <option value="interferon_gamma_tb_quantiferon_tb_gold_blood" data-price="2870">
+                                    Interferon Gamma for TB (Quantiferon TB Gold) - [Blood]</option>
+                                <option value="intrinsic_factor_antibody_serum" data-price="1700">Intrinsic factor
+                                    antibody - [Serum]</option>
+                                <option value="islet_cell_antibody_if_serum" data-price="2100">Islet cell antibody (IF)
+                                    - [Serum]</option>
+                                <option value="kappa_lambda_light_chains_freelite_serum" data-price="3700">Kappa and
+                                    Lambda light chains, freelite - [Serum]</option>
+                                <option value="kappa_light_chains_blood" data-price="2100">Kappa Light Chains - [Blood]
+                                </option>
+                                <option value="karyotyping_serum" data-price="4350">Karyotyping - [Serum]</option>
+                                <option value="kct_kaolin_clotting_time_plasma" data-price="1000">KCT-Kaolin Clotting
+                                    time - [Plasma]</option>
+                                <option value="ketone_bodies_urine_spot" data-price="50">Ketone bodies - [Urine, spot]
+                                </option>
+                                <option value="ketosteroids_17_urine_24_hours" data-price="2000">Ketosteroids (17) -
+                                    [Urine, 24 hours]</option>
+                                <option value="kidney_stone_analysis_serum" data-price="1000">Kidney stone Analysis -
+                                    [Serum]</option>
+                                <option value="la_antibody_ssb_soluble_substance_b_antibody_serum" data-price="1400">La
+                                    antibody (SSB-Soluble Substance B) Antibody, serum - [Serum]</option>
+                                <option value="lactate_plasma" data-price="1320">Lactate - [Plasma]</option>
+                                <option value="lanoxin_digoxin_serum" data-price="750">Lanoxin (Digoxin) - [Serum]
+                                </option>
+                                <option value="lead_blood" data-price="2100">Lead - [Blood]</option>
+                                <option value="lead_urine_24_hours" data-price="2100">Lead - [Urine, 24 hours]</option>
+                                <option value="lead_urine_spot" data-price="2100">Lead - [Urine, spot]</option>
+                                <option value="legionella_pneumophila_igg_antibody_serum" data-price="2800">Legionella
+                                    pneumophila IgG antibody - [Serum]</option>
+                                <option value="legionella_pneumophila_igm_antibody_serum" data-price="2800">Legionella
+                                    pneumophila IgM antibody - [Serum]</option>
+                                <option value="leptin_human_leptin_serum" data-price="5100">Leptin (Human Leptin) -
+                                    [Serum]</option>
+                                <option value="leucocyte_alkaline_phosphatase_lap_score_blood" data-price="1300">
+                                    Leucocyte Alkaline Phosphatase (LAP) score - [Blood]</option>
+                                <option value="light_chains_freelite_kappa_lambda_serum" data-price="3700">Light Chains,
+                                    Freelite (Kappa and Lambda) - [Serum]</option>
+                                <option value="lipoprotein_electrophoresis_serum" data-price="2800">Lipoprotein
+                                    Electrophoresis - [Serum]</option>
+                                <option value="lkm1_antibodies_liver_kidney_microsomes_qualitative_serum"
+                                    data-price="1200">LKM1-Antibodies to Liver Kidney Microsomes (Qualitative) - [Serum]
+                                </option>
+                                <option value="lyme_disease_borrelia_burgdorferi_igg_antibodies_serum"
+                                    data-price="2020">Lyme disease (Borrelia Burgdorferi) IgG antibodies - [Serum]
+                                </option>
+                                <option value="lyme_disease_borrelia_burgdorferi_igm_antibodies_serum"
+                                    data-price="1800">Lyme disease (Borrelia Burgdorferi) IgM antibodies - [Serum]
+                                </option>
+                                <option value="manganese_serum" data-price="2400">Manganese - [Serum]</option>
+                                <option value="marijuana_thc_cannabis_qualitative_urine_spot" data-price="750">Marijuana
+                                    (THC) (Cannabis) (Qualitative) - [Urine, spot]</option>
+                                <option value="marijuana_thc_cannabis_quantitative_urine_spot" data-price="750">
+                                    Marijuana (THC) (Cannabis) (Quantitative) - [Urine, spot]</option>
+                                <option value="measles_rubeola_igg_antibodies_serum" data-price="1280">Measles (Rubeola)
+                                    -IgG antibodies - [Serum]</option>
+                                <option value="measles_rubeola_igm_antibodies_serum" data-price="1280">Measles (Rubeola)
+                                    -IgM antibodies - [Serum]</option>
+                                <option value="mercury_serum" data-price="2950">Mercury - [Serum]</option>
+                                <option value="mercury_urine_24_hours" data-price="2950">Mercury - [Urine, 24 hours]
+                                </option>
+                                <option value="mercury_urine_spot" data-price="3300">Mercury - [Urine, spot]</option>
+                                <option value="metanephrine_plasma" data-price="2400">METANEPHRINE (Plasma)</option>
+                                <option value="metanephrine_quantitative_urine_24_hours" data-price="1900">Metanephrine
+                                    (Quantitative) - [Urine, 24 hours]</option>
+                                <option value="meth_haemoglobin_blood" data-price="900">Meth-haemoglobin - [Blood]
+                                </option>
+                                <option value="mitochondrial_m2_antibody_qualitative_serum" data-price="1250">
+                                    Mitochondrial (M2) Antibody (Qualitative) - [Serum]</option>
+                                <option value="morphine_opiates_qualitative_urine_spot" data-price="770">Morphine
+                                    (Opiates) (Qualitative) - [Urine, spot]</option>
+                                <option value="morphine_opiates_quantitative_urine_spot" data-price="750">Morphine
+                                    (Opiates) (Quantitative) - [Urine, spot]</option>
+                                <option value="mucopolysaccharides_mps_qualitative_serum" data-price="360">
+                                    Mucopolysaccharides (MPS) (Qualitative) - [Serum]</option>
+                                <option value="mumps_igg_antibodies_serum" data-price="3000">Mumps-IgG Antibodies -
+                                    [Serum]</option>
+                                <option value="mumps_igm_antibodies_serum" data-price="1620">Mumps-IgM Antibodies -
+                                    [Serum]</option>
+                                <option value="mycoplasma_pneumoniae_antibody_igg_serum" data-price="1800">Mycoplasma
+                                    pneumoniae antibody, IgG - [Serum]</option>
+                                <option value="mycoplasma_pneumoniae_antibody_igm_serum" data-price="1800">Mycoplasma
+                                    pneumoniae antibody, IgM - [Serum]</option>
+                                <option value="myoglobin_serum" data-price="1700">Myoglobin - [Serum]</option>
+                                <option value="myoglobin_urine" data-price="700">Myoglobin - [Urine]</option>
+                                <option value="neutrophils_count_absolute_blood" data-price="100">Neutrophils Count,
+                                    Absolute - [Blood]</option>
+                                <option value="nor_adrenaline_nor_epinephrine_plasma" data-price="1600">Nor-Adrenaline
+                                    (Nor-epinephrine) - [Plasma]</option>
+                                <option value="nor_epinephrine_nor_adrenaline_plasma" data-price="1600">Nor-epinephrine
+                                    (Nor-Adrenaline ) - [Plasma]</option>
+                                <option value="nse_neuron_specific_enolase_serum" data-price="3400">NSE-Neuron specific
+                                    enolase - [Serum]</option>
+                                <option value="nt_pro_bnp_serum_plasma" data-price="2520">NT Pro BNP - [Serum/Plasma]
+                                </option>
+                                <option value="opiates_morphine_quantitative_urine" data-price="750">Opiates (Morphine)
+                                    (Quantitative) - [Urine]</option>
+                                <option value="osmolality_automated_osmometry_serum" data-price="750">Osmolality
+                                    (Automated Osmometry) - [Serum]</option>
+                                <option value="osmolality_automated_osmometry_urine" data-price="750">Osmolality
+                                    (Automated Osmometry) - [Urine]</option>
+                                <option value="osmotic_fragility_test_rbc_fragility_test_blood" data-price="700">Osmotic
+                                    fragility test. (RBC fragility test) - [Blood]</option>
+                                <option value="osteocalcin_bgp_bone_g1a_protein_plasma" data-price="2100">Osteocalcin
+                                    (BGP-Bone G1a protein) - [Plasma]</option>
+                                <option value="paracetamol_acetaminophane_serum" data-price="1100">Paracetamol
+                                    (Acetaminophane) - [Serum]</option>
+                                <option value="parietal_cell_antibody_total_serum" data-price="1700">Parietal Cell
+                                    Antibody, total - [Serum]</option>
+                                <option value="parvovirus_b19_igg_serum" data-price="3000">Parvovirus B19, IgG - [Serum]
+                                </option>
+                                <option value="parvovirus_b19_igm_serum" data-price="3000">Parvovirus B19, IgM - [Serum]
+                                </option>
+                                <option value="paul_bunnel_test_serum" data-price="750">Paul Bunnel Test - [Serum]
+                                </option>
+                                <option value="pcp_phencyclidine_phosphate_urine_quantitative_urine" data-price="750">
+                                    PCP-Phencyclidine Phosphate, urine (Quantitative) - [Urine]</option>
+                                <option value="pertussis_igg_antibodies_serum" data-price="1800">Pertussis - IgG
+                                    antibodies - [Serum]</option>
+                                <option value="phenobarbitone_gardinal_serum" data-price="700">Phenobarbitone (Gardinal)
+                                    , - [Serum]</option>
+                                <option value="phenyl_alanine_neonatal_screen_blood" data-price="1600">Phenyl alanine,
+                                    neonatal screen - [Blood]</option>
+                                <option value="phenytoin_eptoin_serum" data-price="1020">Phenytoin (Eptoin), - [Serum]
+                                </option>
+                                <option value="plasma_renin_activity_plasma_pra_plasma" data-price="4700">Plasma Renin
+                                    Activity, plasma (PRA) - [Plasma]</option>
+                                <option value="platelet_antibodies_serum" data-price="4300">Platelet Antibodies -
+                                    [Serum]</option>
+                                <option value="pnh_confirmatory_test_hams_test_serum_blood" data-price="6900">PNH
+                                    confirmatory test (Ham's test) - [Serum, Blood]</option>
+                                <option value="porphyrins_includes_ala_pbg_urine_24_hours" data-price="4100">Porphyrins
+                                    (Includes ALA & PBG) - [Urine, 24 hours]</option>
+                                <option value="porphyrins_includes_ala_pbg_urine_spot" data-price="4100">Porphyrins
+                                    (Includes ALA & PBG) - [Urine, spot]</option>
+                                <option value="ppd_mantoux_test_tuberculin_skin_test_skin_test" data-price="100">PPD
+                                    (Mantoux test) (Tuberculin skin test) - [Skin test]</option>
+                                <option value="procalcitonin" data-price="2700">Procalcitonin</option>
+                                <option value="prostatic_fluid_routine_examination_basic_prostatic_fluid"
+                                    data-price="700">Prostatic fluid, routine examination (Basic) - [Prostatic fluid]
+                                </option>
+                                <option value="protein_c_activity_functional_plasma" data-price="4020">Protein C
+                                    activity (functional) - [Plasma]</option>
+                                <option value="protein_c_antigen_quantification_plasma" data-price="4020">Protein C
+                                    antigen, quantification - [Plasma]</option>
+                                <option value="protein_electrophoresis_csf_serum" data-price="4000">Protein
+                                    Electrophoresis - [CSF, serum]</option>
+                                <option value="protein_electrophoresis_urine_24_hours" data-price="930">Protein
+                                    Electrophoresis - [Urine, 24 hours]</option>
+                                <option value="protein_s_activity_total_plasma" data-price="4020">Protein S activity,
+                                    total - [Plasma]</option>
+                                <option value="protein_s_antigen_quantification_plasma" data-price="4960">Protein S
+                                    antigen, Quantification - [Plasma]</option>
+                                <option value="pseudo_cholinesterase_serum" data-price="1000">Pseudo Cholinesterase -
+                                    [Serum]</option>
+                                <option value="pyruvate_pyruvic_acid_blood" data-price="2700">Pyruvate (Pyruvic acid) -
+                                    [Blood]</option>
+                                <option value="rabies_antibody_serum" data-price="2300">Rabies antibody - [Serum]
+                                </option>
+                                <option value="rbc_fragility_test_osmotic_fragility_test_blood" data-price="700">RBC
+                                    fragility test (Osmotic fragility test.) - [Blood]</option>
+                                <option value="renal_stone_analysis_renal_stone" data-price="1000">Renal stone analysis
+                                    - [Renal stone]</option>
+                                <option value="renin_direct_plasma" data-price="3200">Renin direct - [Plasma]</option>
+                                <option value="rnp_sm_antibody_serum" data-price="1400">RNP-Sm Antibody - [Serum]
+                                </option>
+                                <option value="routine_examination_prostatic_fluid_basic_prostatic_fluid"
+                                    data-price="700">Routine examination of prostatic fluid(Basic) - [Prostatic fluid]
+                                </option>
+                                <option value="routine_examination_ascitic_fluid_basic_ascitic_fluid" data-price="700">
+                                    Routine examination, ascitic fluid. (Basic) - [Ascitic fluid]</option>
+                                <option value="routine_examination_body_fluids_basic_body_fluid" data-price="700">
+                                    Routine examination, body fluids (Basic) - [Body fluid]</option>
+                                <option value="routine_examination_csf_basic_csf" data-price="810">Routine examination,
+                                    CSF (Basic) - [CSF]</option>
+                                <option value="routine_examination_pericardial_fluid_basic_pericardial_fluid"
+                                    data-price="700">Routine examination, Pericardial fluid (Basic) - [Pericardial
+                                    fluid]</option>
+                                <option value="routine_examination_peritoneal_fluid_basic_peritoneal_fluid"
+                                    data-price="700">Routine examination, Peritoneal fluid (Basic) - [Peritoneal fluid]
+                                </option>
+                                <option value="routine_examination_plueral_fluid_basic_pleural_fluid" data-price="810">
+                                    Routine examination, plueral fluid (Basic) - [Pleural fluid]</option>
+                                <option value="rubella_dna_detection_blood" data-price="14600">Rubella-DNA detection -
+                                    [Blood]</option>
+                                <option value="rubeola_measles_igg_antibodies_serum" data-price="950">Rubeola (Measles)
+                                    -IgG antibodies - [Serum]</option>
+                                <option value="rubeola_measles_igm_antibodies_serum" data-price="1050">Rubeola (Measles)
+                                    -IgM antibodies - [Serum]</option>
+                                <option value="saccharomyces_cerevisiae_antibodies_asca_iga_serum" data-price="1800">
+                                    Saccharomyces Cerevisiae Antibodies (ASCA), IgA - [Serum]</option>
+                                <option value="saccharomyces_cerevisiae_antibodies_asca_igg_serum" data-price="1800">
+                                    Saccharomyces Cerevisiae Antibodies (ASCA), IgG - [Serum]</option>
+                                <option value="scl_70_antibody_serum" data-price="1400">Scl-70 antibody, serum - [Serum]
+                                </option>
+                                <option value="selenium_blood" data-price="3200">Selenium - [Blood]</option>
+                                <option value="serotonin_5_ht_5_hydroxy_tryptamine_serum" data-price="3600">Serotonin
+                                    (5-HT) (5-Hydroxy Tryptamine) - [Serum]</option>
+                                <option value="sex_hormone_binding_globulin_shbg_serum" data-price="1900">Sex Hormone
+                                    Binding Globulin (SHBG) - [Serum]</option>
+                                <option value="shbg_sex_hormone_binding_globulin_serum" data-price="2355">SHBG-Sex
+                                    Hormone Binding Globulin - [Serum]</option>
+                                <option value="sm_smith_antigen_serum" data-price="1400">Sm (Smith) antigen - [Serum]
+                                </option>
+                                <option value="smooth_muscle_antibody_asma_serum" data-price="1700">Smooth Muscle
+                                    Antibody (ASMA) - [Serum]</option>
+                                <option value="smooth_muscle_antibody_asma_with_titre_serum" data-price="3100">Smooth
+                                    Muscle Antibody (ASMA) with titre - [Serum]</option>
+                                <option value="somatomedin_c_igf_1_serum" data-price="1900">Somatomedin C (IGF-1), serum
+                                    - [Serum]</option>
+                                <option value="specific_gravity_urine" data-price="50">Specific gravity, urine - [Urine]
+                                </option>
+                                <option value="sperm_antibody_asab_total_semen" data-price="1500">Sperm Antibody (ASAB)
+                                    (Total) - [Semen]</option>
+                                <option value="ssa_ro_soluble_substance_a_antibody_serum" data-price="1400">SSA-Ro
+                                    (Soluble Substance A) Antibody - [Serum]</option>
+                                <option value="ssb_la_soluble_substance_b_antibody_serum" data-price="1400">SSB-La
+                                    (Soluble Substance B) Antibody - [Serum]</option>
+                                <option value="stone_calculus_analysis_gall_bladder_stone" data-price="1000">Stone
+                                    (Calculus) analysis - [Gall bladder stone]</option>
+                                <option value="stone_calculus_analysis_renal_calculi" data-price="1000">Stone (Calculus)
+                                    analysis - [Renal calculi]</option>
+                                <option value="stone_calculus_analysis_automated_ftir_gall_bladder_stone"
+                                    data-price="1400">Stone (Calculus) analysis by automated FTIR - [Gall bladder stone]
+                                </option>
+                                <option value="stone_calculus_analysis_automated_ftir_renal_calculi" data-price="1400">
+                                    Stone (Calculus) analysis by automated FTIR - [Renal calculi]</option>
+                                <option value="sucrose_lysis_test_pnh_screening_test_blood" data-price="700">Sucrose
+                                    Lysis Test (PNH Screening test) - [Blood]</option>
+                                <option value="synovial_fluid_routine_examination_basic_synovial_fluid"
+                                    data-price="700">Synovial fluid, Routine examination (Basic) - [Synovial Fluid]
+                                </option>
+                                <option value="syphilis_treponema_antibodies_serum" data-price="1100">Syphilis
+                                    (Treponema) Antibodies - [Serum]</option>
+                                <option value="tacrolimus_blood" data-price="3200">Tacrolimus - [Blood]</option>
+                                <option value="tegretol_carbamazepine_serum" data-price="800">Tegretol (Carbamazepine),
+                                    serum - [Serum]</option>
+                                <option value="testosterone_free_serum" data-price="1900">Testosterone, Free - [Serum]
+                                </option>
+                                <option value="thallium_serum" data-price="3100">Thallium - [Serum]</option>
+                                <option value="thallium_urine_24h" data-price="3100">Thallium - [Urine, 24h]</option>
+                                <option value="thc_cannabis_marijuana_quantitative_urine_spot" data-price="770">THC
+                                    (Cannabis) (Marijuana) (Quantitative) - [Urine, spot]</option>
+                                <option value="thc_cannabis_marijuana_urine_qualitative_urine_spot" data-price="750">THC
+                                    (Cannabis) (Marijuana), urine (Qualitative) - [Urine, spot]</option>
+                                <option value="theophylline_serum" data-price="700">Theophylline - [Serum]</option>
+                                <option value="thrombin_time_tt_plasma" data-price="1000">Thrombin time (TT) - [Plasma]
+                                </option>
+                                <option value="thrombocyte_platelet_count_blood" data-price="100">Thrombocyte (Platelet)
+                                    count - [Blood]</option>
+                                <option value="thyrocalcitonin_calcitonin_serum" data-price="2000">Thyrocalcitonin
+                                    (Calcitonin) - [Serum]</option>
+                                <option value="thyroglobulin_antibody_ata_serum" data-price="1600">Thyroglobulin
+                                    Antibody (ATA) - [Serum]</option>
+                                <option value="thyroid_antibodies_atab_includes_tpo_and_ata_serum" data-price="2200">
+                                    Thyroid Antibodies-AtAb (Includes TPO and ATA) - [Serum]</option>
+                                <option value="tissue_transglutaminase_ttg_antibody_iga_serum" data-price="1800">Tissue
+                                    Transglutaminase (tTG) Antibody-IgA - [Serum]</option>
+                                <option value="tnf_alpha_tumor_necrosis_factor_serum" data-price="3800">TNF-Alpha(Tumor
+                                    necrosis factor) - [Serum]</option>
+                                <option value="toxoplasma_avidity_test_serum" data-price="1400">Toxoplasma, Avidity test
+                                    - [Serum]</option>
+                                <option value="transferrin_serum" data-price="900">Transferrin - [Serum]</option>
+                                <option value="treponema_syphillis_antibodies_serum" data-price="1100">Treponema
+                                    (Syphillis) Antibodies - [Serum]</option>
+                                <option value="tsh_receptor_antibody_serum" data-price="3600">TSH receptor antibody -
+                                    [Serum]</option>
+                                <option value="tumor_necrosis_factor_tnf_alpha_serum" data-price="3800">Tumor necrosis
+                                    factor (TNF)-Alpha, Serum - [Serum]</option>
+                                <option value="u1_snrnp_68_kda_serum" data-price="1500">U1-snRNP (68 KDa), serum -
+                                    [Serum]</option>
+                                <option value="valproic_acid_valparin_serum" data-price="800">Valproic Acid (Valparin) -
+                                    [Serum]</option>
+                                <option value="varicella_herpes_zoster_igg_antibodies_serum" data-price="1820">Varicella
+                                    (Herpes) Zoster-IgG antibodies - [Serum]</option>
+                                <option value="varicella_herpes_zoster_igm_antibodies_serum" data-price="3600">Varicella
+                                    (Herpes) Zoster-IgM antibodies - [Serum]</option>
+                                <option value="vitamin_a_retinol_serum" data-price="4000">Vitamin A (Retinol) - [Serum]
+                                </option>
+                                <option value="vitamin_b1_thiamine_blood" data-price="3500">Vitamin B1 (Thiamine) -
+                                    [Blood]</option>
+                                <option value="vitamin_b2_riboflavin_plasma" data-price="2800">Vitamin B2 (Riboflavin) -
+                                    [Plasma]</option>
+                                <option value="vitamin_b6_pyridoxine_plasma" data-price="3500">Vitamin B6 (Pyridoxine) -
+                                    [Plasma]</option>
+                                <option value="vitamin_c_ascorbic_acid_plasma" data-price="3000">Vitamin C (Ascorbic
+                                    acid) - [Plasma]</option>
+                                <option value="vitamin_d_1_25_dihydroxy_cholecalciferol_serum" data-price="3600">Vitamin
+                                    D (1,25 Dihydroxy Cholecalciferol) - [Serum]</option>
+                                <option value="vitamin_e_tocopherol_serum" data-price="4000">Vitamin E (Tocopherol) -
+                                    [Serum]</option>
+                                <option value="water_analysis_chemical_water" data-price="1700">Water analysis, Chemical
+                                    - [Water]</option>
+                                <option value="weil_felix_test_serum" data-price="660">Weil Felix Test - [Serum]
+                                </option>
+                                <option value="wuchereria_bancrofti_filaria_antigen_blood" data-price="4400">Wuchereria
+                                    Bancrofti (Filaria) Antigen - [Blood]</option>
+                                <option value="zinc_serum" data-price="2200">Zinc - [Serum]</option>
+                                <option value="pcd_lower_extrimity_av_study_both_limb" data-price="5000">PCD Lower
+                                    Extrimity A/V Study (Both Limb)</option>
+                                <option value="pcd_lower_extrimity_av_study_left_limb" data-price="5000">PCD Lower
+                                    Extrimity A/V Study (Left Limb)</option>
+                                <option value="pcd_lower_extrimity_art_study_both_limbs" data-price="5000">PCD Lower
+                                    Extrimity Art Study (Both Limbs)</option>
+                                <option value="pcd_lower_extrimity_art_study_left_limb" data-price="2500">PCD Lower
+                                    Extrimity Art Study (Left Limb)</option>
+                                <option value="pcd_lower_extrimity_art_study_right_limb" data-price="2500">PCD Lower
+                                    Extrimity Art Study (Right Limb)</option>
+                                <option value="pcd_lower_extrimity_venous_study_left_limb" data-price="2500">PCD Lower
+                                    Extrimity Venous Study ( Left Limb )</option>
+                                <option value="pcd_lower_extrimity_venous_study_right_limb" data-price="2500">PCD Lower
+                                    Extrimity Venous Study ( Right Limb )</option>
+                                <option value="pcd_lower_extrimity_venous_study_both_limbs" data-price="2500">PCD Lower
+                                    Extrimity Venous Study (Both Limbs)</option>
+                                <option value="pcd_neck_vessels" data-price="2500">PCD Neck Vessels</option>
+                                <option value="pcd_pelvis" data-price="2500">PCD Pelvis</option>
+                                <option value="pcd_penile_doppler" data-price="2500">PCD Penile Doppler</option>
+                                <option value="pcd_pregnancy" data-price="2500">PCD Pregnancy</option>
+                                <option value="pcd_renal" data-price="2500">PCD RENAL</option>
+                                <option value="pcd_renal_doppler" data-price="2500">PCD Renal Doppler</option>
+                                <option value="pcd_scrotal_doppler" data-price="2500">PCD Scrotal Doppler</option>
+                                <option value="pcd_thyroid" data-price="2500">PCD Thyroid</option>
+                                <option value="pcd_transplant_kidney" data-price="2500">PCD Transplant Kidney</option>
+                                <option value="pcd_transvaginal" data-price="2500">PCD Transvaginal</option>
+                                <option value="pcd_upper_extremity_art_study_left_limb" data-price="2500">PCD Upper
+                                    Extremity Art Study (Left Limb)</option>
+                                <option value="pcd_upper_extremity_art_study_right_limb" data-price="2500">PCD Upper
+                                    Extremity Art Study (Right Limb)</option>
+                                <option value="pcd_upper_extremity_art_study_both_limbs" data-price="5000">PCD Upper
+                                    Extremity Art Study(Both Limbs)</option>
+                                <option value="pcd_upper_extremity_venous_study_left_limb" data-price="2500">PCD Upper
+                                    Extremity Venous Study (Left Limb)</option>
+                                <option value="pcd_upper_extremity_venous_study_right_limb" data-price="2500">PCD Upper
+                                    Extremity Venous Study (Right Limb)</option>
+                                <option value="pcd_upper_extremity_venous_study_both_limbs" data-price="2500">PCD Upper
+                                    Extremity Venous Study(Both Limbs)</option>
+                                <option value="pcd_varicocele" data-price="2500">PCD Varicocele</option>
+                                <option value="pulmonary_function_test" data-price="1500">Pulmonary Function Test
+                                </option>
+                                <option value="health_check_camp_lic" data-price="100">Health Check Camp (LIC)</option>
+                                <option value="sono_abdomen_female" data-price="1500">Sono Abdomen (Female)</option>
+                                <option value="sono_abdomen_male" data-price="1500">Sono Abdomen (Male)</option>
+                                <option value="sono_abdomen_and_pelvis_female" data-price="1500">Sono Abdomen and Pelvis
+                                    (Female)</option>
+                                <option value="sono_abdomen_and_pelvis_male" data-price="1500">Sono Abdomen and Pelvis
+                                    (Male)</option>
+                                <option value="sono_anomaly_scan" data-price="2000">Sono Anomaly Scan</option>
+                                <option value="sono_b_scan_both_eyes" data-price="1200">Sono B Scan-Both Eyes</option>
+                                <option value="sono_breast" data-price="1500">Sono Breast</option>
+                                <option value="sono_chest" data-price="1500">Sono Chest</option>
+                                <option value="sono_follicular_study" data-price="500">Sono Follicular Study</option>
+                                <option value="sono_kub_female" data-price="1500">Sono K.U.B (Female)</option>
+                                <option value="sono_kub_male" data-price="1500">Sono K.U.B (Male)</option>
+                                <option value="sono_kub_prostate" data-price="1500">Sono KUB & Prostate</option>
+                                <option value="sono_local_part" data-price="1500">Sono Local Part</option>
+                                <option value="sono_neck" data-price="1200">Sono Neck</option>
+                                <option value="sono_obstetrics_preg_1_to_3_months" data-price="1500">Sono
+                                    Obstetrics/Preg(1 to 3 Months)</option>
+                                <option value="sono_obstetrics_preg_4_to_9_months" data-price="1500">Sono
+                                    Obstetrics/Preg(4 to 9 Months)</option>
+                                <option value="sono_pelvis_female" data-price="1500">Sono Pelvis (Female)</option>
+                                <option value="sono_pelvis_male" data-price="1500">Sono Pelvis (Male)</option>
+                                <option value="sono_prostrate" data-price="1500">Sono Prostrate</option>
+                                <option value="sono_scrotum" data-price="1500">Sono Scrotum</option>
+                                <option value="sono_skull" data-price="1500">Sono Skull</option>
+                                <option value="sono_thyroid" data-price="1500">Sono Thyroid</option>
+                                <option value="sono_transrectal" data-price="1500">Sono Transrectal</option>
+                                <option value="sono_transvaginal" data-price="1500">Sono Transvaginal</option>
+                                <option value="stress_test" data-price="1800">Stress Test</option>
+                                <option value="hsg_procedure" data-price="2500">HSG (Procedure)</option>
+                                <option value="xray_both_ankle_joint_ap_lat" data-price="1600">Xray Both Ankle Joint
+                                    AP/LAT</option>
+                                <option value="xray_both_clavicle" data-price="800">Xray Both Clavicle</option>
+                                <option value="xray_both_elbow_joint_ap_lat" data-price="1600">Xray Both Elbow Joint
+                                    AP/LAT</option>
+                                <option value="xray_both_foot_ap_lat" data-price="1600">XRAY BOTH FOOT AP/LAT</option>
+                                <option value="xray_both_foot_ap_lat_obl" data-price="2400">XRAY BOTH FOOT AP/LAT/OBL
+                                </option>
+                                <option value="xray_both_foot_ap_obl" data-price="1600">Xray Both Foot AP/OBL</option>
+                                <option value="xray_both_forearm_radius_ulna_ap_lat" data-price="1600">Xray Both Forearm
+                                    (Radius / Ulna) AP/LAT</option>
+                                <option value="xray_both_hand_ap" data-price="800">Xray Both Hand AP</option>
+                                <option value="xray_both_hand_ap_obl" data-price="1600">Xray Both Hand AP/OBL</option>
+                                <option value="xray_both_heel_lat_axial" data-price="1600">Xray Both Heel LAT/Axial
+                                </option>
+                                <option value="xray_both_heels_lat" data-price="800">Xray Both Heels Lat</option>
+                                <option value="xray_both_hip_joints_frog_view" data-price="400">Xray Both Hip Joints
+                                    Frog View</option>
+                                <option value="xray_both_humerus_ap_lat" data-price="1600">Xray Both Humerus AP/LAT
+                                </option>
+                                <option value="xray_both_knee_ap_lat_standing" data-price="1600">Xray Both Knee AP/LAT
+                                    Standing</option>
+                                <option value="xray_both_knee_ap_standing" data-price="800">Xray Both Knee AP (STANDING)
+                                </option>
+                                <option value="xray_both_knee_axial_view" data-price="800">Xray Both Knee Axial View
+                                </option>
+                                <option value="xray_both_patella_skyline_view" data-price="800">Xray Both Patella
+                                    Skyline View</option>
+                                <option value="xray_both_sacro_iliac_joint_obl" data-price="800">Xray Both Sacro-iliac
+                                    Joint OBL</option>
+                                <option value="xray_both_shoulder_joint_ap_lat" data-price="1600">Xray Both Shoulder
+                                    Joint AP/LAT</option>
+                                <option value="xray_both_tibia_fibula_pa_lat" data-price="1600">Xray Both Tibia & Fibula
+                                    PA/LAT</option>
+                                <option value="xray_both_toe_ap_lat" data-price="1600">Xray Both Toe AP/LAT</option>
+                                <option value="xray_both_wrist_joint_ap_lat" data-price="1600">Xray Both Wrist Joint
+                                    AP/LAT</option>
+                                <option value="xray_cervical_spine_ap" data-price="400">Xray Cervical Spine - AP
+                                </option>
+                                <option value="xray_cervical_spine_both_obligues" data-price="800">Xray Cervical Spine -
+                                    Both Obligues</option>
+                                <option value="xray_cervical_spine_ap_lat" data-price="800">Xray Cervical Spine AP/LAT
+                                </option>
+                                <option value="xray_cervical_spine_ap_lat_both_obl" data-price="1600">Xray Cervical
+                                    Spine AP/LAT/Both OBL</option>
+                                <option value="xray_cervical_spine_ap_lat_flexion_extension" data-price="1600">Xray
+                                    Cervical Spine AP/LAT/Flexion / Extension</option>
+                                <option value="xray_cervical_spine_lat" data-price="400">Xray Cervical Spine Lat
+                                </option>
+                                <option value="xray_cervical_spine_open_mouth_view" data-price="400">Xray Cervical Spine
+                                    Open Mouth View</option>
+                                <option value="xray_cervico_dorsal_ap_lat" data-price="800">XRAY CERVICO-DORSAL AP/LAT
+                                </option>
+                                <option value="xray_chest_ap_supine_view" data-price="400">Xray Chest AP Supine View
+                                </option>
+                                <option value="xray_chest_ap_obl" data-price="400">Xray Chest AP/OBL</option>
+                                <option value="xray_chest_lateral_sternum_bone" data-price="400">Xray Chest Lateral
+                                    (Sternum Bone)</option>
+                                <option value="xray_chest_left_lat_view" data-price="400">Xray Chest Left LAT View
+                                </option>
+                                <option value="xray_chest_obl" data-price="400">Xray Chest Obl</option>
+                                <option value="xray_chest_oblique" data-price="400">Xray Chest Oblique</option>
+                                <option value="xray_chest_pa_view" data-price="400">Xray Chest PA View</option>
+                                <option value="xray_chest_right_lat_view" data-price="400">Xray Chest Right LAT View
+                                </option>
+                                <option value="xray_finger_ap_lat" data-price="800">Xray Finger AP/LAT</option>
+                                <option value="xray_hand_with_wrist_ap" data-price="400">Xray Hand with Wrist AP
+                                </option>
+                                <option value="xray_heel" data-price="400">Xray Heel</option>
+                                <option value="xray_left_ankle_joint_ap_lat" data-price="800">Xray Left Ankle Joint
+                                    AP/LAT</option>
+                                <option value="xray_left_clavicle" data-price="400">Xray Left Clavicle</option>
+                                <option value="xray_left_elbow_joint_ap_lat" data-price="800">Xray Left Elbow Joint
+                                    AP/LAT</option>
+                                <option value="xray_left_femur_ap_lat_view" data-price="800">Xray Left Femur AP/LAT View
+                                </option>
+                                <option value="xray_left_foot_ap" data-price="400">XRAY LEFT FOOT AP</option>
+                                <option value="xray_left_foot_ap_lat" data-price="800">XRAY LEFT FOOT AP/LAT</option>
+                                <option value="xray_left_foot_ap_obl" data-price="800">Xray Left Foot AP/OBL</option>
+                                <option value="xray_left_forearm_ap_lat" data-price="800">Xray Left Forearm AP/LAT
+                                </option>
+                                <option value="xray_left_hand_ap_lat" data-price="800">XRAY LEFT HAND AP/LAT</option>
+                                <option value="xray_left_hand_ap_obl" data-price="800">Xray Left Hand AP/OBL</option>
+                                <option value="xray_left_heel_lat_axial" data-price="800">Xray Left Heel LAT/Axial
+                                </option>
+                                <option value="xray_left_hip_ap_lat" data-price="800">Xray Left Hip - AP / LAT</option>
+                                <option value="xray_left_hip_joint_lat" data-price="400">Xray Left Hip Joint LAT
+                                </option>
+                                <option value="xray_left_humerus_ap_lat" data-price="800">Xray Left Humerus AP/LAT
+                                </option>
+                                <option value="xray_left_knee_ap_lat" data-price="800">Xray Left Knee AP/LAT</option>
+                                <option value="xray_left_knee_ap_lat_skyline_view" data-price="1200">Xray Left Knee
+                                    AP/LAT/Skyline View</option>
+                                <option value="xray_left_sacro_iliac_joint_obl" data-price="400">Xray Left Sacro-iliac
+                                    Joint OBL</option>
+                                <option value="xray_left_scapula_ap_lat_view" data-price="800">Xray Left Scapula AP/LAT
+                                    View</option>
+                                <option value="xray_left_shoulder_joint_ap" data-price="400">Xray Left Shoulder Joint AP
+                                </option>
+                                <option value="xray_left_shoulder_joint_ap_axial" data-price="800">Xray Left Shoulder
+                                    Joint AP/Axial</option>
+                                <option value="xray_left_shoulder_joint_ap_lat" data-price="800">Xray Left Shoulder
+                                    Joint AP/LAT</option>
+                                <option value="xray_left_thumb_ap_lateral" data-price="800">Xray Left Thumb AP/Lateral
+                                </option>
+                                <option value="xray_left_tibia_fibula_pa_lat" data-price="800">Xray Left Tibia & Fibula
+                                    PA/LAT</option>
+                                <option value="xray_left_toe_ap_lat" data-price="800">Xray Left Toe AP/LAT</option>
+                                <option value="xray_left_wrist_joint_ap_lat" data-price="800">Xray Left Wrist Joint
+                                    AP/LAT</option>
+                                <option value="xray_left_wrist_joint_ap_obl" data-price="800">Xray Left Wrist Joint
+                                    AP/OBL</option>
+                                <option value="xray_left_wrist_scaphoid" data-price="400">Xray Left Wrist Scaphoid
+                                </option>
+                                <option value="xray_nasal_bone" data-price="800">Xray Nasal Bone</option>
+                                <option value="xray_neck_lat_adenoid" data-price="400">Xray Neck LAT - Adenoid</option>
+                                <option value="xray_pelvis_ap_lat" data-price="400">XRAY PELVIS AP/LAT</option>
+                                <option value="xray_pelvis_left_obl" data-price="400">XRAY PELVIS LEFT OBL</option>
+                                <option value="xray_pelvis_right_obl" data-price="400">XRAY PELVIS RIGHT OBL</option>
+                                <option value="xray_pelvis_with_both_hip_joint_ap_view" data-price="400">Xray Pelvis
+                                    with Both Hip joint AP View</option>
+                                <option value="xray_pns" data-price="400">XRay PNS</option>
+                                <option value="xray_pns_lat" data-price="400">Xray PNS - LAT</option>
+                                <option value="xray_pns_waters_and_caldwell" data-price="800">Xray PNS Waters and
+                                    Caldwell</option>
+                                <option value="xray_pns_waters_view" data-price="400">Xray PNS Waters View</option>
+                                <option value="xray_right_heel_lat_axial" data-price="800">Xray Right Heel LAT/Axial
+                                </option>
+                                <option value="xray_right_ankle_joint_ap_lat" data-price="800">Xray Right Ankle Joint
+                                    AP/LAT</option>
+                                <option value="xray_right_clavicle" data-price="400">Xray Right Clavicle</option>
+                                <option value="xray_right_elbow_joint_ap_lat" data-price="800">Xray Right Elbow Joint
+                                    AP/LAT</option>
+                                <option value="xray_right_femur_ap_lat_view" data-price="800">Xray Right Femur AP/LAT
+                                    View</option>
+                                <option value="xray_right_foot_ap" data-price="400">XRAY RIGHT FOOT AP</option>
+                                <option value="xray_right_foot_ap_lat" data-price="800">XRAY RIGHT FOOT AP/LAT</option>
+                                <option value="xray_right_foot_ap_obl" data-price="800">Xray Right Foot AP/OBL</option>
+                                <option value="xray_right_forearm_ap_lat" data-price="800">Xray Right Forearm AP/LAT
+                                </option>
+                                <option value="xray_right_hand_ap_lat" data-price="800">Xray right hand -AP/LAT</option>
+                                <option value="xray_right_hand_ap_obl" data-price="800">Xray Right Hand AP/OBL</option>
+                                <option value="xray_right_hip_ap_lat" data-price="800">Xray Right Hip - AP / LAT
+                                </option>
+                                <option value="xray_right_hip_ap" data-price="400">Xray Right Hip AP</option>
+                                <option value="xray_right_hip_joint_lat" data-price="400">Xray Right Hip Joint LAT
+                                </option>
+                                <option value="xray_right_humerus_ap_lat_1" data-price="800">Xray Right Humerus - AP/LAT
+                                </option>
+                                <option value="xray_right_humerus_ap_lat_2" data-price="800">Xray Right Humerus AP/LAT
+                                </option>
+                                <option value="xray_right_knee_ap_lat" data-price="800">Xray Right Knee AP/LAT</option>
+                                <option value="xray_right_sacro_iliac_joint_obl" data-price="400">Xray Right Sacro-iliac
+                                    Joint OBL</option>
+                                <option value="xray_right_scapula_ap_lat_view" data-price="800">Xray Right Scapula
+                                    AP/LAT View</option>
+                                <option value="xray_right_shoulder_joint_ap" data-price="400">Xray Right Shoulder Joint
+                                    - AP</option>
+                                <option value="xray_right_shoulder_joint_ap_axial" data-price="800">Xray Right Shoulder
+                                    Joint AP/Axial</option>
+                                <option value="xray_right_shoulder_joint_ap_lat" data-price="800">Xray Right Shoulder
+                                    Joint AP/LAT</option>
+                                <option value="xray_right_shoulder_joint_lat" data-price="400">Xray Right Shoulder Joint
+                                    LAT</option>
+                                <option value="xray_right_thumb_ap_lateral" data-price="800">Xray Right Thumb AP/Lateral
+                                </option>
+                                <option value="xray_right_thumb_ap_oblique" data-price="800">Xray Right Thumb AP/Oblique
+                                </option>
+                                <option value="xray_right_tibia_fibula_ap_lat" data-price="800">Xray Right Tibia &
+                                    Fibula AP/LAT</option>
+                                <option value="xray_right_tibia_fibula_lat" data-price="400">Xray Right Tibia & Fibula
+                                    LAT</option>
+                                <option value="xray_right_toe_ap_lat" data-price="800">Xray Right Toe AP/LAT</option>
+                                <option value="xray_right_wrist_joint_ap_lat" data-price="800">Xray Right Wrist Joint
+                                    AP/LAT</option>
+                                <option value="xray_right_wrist_scaphoid" data-price="400">Xray Right Wrist Scaphoid
+                                </option>
+                                <option value="xray_sacro_iliac_joint_prone" data-price="400">Xray Sacro-iliac Joint
+                                    Prone</option>
+                                <option value="xray_shoulder_joint_external_rotation_view" data-price="400">Xray
+                                    Shoulder Joint External Rotation View</option>
+                                <option value="xray_shoulder_joint_internal_rotation_view" data-price="400">Xray
+                                    Shoulder Joint Internal Rotation View</option>
+                                <option value="xray_skull_ap_lat" data-price="800">Xray Skull AP/LAT</option>
+                                <option value="xray_skull_base" data-price="400">Xray Skull Base</option>
+                                <option value="xray_skull_both_mandible_obl" data-price="8000">Xray Skull Both Mandible
+                                    OBL</option>
+                                <option value="xray_skull_both_mastoids" data-price="800">Xray Skull Both Mastoids
+                                </option>
+                                <option value="xray_skull_both_tm_joints" data-price="800">Xray Skull Both TM Joints
+                                </option>
+                                <option value="xray_skull_lat_pitutary_fossa" data-price="400">Xray Skull LAT - Pitutary
+                                    Fossa</option>
+                                <option value="xray_skull_left_mandible_obl" data-price="400">Xray Skull Left Mandible
+                                    OBL</option>
+                                <option value="xray_skull_left_mastoid" data-price="400">Xray Skull Left Mastoid
+                                </option>
+                                <option value="xray_skull_leftt_tm_joint" data-price="400">Xray Skull Leftt TM Joint
+                                </option>
+                                <option value="xray_skull_mandible_pa_view" data-price="400">Xray Skull Mandible PA View
+                                </option>
+                                <option value="xray_skull_orbit" data-price="400">Xray Skull Orbit</option>
+                                <option value="xray_skull_pa_view" data-price="400">Xray Skull PA View</option>
+                                <option value="xray_skull_right_mandible_obl" data-price="400">Xray Skull Right Mandible
+                                    OBL</option>
+                                <option value="xray_skull_right_mastoid" data-price="400">Xray Skull Right Mastoid
+                                </option>
+                                <option value="xray_skull_right_tm_joint" data-price="400">Xray Skull Right TM Joint
+                                </option>
+                                <option value="xray_skull_towns_view" data-price="400">Xray Skull Towns View</option>
+                                <option value="xray_soft_tissue_ap_lat" data-price="800">Xray Soft Tissue - AP/LAT
+                                </option>
+                                <option value="xray_sternoclavicular_joint" data-price="400">Xray Sternoclavicular Joint
+                                </option>
+                                <option value="xray_thoracic_inlet_ap" data-price="400">Xray Thoracic Inlet - AP
+                                </option>
+                                <option value="xray_thoracic_inlet_lat" data-price="400">Xray Thoracic Inlet -Lat
+                                </option>
+                            </select>
+
+                            </select>
+                            <div
+                                style="margin-top: 10px; padding: 10px; background: #e3f2fd; border-radius: 6px; border-left: 4px solid #2196f3;">
+                                <p style="margin: 0; color: #1565c0; font-size: 0.9em;">
+                                    <strong>💡 How to select multiple tests:</strong><br>
+                                    • Windows/Linux: Hold <strong>Ctrl</strong> key and click on tests<br>
+                                    • Mac: Hold <strong>Cmd</strong> key and click on tests<br>
+                                    • To select a range: Click first test, hold <strong>Shift</strong>, click last
+                                    test
+                                </p>
+                            </div>
+                            <div id="selectedServices" style="margin-top: 15px; display: none;">
+                                <h4 style="color: #2c3e50; margin-bottom: 10px;">Selected Services:</h4>
+                                <div id="servicesList"></div>
+                            </div>
+                        </div>
+                        </select>
+
+                        <div class="conditional-field" id="prescriptionField">
+                            <label for="prescription">Upload Prescription *</label>
+                            <input type="file" id="prescription" name="prescription" accept=".jpg,.jpeg,.png,.pdf"
+                                class="file-input" style="display: none;" onchange="handleFileSelect(this)">
+                            <div class="file-upload-area" onclick="document.getElementById('prescription').click();">
+                                <div class="upload-icon">📄</div>
+                                <p>Click to upload or drag and drop</p>
+                                <p class="file-types">JPG, PNG, PDF (Max 5MB)</p>
+                                <div id="fileName" style="margin-top: 10px; font-weight: 500; color: #27ae60;">
+                                </div>
+                            </div>
+                        </div>
+                </div>
+
+                <div class="form-group">
+                    <label for="preferredDate">Preferred Date</label>
+                    <input type="date" id="preferredDate" name="preferredDate">
+                </div>
+
+                <div class="form-group">
+                    <label for="preferredTime">Preferred Time</label>
+                    <select id="preferredTime" name="preferredTime">
+                        <option value="">Select Time</option>
+                        <option value="08:00">8:00 AM</option>
+                        <option value="08:15">8:15 AM</option>
+                        <option value="08:30">8:30 AM</option>
+                        <option value="08:45">8:45 AM</option>
+
+                        <option value="09:00">9:00 AM</option>
+                        <option value="09:15">9:15 AM</option>
+                        <option value="09:30">9:30 AM</option>
+                        <option value="09:45">9:45 AM</option>
+
+                        <option value="10:00">10:00 AM</option>
+                        <option value="10:15">10:15 AM</option>
+                        <option value="10:30">10:30 AM</option>
+                        <option value="10:45">10:45 AM</option>
+
+                        <option value="11:00">11:00 AM</option>
+                        <option value="11:15">11:15 AM</option>
+                        <option value="11:30">11:30 AM</option>
+                        <option value="11:45">11:45 AM</option>
+
+                        <option value="12:00">12:00 PM</option>
+                        <option value="12:15">12:15 PM</option>
+                        <option value="12:30">12:30 PM</option>
+                        <option value="12:45">12:45 PM</option>
+
+                        <option value="13:00">1:00 PM</option>
+                        <option value="13:15">1:15 PM</option>
+                        <option value="13:30">1:30 PM</option>
+                        <option value="13:45">1:45 PM</option>
+
+                        <option value="14:00">2:00 PM</option>
+                        <option value="14:15">2:15 PM</option>
+                        <option value="14:30">2:30 PM</option>
+                        <option value="14:45">2:45 PM</option>
+
+                        <option value="15:00">3:00 PM</option>
+                        <option value="15:15">3:15 PM</option>
+                        <option value="15:30">3:30 PM</option>
+                        <option value="15:45">3:45 PM</option>
+
+                        <option value="16:00">4:00 PM</option>
+
+
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label for="notes">Additional Notes</label>
+                    <textarea id="notes" name="notes" rows="3"
+                        placeholder="Any special requirements or medical history..."></textarea>
+                </div>
+
+                <div class="total-cost" id="totalCost" style="display: none;">
+                    Total Cost: ₹0
+                </div>
+
+                <button type="submit" class="btn-primary">
+                    Book Appointment
+                </button>
+
+
+            </form>
+        </div>
+    </div>
+    </div>
+
+    <script src="/Healthlink/Diagnostics/Patient/tabs/book.js"></script>
+</body>
+
+</html>

@@ -1,0 +1,235 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Organization Portal - Sign Up / Login</title>
+    <link rel="stylesheet" href="corp_solsignup.css">
+</head>
+<body>
+    <div class="container">
+        <div class="floating-elements"></div>
+        
+        <div class="header">
+             <img src="/Healthlink/Diagnostics/Patient/pictures/logo.png" alt="HealthLink Logo"  height="80px"
+                width="130px">
+        </div>
+
+        <div class="form-toggle">
+            <button class="toggle-btn active" onclick="showLogin()">Login</button>
+            <button class="toggle-btn" onclick="showSignup()">Sign Up</button>
+        </div>
+
+        <div class="success-message" id="successMessage">
+            Account created successfully! Please log in.
+        </div>
+
+        <div class="error-message" id="errorMessage">
+            Please fill in all required fields.
+        </div>
+
+        <div class="form-container">
+            <!-- Login Form -->
+            <form class="form" id="loginForm">
+                <div class="form-group">
+                    <label class="form-label" for="loginEmail">Email Address</label>
+                    <input type="email" class="form-input" id="loginEmail" placeholder="Enter your email" required>
+                </div>
+                
+                <div class="form-group">
+                    <label class="form-label" for="loginEmployeeCode">Employee Code</label>
+                    <input type="text" class="form-input" id="loginEmployeeCode" placeholder="Enter your employee code" required>
+                </div>
+                
+                <button type="submit" class="btn">Sign In</button>
+                
+                <div class="forgot-password">
+                    <a href="#" onclick="showForgotPassword()">Forgot your password?</a>
+                </div>
+            </form>
+
+            <!-- Signup Form -->
+            <form class="form hidden" id="signupForm">
+                <div class="form-group">
+                    <label class="form-label" for="organizationName">Organization Name</label>
+                    <input type="text" class="form-input" id="organizationName" placeholder="Enter organization name" required>
+                </div>
+                
+                <div class="form-group">
+                    <label class="form-label" for="contactPersonName">Contact Person Name</label>
+                    <input type="text" class="form-input" id="contactPersonName" placeholder="Enter contact person name" required>
+                </div>
+                
+                <div class="form-group">
+                    <label class="form-label" for="contactPersonMobile">Contact Person Mobile</label>
+                    <input type="tel" class="form-input" id="contactPersonMobile" placeholder="Enter mobile number" required>
+                </div>
+                
+                <div class="form-group">
+                    <label class="form-label" for="contactPersonEmail">Contact Person Email</label>
+                    <input type="email" class="form-input" id="contactPersonEmail" placeholder="Enter email address" required>
+                </div>
+                
+                <div class="form-group">
+                    <label class="form-label" for="employeeCode">Employee Code</label>
+                    <input type="text" class="form-input" id="employeeCode" placeholder="Enter employee code" required>
+                </div>
+                
+                <button type="submit" class="btn">Create Account</button>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        let users = [];
+        let currentForm = 'login';
+
+        function showLogin() {
+            document.getElementById('loginForm').classList.remove('hidden');
+            document.getElementById('signupForm').classList.add('hidden');
+            document.querySelectorAll('.toggle-btn')[0].classList.add('active');
+            document.querySelectorAll('.toggle-btn')[1].classList.remove('active');
+            currentForm = 'login';
+            hideMessages();
+        }
+
+        function showSignup() {
+            document.getElementById('signupForm').classList.remove('hidden');
+            document.getElementById('loginForm').classList.add('hidden');
+            document.querySelectorAll('.toggle-btn')[1].classList.add('active');
+            document.querySelectorAll('.toggle-btn')[0].classList.remove('active');
+            currentForm = 'signup';
+            hideMessages();
+        }
+
+        function showForgotPassword() {
+            alert('Password reset functionality would be implemented here. Please contact your administrator.');
+        }
+
+        function hideMessages() {
+            document.getElementById('successMessage').style.display = 'none';
+            document.getElementById('errorMessage').style.display = 'none';
+        }
+
+        function showSuccessMessage(message) {
+            const successEl = document.getElementById('successMessage');
+            successEl.textContent = message;
+            successEl.style.display = 'block';
+            document.getElementById('errorMessage').style.display = 'none';
+        }
+
+        function showErrorMessage(message) {
+            const errorEl = document.getElementById('errorMessage');
+            errorEl.textContent = message;
+            errorEl.style.display = 'block';
+            document.getElementById('successMessage').style.display = 'none';
+        }
+
+        function validateEmail(email) {
+            const re = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+            return re.test(email);
+        }
+
+        function validateMobile(mobile) {
+            const re = /^[0-9]{10}$/;
+            return re.test(mobile.replace(/\D/g, ''));
+        }
+
+        // Handle Login Form
+        document.getElementById('loginForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            const email = document.getElementById('loginEmail').value.trim();
+            const employeeCode = document.getElementById('loginEmployeeCode').value.trim();
+            
+            if (!email || !employeeCode) {
+                showErrorMessage('Please fill in all fields.');
+                return;
+            }
+            
+            if (!validateEmail(email)) {
+                showErrorMessage('Please enter a valid email address.');
+                return;
+            }
+            
+            // Check if user exists
+            const user = users.find(u => u.email === email && u.employeeCode === employeeCode);
+            
+            if (user) {
+                showSuccessMessage(`Welcome back, ${user.contactPersonName}!`);
+                // Here you would typically redirect to the dashboard
+                setTimeout(() => {
+                    alert('Login successful! Redirecting to dashboard...');
+                }, 1500);
+            } else {
+                showErrorMessage('Invalid email or employee code. Please try again.');
+            }
+        });
+
+        // Handle Signup Form
+        document.getElementById('signupForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            const organizationName = document.getElementById('organizationName').value.trim();
+            const contactPersonName = document.getElementById('contactPersonName').value.trim();
+            const contactPersonMobile = document.getElementById('contactPersonMobile').value.trim();
+            const contactPersonEmail = document.getElementById('contactPersonEmail').value.trim();
+            const employeeCode = document.getElementById('employeeCode').value.trim();
+            
+            // Validation
+            if (!organizationName || !contactPersonName || !contactPersonMobile || !contactPersonEmail || !employeeCode) {
+                showErrorMessage('Please fill in all required fields.');
+                return;
+            }
+            
+            if (!validateEmail(contactPersonEmail)) {
+                showErrorMessage('Please enter a valid email address.');
+                return;
+            }
+            
+            if (!validateMobile(contactPersonMobile)) {
+                showErrorMessage('Please enter a valid 10-digit mobile number.');
+                return;
+            }
+            
+            // Check if user already exists
+            const existingUser = users.find(u => u.email === contactPersonEmail || u.employeeCode === employeeCode);
+            
+            if (existingUser) {
+                showErrorMessage('User with this email or employee code already exists.');
+                return;
+            }
+            
+            // Create new user
+            const newUser = {
+                organizationName,
+                contactPersonName,
+                contactPersonMobile,
+                email: contactPersonEmail,
+                employeeCode
+            };
+            
+            users.push(newUser);
+            
+            // Clear form
+            document.getElementById('signupForm').reset();
+            
+            // Show success message and switch to login
+            showSuccessMessage('Account created successfully! Please log in.');
+            
+            setTimeout(() => {
+                showLogin();
+            }, 2000);
+        });
+
+        // Add some sample users for testing
+        users.push({
+            organizationName: 'Tech Corp',
+            contactPersonName: 'John Doe',
+            contactPersonMobile: '1234567890',
+            email: 'john@techcorp.com',
+            employeeCode: 'EMP001'
+        });
+    </script>
+</body>
+</html>

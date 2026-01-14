@@ -1,0 +1,216 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Medical Diagnostics Reports</title>
+    <link rel="stylesheet" href="reports.css">
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <img src="/Healthlink/Diagnostics/Patient/pictures/logo.png" alt="Logo" class="logo" height="80px" width="130px">
+            <p>View and download your diagnostic reports uploaded by labs</p>
+        </div>
+
+        <div class="filters">
+            <div class="filter-group">
+                <div class="filter-item">
+                    <label for="search">Search Reports</label>
+                    
+                </div>
+                <div class="filter-item">
+                    <label for="dateFrom">From Date</label>
+                    <input type="date" id="dateFrom">
+                </div>
+                <div class="filter-item">
+                    <label for="dateTo">To Date</label>
+                    <input type="date" id="dateTo">
+                </div>
+            </div>
+        </div>
+
+        <div class="reports-grid" id="reportsGrid">
+            <!-- Single Report Card with All Tests -->
+            <div class="report-card" data-date="2024-06-15" data-status="uploaded" data-type="all reports">
+                <div class="report-header">
+                    <div class="report-date">Jun 15, 2024</div>
+                </div>
+
+                <div class="test-list">
+                    <div class="test-item">
+                        <div>
+                            <div class="test-name">Complete Blood Count (CBC)</div>
+                            <div class="test-size">2.3 MB</div>
+                        </div>
+                        <button class="download-btn" onclick="downloadPDF('CBC_Report_20240615.pdf')">
+                            ⬇️ Download
+                        </button>
+                    </div>
+                    <div class="test-item">
+                        <div>
+                            <div class="test-name">Lipid Profile</div>
+                            <div class="test-size">1.8 MB</div>
+                        </div>
+                        <button class="download-btn" onclick="downloadPDF('Lipid_Profile_20240610.pdf')">
+                            ⬇️ Download
+                        </button>
+                    </div>
+                    <div class="test-item">
+                        <div>
+                            <div class="test-name">Chest X-Ray</div>
+                            <div class="test-size">Pending Upload</div>
+                        </div>
+                        <button class="download-btn" disabled>
+                            ⬇️ Download
+                        </button>
+                    </div>
+                    <div class="test-item">
+                        <div>
+                            <div class="test-name">MRI Brain Scan</div>
+                            <div class="test-size">5.7 MB</div>
+                        </div>
+                        <button class="download-btn" onclick="downloadPDF('MRI_Brain_20240605.pdf')">
+                            ⬇️ Download
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- PDF Viewer Modal -->
+    <div class="pdf-viewer-modal" id="pdfModal">
+        <div class="pdf-viewer-content">
+            <div class="pdf-viewer-header">
+                <h3 id="pdfTitle">PDF Viewer</h3>
+                <button class="close-btn" onclick="closePDFViewer()">×</button>
+            </div>
+            <div class="pdf-viewer-body">
+                <div style="text-align: center; color: #6c757d;">
+                    <div style="font-size: 3rem; margin-bottom: 20px;">📄</div>
+                    <h3>PDF Document</h3>
+                    <p>In a real application, the PDF would be displayed here using a PDF viewer library like PDF.js</p>
+                    <p style="margin-top: 20px; font-size: 0.9rem;">Currently showing: <span id="currentPdfName"></span></p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Filter functionality
+        const searchInput = document.getElementById('search');
+        const dateFromInput = document.getElementById('dateFrom');
+        const dateToInput = document.getElementById('dateTo');
+        const statusSelect = document.getElementById('status');
+        const reportsGrid = document.getElementById('reportsGrid');
+        const reportCards = document.querySelectorAll('.report-card');
+
+        function filterReports() {
+            const searchTerm = searchInput.value.toLowerCase();
+            const dateFrom = dateFromInput.value;
+            const dateTo = dateToInput.value;
+            const statusFilter = statusSelect.value;
+
+            reportCards.forEach(card => {
+                const reportType = card.querySelector('.report-type').textContent.toLowerCase();
+                const reportDate = card.dataset.date;
+                const reportStatus = card.dataset.status;
+                
+                let showCard = true;
+
+                // Search filter
+                if (searchTerm && !reportType.includes(searchTerm)) {
+                    showCard = false;
+                }
+
+                // Date range filter
+                if (dateFrom && reportDate < dateFrom) {
+                    showCard = false;
+                }
+                if (dateTo && reportDate > dateTo) {
+                    showCard = false;
+                }
+
+                // Status filter
+                if (statusFilter && reportStatus !== statusFilter) {
+                    showCard = false;
+                }
+
+                card.style.display = showCard ? 'block' : 'none';
+            });
+
+            // Check if any reports are visible
+            const visibleReports = Array.from(reportCards).filter(card => card.style.display !== 'none');
+            if (visibleReports.length === 0) {
+                showNoReportsMessage();
+            } else {
+                hideNoReportsMessage();
+            }
+        }
+
+        function showNoReportsMessage() {
+            const existingMessage = document.querySelector('.no-reports');
+            if (!existingMessage) {
+                const noReportsDiv = document.createElement('div');
+                noReportsDiv.className = 'no-reports';
+                noReportsDiv.innerHTML = `
+                    <h3>No reports found</h3>
+                    <p>Try adjusting your search criteria or filters.</p>
+                `;
+                reportsGrid.appendChild(noReportsDiv);
+            }
+        }
+
+        function hideNoReportsMessage() {
+            const existingMessage = document.querySelector('.no-reports');
+            if (existingMessage) {
+                existingMessage.remove();
+            }
+        }
+
+        // Add event listeners for filters
+        searchInput.addEventListener('input', filterReports);
+        dateFromInput.addEventListener('change', filterReports);
+        dateToInput.addEventListener('change', filterReports);
+        statusSelect.addEventListener('change', filterReports);
+
+        // PDF Functions
+        function viewPDF(filename) {
+            document.getElementById('pdfTitle').textContent = 'Viewing: ' + filename;
+            document.getElementById('currentPdfName').textContent = filename;
+            document.getElementById('pdfModal').style.display = 'block';
+        }
+
+        function downloadPDF(filename) {
+            // In a real application, this would download the actual PDF file
+            // For demo purposes, we'll simulate the download
+            alert(`Downloading: ${filename}\n\nIn a real application, this would start the PDF download from the server.`);
+            
+            // Simulate file download
+            const link = document.createElement('a');
+            link.href = '#'; // In real app, this would be the PDF URL
+            link.download = filename;
+            link.click();
+        }
+
+        function closePDFViewer() {
+            document.getElementById('pdfModal').style.display = 'none';
+        }
+
+        // Close modal when clicking outside
+        document.getElementById('pdfModal').addEventListener('click', function(e) {
+            if (e.target === this) {
+                closePDFViewer();
+            }
+        });
+
+        // Keyboard shortcut to close modal
+        document.addEventListener('keydown', function(e) {
+            if (e.key === 'Escape') {
+                closePDFViewer();
+            }
+        });
+    </script>
+</body>
+</html>

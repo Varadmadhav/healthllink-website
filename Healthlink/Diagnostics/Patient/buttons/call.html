@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Lab Test Booking Modal</title>
+    <link rel="stylesheet" href="call.css">
+
+</head>
+<body>
+    <!-- Modal Overlay -->
+    <div class="modal-overlay" id="labBookingModal">
+        <div class="modal">
+            <!-- Modal Header -->
+            <div class="modal-header">
+                <h2 class="modal-title">Need help in booking a lab test?</h2>
+                <button class="close-button" onclick="closeLabBookingModal()">&times;</button>
+            </div>
+
+            <!-- Modal Body -->
+            <div class="modal-body">
+                <form id="labBookingForm" onsubmit="handleLabBookingSubmit(event)">
+                    <!-- Full Name -->
+                    <div class="form-group">
+                        <label class="form-label" for="fullName">
+                            Full name <span class="required">*</span>
+                        </label>
+                        <input 
+                            type="text" 
+                            id="fullName" 
+                            name="fullName" 
+                            class="form-input"
+                            placeholder="Enter full name"
+                            required
+                        >
+                    </div>
+
+                    <!-- Mobile Number -->
+                    <div class="form-group">
+                        <label class="form-label" for="mobileNumber">
+                            Enter Mobile Number <span class="required">*</span>
+                        </label>
+                        <input 
+                            type="tel" 
+                            id="mobileNumber" 
+                            name="mobileNumber" 
+                            class="form-input"
+                            placeholder="+91"
+                            value="+91"
+                            required
+                        >
+                    </div>
+
+                    <!-- City -->
+                    <div class="form-group">
+                        <label class="form-label" for="city">
+                            City <span class="required">*</span>
+                        </label>
+                        <select id="city" name="city" class="form-select" required>
+                            <option value="">Select a city</option>
+                            <option value="mumbai">Mumbai</option>
+                            <option value="delhi">Delhi</option>
+                            <option value="bangalore">Bangalore</option>
+                            <option value="hyderabad">Hyderabad</option>
+                            <option value="chennai">Chennai</option>
+                            <option value="kolkata">Kolkata</option>
+                            <option value="pune">Pune</option>
+                            <option value="ahmedabad">Ahmedabad</option>
+                            <option value="jaipur">Jaipur</option>
+                            <option value="lucknow">Lucknow</option>
+                            <option value="kanpur">Kanpur</option>
+                            <option value="nagpur">Nagpur</option>
+                            <option value="indore">Indore</option>
+                            <option value="thane">Thane</option>
+                            <option value="bhopal">Bhopal</option>
+                            <option value="visakhapatnam">Visakhapatnam</option>
+                            <option value="patna">Patna</option>
+                            <option value="vadodara">Vadodara</option>
+                        </select>
+                    </div>
+
+                    <!-- Consent Checkbox -->
+                    <div class="checkbox-group">
+                        <input 
+                            type="checkbox" 
+                            id="consent" 
+                            name="consent" 
+                            class="checkbox-input"
+                            required
+                        >
+                        <label for="consent" class="checkbox-label">
+                            I hereby affirm & authorise Agilus to process the personal data as per the T&C.
+                        </label>
+                    </div>
+
+                    <!-- Submit Button -->
+                    <button type="submit" class="submit-button">
+                        Get a call back
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function openLabBookingModal() {
+            document.getElementById('labBookingModal').classList.add('active');
+            document.body.style.overflow = 'hidden';
+        }
+
+        function closeLabBookingModal() {
+            document.getElementById('labBookingModal').classList.remove('active');
+            document.body.style.overflow = 'auto';
+        }
+
+        // Close modal when clicking outside
+        document.getElementById('labBookingModal').addEventListener('click', function(e) {
+            if (e.target === this) {
+                closeLabBookingModal();
+            }
+        });
+
+        // Close modal with Escape key
+        document.addEventListener('keydown', function(e) {
+            if (e.key === 'Escape' && document.getElementById('labBookingModal').classList.contains('active')) {
+                closeLabBookingModal();
+            }
+        });
+
+        function handleLabBookingSubmit(event) {
+            event.preventDefault();
+            
+            const formData = new FormData(event.target);
+            const data = {
+                fullName: formData.get('fullName'),
+                mobileNumber: formData.get('mobileNumber'),
+                city: formData.get('city'),
+                consent: formData.get('consent')
+            };
+            
+            console.log('Lab booking form submitted:', data);
+            
+            // Here you would typically send the data to your server
+            alert('Thank you! We will call you back shortly.');
+            closeLabBookingModal();
+            
+            // Reset form
+            event.target.reset();
+            document.getElementById('mobileNumber').value = '+91';
+        }
+
+        // Auto-format mobile number
+        document.getElementById('mobileNumber').addEventListener('input', function(e) {
+            let value = e.target.value;
+            if (!value.startsWith('+91')) {
+                e.target.value = '+91' + value.replace('+91', '');
+            }
+        });
+    </script>
+</body>
+</html>

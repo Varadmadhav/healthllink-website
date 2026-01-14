@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>User Profile</title>
+    <link rel="stylesheet" href="profile.css">
+</head>
+
+<body>
+    <div class="container">
+        <div class="header">
+            <!-- Fixed the malformed img tag and removed the extra </header> -->
+            <img src="/Healthlink/Diagnostics/patient/pictures/logo.png" width="150px" height="90px">
+        </div>
+
+        <div class="profile-content">
+            <div class="main-profile">
+                <div class="profile-section">
+                    <h2 class="section-title">Personal Information</h2>
+                    <form id="profileForm">
+                        <div class="form-group">
+                            <label for="fullName">Full Name</label>
+                            <input type="text" id="fullName" name="fullName" placeholder="Enter your full name">
+                        </div>
+
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="mobile">Mobile Number</label>
+                                <input type="tel" id="mobile" name="mobile" placeholder="+91 9876543210">
+                            </div>
+                            <div class="form-group">
+                                <label for="email">Email ID</label>
+                                <input type="email" id="email" name="email" placeholder="user@example.com">
+                            </div>
+                        </div>
+
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="gender">Gender</label>
+                                <select id="gender" name="gender">
+                                    <option value="">Select Gender</option>
+                                    <option value="male">Male</option>
+                                    <option value="female">Female</option>
+                                    <option value="other">Other</option>
+                                    <option value="prefer-not-to-say">Prefer not to say</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label for="dob">Date of Birth</label>
+                                <input type="date" id="dob" name="dob">
+                            </div>
+                        </div>
+                        
+                        <!-- Added location and pincode for completeness if you want them on the profile -->
+                        <div class="form-row">
+                             <div class="form-group">
+                                <label for="location">Location</label>
+                                <select id="location" name="location">
+                                    <option value="">Select Location</option>
+                                    <option value="Mumbai">Mumbai</option>
+                                    <option value="Delhi">Delhi</option>
+                                    <option value="Bangalore">Bangalore</option>
+                                    <option value="Chennai">Chennai</option>
+                                    <option value="Kolkata">Kolkata</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label for="pincode">Pincode</label>
+                                <input type="text" id="pincode" name="pincode" placeholder="e.g., 400001" maxlength="6">
+                            </div>
+                        </div>
+
+                        <button type="submit" class="save-button">Save Changes</button>
+                    </form>
+                </div>
+            </div>
+
+            <div class="sidebar">
+                <div class="sidebar-section">
+                    <h3 class="sidebar-title">Quick Actions</h3>
+                    <!-- Removed extra </button> -->
+                    <button class="nav-button" onclick="showBookings()">
+                        📅 My Bookings
+                    </button>
+                    <button class="nav-button" onclick="resetPassword()">
+                        🔑 Reset Password
+                    </button>
+                </div>
+
+                <div class="sidebar-section">
+                    <h3 class="sidebar-title">Settings</h3>
+                    <div class="settings-group">
+                        <h4 style="margin-bottom: 15px; color: #555;">Manage Notifications</h4>
+                        <div class="checkbox-group">
+                            <input type="checkbox" id="emailNotif" checked>
+                            <label for="emailNotif">Email Notifications</label>
+                        </div>
+                        <div class="checkbox-group">
+                            <input type="checkbox" id="smsNotif">
+                            <label for="smsNotif">SMS Notifications</label>
+                        </div>
+                        <div class="checkbox-group">
+                            <input type="checkbox" id="pushNotif" checked>
+                            <label for="pushNotif">Push Notifications</label>
+                        </div>
+                    </div>
+
+                    <button class="nav-button" onclick="showNotifications()">
+                        🔔 Notifications
+                    </button>
+                    <button class="nav-button" onclick="showReports()">
+                        📊 Reports
+                    </button>
+                </div>
+
+                <div class="sidebar-section">
+                    <h3 class="sidebar-title">Account Management</h3>
+                    <!-- Removed extra </button> -->
+                    <button class="nav-button danger-button" onclick="deleteAccount()">
+                        🗑️ Delete Account
+                    </button>
+                    <!-- Added a Logout button here -->
+                    <button class="nav-button" id="logoutButton">
+                        🚪 Logout
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="profile.js"></script>
+</body>
+
+</html>

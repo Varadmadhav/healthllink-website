@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Health Hub - Medical Articles & Information</title>
+    <link rel="stylesheet" href="newsletter.css">
+</head>
+<body>
+    <header class="header">
+        <div class="container header-content">
+            <h1>🏥 Health Hub</h1>
+            <p>Your trusted source for medical articles and health information</p>
+        </div>
+    </header>
+
+    <section class="search-section">
+        <div class="container">
+            <div class="disclaimer">
+                <strong>⚠️ Medical Disclaimer:</strong> The information provided here is for educational purposes only and should not replace professional medical advice. Always consult with healthcare professionals for medical concerns.
+            </div>
+            
+            <div class="search-container">
+                <input type="text" id="searchInput" class="search-input" placeholder="Search for diseases, symptoms, treatments...">
+                <button onclick="searchArticles()" class="search-btn">🔍 Search</button>
+            </div>
+            
+            <div class="categories">
+                <button class="category-btn active" onclick="selectCategory('general')">General Health</button>
+                <button class="category-btn" onclick="selectCategory('heart disease')">Heart Disease</button>
+                <button class="category-btn" onclick="selectCategory('diabetes')">Diabetes</button>
+                <button class="category-btn" onclick="selectCategory('cancer')">Cancer</button>
+                <button class="category-btn" onclick="selectCategory('mental health')">Mental Health</button>
+                <button class="category-btn" onclick="selectCategory('nutrition')">Nutrition</button>
+                <button class="category-btn" onclick="selectCategory('covid')">COVID-19</button>
+                <button class="category-btn" onclick="selectCategory('vaccines')">Vaccines</button>
+            </div>
+        </div>
+    </section>
+
+    <main class="main-content">
+        <div class="container">
+            <div class="health-tips">
+                <h3>💡 Quick Health Tips</h3>
+                <ul>
+                    <li>Stay hydrated - drink at least 8 glasses of water daily</li>
+                    <li>Get 7-9 hours of quality sleep each night</li>
+                    <li>Exercise for at least 30 minutes, 5 days a week</li>
+                    <li>Eat a balanced diet rich in fruits and vegetables</li>
+                    <li>Practice stress management through meditation or deep breathing</li>
+                    <li>Schedule regular check-ups with your healthcare provider</li>
+                </ul>
+            </div>
+            
+            <div id="loadingDiv" class="loading" style="display: none;">
+                <div class="spinner"></div>
+                <p>Searching for health articles...</p>
+            </div>
+            
+            <div id="articlesContainer" class="articles-grid">
+                <!-- Articles will be loaded here -->
+            </div>
+            
+            <div id="noResults" class="no-results" style="display: none;">
+                <h3>No articles found</h3>
+                <p>Try adjusting your search terms or browse by category</p>
+            </div>
+        </div>
+    </main>
+
+    <footer class="footer">
+        <div class="container">
+            <p>&copy; 2025 Health Hub. Information sourced from reputable medical websites and publications.</p>
+            <p style="margin-top: 0.5rem; font-size: 0.9rem; opacity: 0.8;">Always consult healthcare professionals for medical advice.</p>
+        </div>
+    </footer>
+
+    <script src="newsletter.js"></script>
+</body>
+</html>

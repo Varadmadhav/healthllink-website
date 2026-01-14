@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>All In One Package</title>
+    <link rel="stylesheet" href="packages.css">
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <div class="badge">All In One Package </div>
+            <h1>All In One Package</h1>
+            <p>Full body diagnostic health check with advanced diagnostics included</p>
+        </div>
+
+        <div class="main-card">
+            <div class="card-header">
+                <h2>All In One Package</h2>
+                <p class="subtitle">Comprehensive diagnostics for total health assessment</p>
+            </div>
+
+            <div class="card-body">
+                <div class="pricing-section">
+                    <div class="price-tag">All In One Package</div>
+                    <div class="price">₹4499</div>
+                    <button class="add-to-cart-btn" onclick="addToCart()">
+                        <span>Add to Cart</span>
+                    </button>
+                </div>
+
+                <div class="tests-section">
+                    <h3 class="section-title">Test Details</h3>
+                    <div class="test-details">
+                        <p>All-inclusive package with everything from basic blood work to stress testing and imaging.</p>
+                    </div>
+
+                    <h3 class="section-title">Tests Included</h3>
+                    <div class="tests-grid">
+                        <div class="test-item">
+                            <h4><span class="icon"></span>HB/CBC, ESR, Fasting Sugar</h4>
+                            <p>Complete blood count, inflammation markers, and glucose screening</p>
+                        </div>
+                        <div class="test-item">
+                            <h4><span class="icon"></span>Kidney Function & Sr. Electrolytes Test</h4>
+                            <p>Assesses kidney health and checks electrolyte balance for overall fluid regulation</p>
+                        </div>
+                        <div class="test-item">
+                            <h4><span class="icon"></span>Lipid & Liver Profile</h4>
+                            <p>Evaluates cholesterol levels and liver function to monitor heart and liver health</p>
+                        </div>
+                        <div class="test-item">
+                            <h4><span class="icon"></span>Glyco HB (HbA1c), Thyroid Profile</h4>
+                            <p>Long-term diabetes monitoring and complete thyroid function</p>
+                        </div>
+                        <div class="test-item">
+                            <h4><span class="icon"></span>Vitamin B12, Vitamin D3</h4>
+                            <p>Essential vitamin levels for energy and bone health</p>
+                        </div>
+                        <div class="test-item">
+                            <h4><span class="icon"></span>Urine Routine</h4>
+                            <p>Kidney function analysis</p>
+                        </div>
+                        <div class="test-item">
+                            <h4><span class="icon"></span>CA 125, Sr. PSA</h4>
+                            <p>Cancer screening markers for comprehensive health monitoring</p>
+                        </div>
+                        <div class="test-item">
+                            <h4><span class="icon"></span>X-RAY Chest PA</h4>
+                            <p>Chest imaging to assess lung and heart health</p>
+                        </div>
+                        <div class="test-item">
+                            <h4><span class="icon"></span>ECG & Stress Test (TMT)</h4>
+                            <p>Heart rhythm assessment and Cardiovascular stress testing for heart function evaluation</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function addToCart() {
+            const btn = document.querySelector('.add-to-cart-btn');
+            const originalHTML = btn.innerHTML;
+            
+            // Success feedback
+            btn.innerHTML = '<span>✓ Added to Cart!</span>';
+            btn.style.background = 'linear-gradient(135deg, #2ecc71 0%, #27ae60 100%)';
+            btn.style.transform = 'scale(1.05)';
+            
+            // Show success message
+            const successMsg = document.createElement('div');
+            successMsg.style.cssText = `
+                position: fixed;
+                top: 20px;
+                right: 20px;
+                background: linear-gradient(135deg, #2ecc71 0%, #27ae60 100%);
+                color: white;
+                padding: 15px 25px;
+                border-radius: 10px;
+                box-shadow: 0 10px 25px rgba(0,0,0,0.2);
+                z-index: 1000;
+                animation: slideInRight 0.5s ease-out;
+            `;
+            successMsg.textContent = 'All In One Package added to cart!';
+            document.body.appendChild(successMsg);
+            
+            setTimeout(() => {
+                btn.innerHTML = originalHTML;
+                btn.style.background = 'linear-gradient(135deg, #ff6b6b 0%, #ee5a24 100%)';
+                btn.style.transform = 'scale(1)';
+                successMsg.remove();
+            }, 3000);
+        }
+
+        // Add smooth scrolling and interactive elements
+        document.addEventListener('DOMContentLoaded', function() {
+            const cards = document.querySelectorAll('.test-item');
+            
+            const observer = new IntersectionObserver((entries) => {
+                entries.forEach((entry, index) => {
+                    if (entry.isIntersecting) {
+                        setTimeout(() => {
+                            entry.target.style.animation = 'fadeInUp 0.6s ease-out';
+                            entry.target.style.opacity = '1';
+                        }, index * 100);
+                    }
+                });
+            }, {
+                threshold: 0.1
+            });
+
+            cards.forEach(card => {
+                card.style.opacity = '0';
+                observer.observe(card);
+            });
+        });
+    </script>
+</body>
+</html>

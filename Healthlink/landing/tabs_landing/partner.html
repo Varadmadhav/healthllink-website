@@ -1,0 +1,240 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Become A Healthlink Partner</title>
+    <link rel="stylesheet" href="partner.css">
+</head>
+<body>
+    <!-- Login Modal -->
+    <div class="login-modal-overlay" id="loginModal">
+        <div class="login-modal">
+            <button class="login-close-btn" onclick="closeModal()">&times;</button>
+            <div class="login-modal-header">
+                <h2 class="login-modal-title">Welcome to Healthlink</h2>
+                <p class="login-modal-subtitle">Please login to continue with partner registration</p>
+            </div>
+            
+            <div class="login-buttons">
+                <a href="/Healthlink/Diagnostics/Patient/frontend/signup.html" class="login-btn login-btn-primary">
+                    Login
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Main Page Content (Initially Blurred) -->
+    <div id="pageContent" class="page-blur">
+        <!-- Header -->
+        <header class="header">
+            <div class="nav-container">
+                <div class="logo">Healthlink</div>
+                <nav>
+                    <ul class="nav-menu">
+                        <li><a href="/Healthlink/Diagnostics/Patient/tabs/book.html">Book a Test</a></li>
+                        <li><a href="/Healthlink/Diagnostics/Patient/frontend/main.html#book-pack">Packages</a></li>
+                        <li><a href="/Healthlink/Diagnostics/Patient/frontend/main.html#contact-us">Labs Near Me</a></li>
+                        <li><a href="/Healthlink/Diagnostics/Patient/tabs/partner.html">Become a Healthlink Partner</a></li>
+                        <li><a href="/Healthlink/Diagnostics/Patient/tabs/corp.html">Corporate Enquiry</a></li>
+                    </ul>
+                </nav>
+
+            </div>
+        </header>
+
+        <!-- Main Content -->
+        <main class="main-content">
+            <div class="content-container">
+                <div class="text-content">
+                    <h1>Healthlink, India's best and biggest leading clinical diagnostic laboratory, is a pioneer in providing high-quality diagnostics and preventive healthcare services at affordable costs.</h1>
+                    <p>We are a B2B-oriented company partnering with multiple healthcare players and industries enabling diagnostics in their service portfolio.</p>
+                    <p>Powered by world-class fully automated laboratories and a legacy of 12 years.</p>
+                </div>
+                
+                <div class="registration-form">
+                    <h2 class="form-title">Opportunity for Growth</h2>
+                    <form>
+                        <div class="form-group">
+                            <label for="name">Name *</label>
+                            <input type="text" id="name" name="name" required>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="mobile">Mobile No. *</label>
+                            <input type="tel" id="mobile" name="mobile" required>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="email">Email Id *</label>
+                            <input type="email" id="email" name="email" required>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="city">City *</label>
+                            <input type="text" id="city" name="city" required>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="state">State *</label>
+                            <select id="state" name="state" required>
+                                <option value="">Select State</option>
+                                <option value="maharashtra">Maharashtra</option>
+                                <option value="delhi">Delhi</option>
+                                <option value="karnataka">Karnataka</option>
+                                <option value="tamil-nadu">Tamil Nadu</option>
+                                <option value="gujarat">Gujarat</option>
+                            </select>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="investment">Investment Capacity *</label>
+                            <select id="investment" name="investment" required>
+                                <option value="">Select Investment Range</option>
+                                <option value="1-5-lakhs">1-5 Lakhs</option>
+                                <option value="5-10-lakhs">5-10 Lakhs</option>
+                                <option value="10-25-lakhs">10-25 Lakhs</option>
+                                <option value="25-50-lakhs">25-50 Lakhs</option>
+                                <option value="above-50-lakhs">Above 50 Lakhs</option>
+                            </select>
+                        </div>
+                        
+                        <div class="checkbox-group">
+                            <input type="checkbox" id="terms" name="terms" required>
+                            <label for="terms">By clicking submit, you agree with the Privacy Policy, Terms & Conditions of Healthlink Labs that allow</label>
+                        </div>
+                        
+                        <button type="submit" class="submit-btn">Submit</button>
+                    </form>
+                </div>
+            </div>
+        </main>
+
+        <!-- Info Sections -->
+        <section class="info-sections">
+            <div class="info-container">
+                <div class="info-box">
+                    <h3>Why Choose Healthlink for Lab Franchisee ?</h3>
+                    <ul>
+                        <li>Pre-tested lab business model</li>
+                        <li>It takes 2 months to flourished lab</li>
+                        <li>Exclusive lab territory with 500+ population radius</li>
+                        <li>Quality standard with ISO accredited laboratory</li>
+                        <li>Free home sample pickup</li>
+                    </ul>
+                </div>
+                
+                <div class="info-box">
+                    <h3>Benefits Of Becoming Healthlink Lab Franchisee Partner</h3>
+                    <ul>
+                        <li>Sample Pickup from Customer to Lab Hubs</li>
+                        <li>Quick Delivery</li>
+                        <li>Dedicated Resources of Over to Over</li>
+                        <li>Easy Sales Analysis | Updates and Downloads</li>
+                    </ul>
+                </div>
+                
+                <div class="info-box">
+                    <h3>List of Requirements To Start Healthlink Franchisee</h3>
+                    <ul>
+                        <li>Clear and Well furnished Infrastructure</li>
+                        <li>Ample Resources</li>
+                        <li>Sound financial Stability</li>
+                        <li>Computer and Printer</li>
+                        <li>Catalogues</li>
+                        <li>Refrigerator</li>
+                    </ul>
+                </div>
+            </div>
+        </section>
+
+        <!-- Footer -->
+        <footer class="footer">
+            <div class="footer-container">
+                <div class="footer-section">
+                    <h4>Popular Health Packages</h4>
+                    <ul>
+                        <li><a href="/Healthlink/Diagnostics/Patient/packages/advance.html">Advanced Health Package</a></li>
+                        <li><a href="/Healthlink/Diagnostics/Patient/packages/smartsel.html">Smart Selection Package</a></li>
+                        <li><a href="/Healthlink/Diagnostics/Patient/packages/allinone.html">All In One Package</a></li>
+                        <li><a href="/Healthlink/Diagnostics/Patient/packages/basic.html">Best of 5 Basic Heath Package</a></li>
+                        <li><a href="/Healthlink/Diagnostics/Patient/packages/food(female).html">Perfect Natural Food Plan(Female)</a></li>
+                    </ul>
+                </div>
+                
+                <div class="footer-section">
+                    <h4>Most Booked Tests</h4>
+                    <ul>
+                        <li><a href="/Healthlink/Diagnostics/Patient/packages/anc.html">ANC Profile</a></li>
+                        <li><a href="/Healthlink/Diagnostics/Patient/packages/pcod.html">PCOD Profile</a></li>
+                        <li><a href="/Healthlink/Diagnostics/Patient/packages/arthritis.html">Arthritis Profile</a></li>
+                        <li><a href="#">Diabetes Profile</a></li>
+                        <li><a href="/Healthlink/Diagnostics/Patient/packages/hyper.html">Hypertension Profile</a></li>
+                        <li><a href="/Healthlink/Diagnostics/Patient/packages/fever.html">Fever Profile</a></li>
+                        <li><a href="/Healthlink/Diagnostics/Patient/packages/dialysis.html">Dialysis Profile</a></li>
+                    </ul>
+                </div>
+                
+                <div class="footer-section">
+                    <h4>Quick Links</h4>
+                    <ul>
+                        <li><a href="#">Check Lab</a></li>
+                        <li><a href="/Healthlink/Diagnostics/Patient/tabs/careermain.html">Career</a></li>
+                        <li><a href="/Healthlink/Diagnostics/Patient/frontend/main.html#about-us">About Us</a></li>
+                        <li><a href="#">Privacy Policy</a></li>
+                        <li><a href="#">Terms & Conditions</a></li>
+                    </ul>
+                </div>
+                
+                <div class="footer-section">
+                    <h4>Contact Us</h4>
+                    <ul>
+                        <li><a href="#">Other Queries</a></li>
+                        <li><a href="/Healthlink/Diagnostics/Patient/tabs/book.html">Book A Test</a></li>
+                        <li><a href="/Healthlink/Diagnostics/Patient/tabs/faq.html">FAQ</a></li>
+                        <li><a href="/Healthlink/Diagnostics/Patient/tabs/franchise.html">Franchise</a></li>
+                    </ul>
+                </div>
+            </div>
+            
+            <div class="footer-bottom">
+                <p>&copy; 2025 Healthlink Diagnostics Center PVT Limited. All rights reserved.</p>
+            </div>
+        </footer>
+    </div>
+
+    <script>
+        // Show modal on page load
+        window.addEventListener('load', function() {
+            showModal();
+        });
+
+        function showModal() {
+            const modal = document.getElementById('loginModal');
+            const pageContent = document.getElementById('pageContent');
+            
+            modal.classList.remove('hidden');
+            pageContent.classList.add('page-blur');
+        }
+
+        function closeModal() {
+            // Redirect to main page
+            window.location.href = '/Healthlink/landing/landing.html';
+        }
+
+        // Close modal when clicking outside of it
+        document.getElementById('loginModal').addEventListener('click', function(e) {
+            if (e.target === this) {
+                closeModal();
+            }
+        });
+
+        // Close modal with Escape key
+        document.addEventListener('keydown', function(e) {
+            if (e.key === 'Escape') {
+                closeModal();
+            }
+        });
+    </script>
+</body>
+</html>

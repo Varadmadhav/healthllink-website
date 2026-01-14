@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Patient Records Management System</title>
+    <link rel="stylesheet" href="page.css">
+</head>
+
+<body>
+    <div class="container">
+        <div class="header">
+            <img src="/Healthlink/Diagnostics/Patient/pictures/logo.png" alt="Healthlink Diagnostics Logo" class="logo" width="130px" height="80px">
+        </div>
+
+        <div class="auth-section">
+            <div id="loginForm" class="auth-form">
+                <span class="status-indicator status-logged-out"></span>
+                <input type="text" id="doctorId" class="auth-input" placeholder="Doctor ID" value="">
+                <input type="password" id="password" class="auth-input" placeholder="Password" value="">
+                <button onclick="login()" class="auth-btn">🔐 Login</button>
+            </div>
+            <div id="loggedInStatus" class="auth-form" style="display: none;">
+                <span class="status-indicator status-logged-in"></span>
+                <span id="doctorName">Dr. </span>
+                <button onclick="logout()" class="auth-btn logout-btn">🚪 Logout</button>
+            </div>
+        </div>
+
+        <div id="mainContent" class="main-content">
+            <div class="stats-container">
+                <div class="stat-card">
+                    <div class="stat-number" id="totalPatients">0</div>
+                    <div class="stat-label">Total Patients</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-number" id="todayTests">0</div>
+                    <div class="stat-label">Tests Today</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-number" id="pendingReports">0</div>
+                    <div class="stat-label">Pending Reports</div>
+                </div>
+            </div>
+
+            <div class="controls">
+                <div class="control-group">
+                    <button onclick="exportToExcel()" class="btn btn-success">📊 Export Excel</button>
+                </div>
+                <div class="filter-group">
+                    <input type="text" id="searchInput" class="search-input" placeholder="🔍 Search patients..."
+                        onkeyup="applyFilters()">
+                    <span class="filter-label">From:</span>
+                    <input type="date" id="dateFrom" class="date-input" onchange="applyFilters()">
+                    <span class="filter-label">To:</span>
+                    <input type="date" id="dateTo" class="date-input" onchange="applyFilters()">
+                    <button onclick="clearFilters()" class="clear-filter-btn">Clear</button>
+                </div>
+            </div>
+
+            <div class="table-container">
+                <table class="excel-table" id="patientTable">
+                    <thead>
+                        <tr>
+                            <th style="width: 5%">#</th>
+                            <th style="width: 25%">Patient Name</th>
+                            <th style="width: 15%">Test Date</th>
+                            <th style="width: 20%">Test Type</th>
+                            <th style="width: 15%">Status</th>
+                            <th style="width: 20%">Report</th>
+                        </tr>
+                    </thead>
+                    <tbody id="patientTableBody">
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <script src="page.js"></script>
+</body>
+
+</html>

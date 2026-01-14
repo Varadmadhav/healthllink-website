@@ -1,0 +1,388 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Smart Selection Package</title>
+    <link rel="stylesheet" href="packages.css">
+</head>
+<body>
+    <!-- Login Modal -->
+    <div class="modal-overlay" id="loginModal">
+        <div class="login-modal">
+            <button class="close-modal" id="closeModal">&times;</button>
+            <div class="login-header">
+                <h2>🔐 Login Required</h2>
+                <p>Please login to add items to your cart</p>
+            </div>
+            <form class="login-form" id="loginForm">
+                <div class="form-group">
+                   <label for="loginUserId">User ID</label>
+                    <input type="text" id="loginUserId" name="loginUserId" required>
+                </div>
+                <div class="form-group">
+                    <label for="password">Password</label>
+                    <input type="password" id="password" name="password" required>
+                </div>
+                <button type="submit" class="login-btn">Login & Continue</button>
+            </form>
+            <div class="forgot-password">
+                <a href="/Healthlink/Diagnostics/Patient/frontend/signup.html" id="forgotPassword">Don't have an account? Signup</a>
+            </div>
+        </div>
+    </div>
+    <div class="container">
+        <div class="header">
+            <div class="badge">Smart Selection Package</div>
+            <h1>Smart Selection Package</h1>
+            <p>Smart Selection Package monitors core body functions and detect early imbalances</p>
+        </div>
+
+        <div class="main-card">
+            <div class="card-header">
+                <h2>Smart Selection Package</h2>
+                <p class="subtitle">Intelligent testing with flexible options</p>
+            </div>
+
+            <div class="card-body">
+                <div class="options-section">
+                    <h3 class="section-title">Choose Your Testing Options</h3>
+                    
+                    <!-- First Selection Group -->
+                    <div class="selection-group">
+                        <h4>Select One: Liver, Kidney, or Cholesterol Testing</h4>
+                        <div class="radio-options">
+                            <div class="radio-option">
+                                <input type="radio" id="lft" name="group1" value="lft">
+                                <label for="lft">
+                                    <div class="radio-option-title">LFT (Liver Function Test)</div>
+                                    <div class="radio-option-desc">Comprehensive liver health assessment</div>
+                                </label>
+                            </div>
+                            <div class="radio-option">
+                                <input type="radio" id="rft" name="group1" value="rft">
+                                <label for="rft">
+                                    <div class="radio-option-title">RFT (Kidney Function Test)</div>
+                                    <div class="radio-option-desc">Complete kidney function evaluation</div>
+                                </label>
+                            </div>
+                            <div class="radio-option">
+                                <input type="radio" id="lipid" name="group1" value="lipid">
+                                <label for="lipid">
+                                    <div class="radio-option-title">Lipid Profile</div>
+                                    <div class="radio-option-desc">Cholesterol and heart health screening</div>
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Second Selection Group -->
+                    <div class="selection-group">
+                        <h4>Select One: Diabetes or Thyroid Function Testing</h4>
+                        <div class="radio-options">
+                            <div class="radio-option">
+                                <input type="radio" id="hba1c" name="group2" value="hba1c">
+                                <label for="hba1c">
+                                    <div class="radio-option-title">Glyco HB (HbA1c)</div>
+                                    <div class="radio-option-desc">Long-term diabetes monitoring</div>
+                                </label>
+                            </div>
+                            <div class="radio-option">
+                                <input type="radio" id="thyroid" name="group2" value="thyroid">
+                                <label for="thyroid">
+                                    <div class="radio-option-title">Thyroid Profile (T3 + T4 + TSH)</div>
+                                    <div class="radio-option-desc">Complete thyroid function assessment</div>
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Selection Summary -->
+                    <div class="selection-summary" id="selectionSummary">
+                        <h4>Your Selected Tests:</h4>
+                        <p id="group1Selection">• Please select from first group</p>
+                        <p id="group2Selection">• Please select from second group</p>
+                    </div>
+                </div>
+
+                <div class="pricing-section">
+                    <div class="price-tag">Smart Selection Package</div>
+                    <div class="price">₹999</div>
+                    <div class="price-description">Smart selection with flexible testing options</div>
+                    <button class="book-btn" id="addToCartBtn" disabled>
+                        <span>Add to Cart</span>
+                    </button>
+                </div>
+
+                <div class="tests-section">
+                    <h3 class="section-title">Test Details</h3>
+                    <div class="test-details">
+                        <p>This comprehensive package includes blood count, sugar, kidney/liver/heart options, and choice of thyroid or diabetes check to give you a complete health overview.</p>
+                    </div>
+
+                    <h3 class="section-title">Tests Included</h3>
+                    <div class="tests-grid">
+                        <div class="test-item">
+                            <h4><span class="icon"></span>HB/CBC</h4>
+                            <p>Complete Blood Count to check for anemia, infections, and other blood disorders</p>
+                        </div>
+                        <div class="test-item">
+                            <h4><span class="icon"></span>Fasting Blood Sugar</h4>
+                            <p>Measures glucose levels after fasting to screen for diabetes</p>
+                        </div>
+                        <div class="test-item" id="group1Test">
+                            <h4><span class="icon"></span>Your Selected Test from Group 1</h4>
+                            <p>Choose between Liver Function, Kidney Function, or Cholesterol testing</p>
+                        </div>
+                        <div class="test-item" id="group2Test">
+                            <h4><span class="icon"></span>Your Selected Test from Group 2</h4>
+                            <p>Select either long-term diabetes monitoring or complete thyroid function</p>
+                        </div>
+                        <div class="test-item">
+                            <h4><span class="icon"></span>Urine Routine</h4>
+                            <p>Comprehensive urine analysis for kidney health and urinary tract issues</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+                // Modal functionality
+        const addToCartBtn = document.getElementById('addToCartBtn');
+        const loginModal = document.getElementById('loginModal');
+        const closeModal = document.getElementById('closeModal');
+        const loginForm = document.getElementById('loginForm');
+        const body = document.body;
+
+        // Show login modal when add to cart button is clicked
+        addToCartBtn.addEventListener('click', function (e) {
+            e.preventDefault();
+            showLoginModal();
+        });
+
+        // Close modal when X is clicked
+        closeModal.addEventListener('click', function () {
+            hideLoginModal();
+        });
+
+        // Close modal when clicking outside of it
+        loginModal.addEventListener('click', function (e) {
+            if (e.target === loginModal) {
+                hideLoginModal();
+            }
+        });
+
+        // Handle login form submission
+        loginForm.addEventListener('submit', function (e) {
+            e.preventDefault();
+
+            // Simulate login process
+            const loginUserId = document.getElementById('loginUserId').value;
+            const password = document.getElementById('password').value;
+
+            if (loginUserId && password) {
+                // Show loading state
+                const loginBtn = document.querySelector('.login-btn');
+                const originalText = loginBtn.textContent;
+                loginBtn.textContent = 'Logging in...';
+                loginBtn.disabled = true;
+
+                // Simulate API call delay
+                setTimeout(() => {
+                    // Hide modal
+                    hideLoginModal();
+
+                    // Show success message and add to cart
+                    showSuccessMessage();
+                    
+                    // Reset login button
+                    loginBtn.textContent = originalText;
+                    loginBtn.disabled = false;
+                }, 1500);
+            }
+        });
+
+        // Forgot password functionality
+        document.getElementById('forgotPassword').addEventListener('click', function (e) {
+            e.preventDefault();
+            alert('Redirecting to signup page...');
+             window.location.href = '/Healthlink/Diagnostics/Patient/frontend/signup.html'; // Replace with your actual signup URL
+        });
+
+        function showLoginModal() {
+            loginModal.classList.add('active');
+            body.classList.add('modal-open');
+            document.getElementById('loginUserId').focus();
+        }
+
+        function hideLoginModal() {
+            loginModal.classList.remove('active');
+            body.classList.remove('modal-open');
+
+            // Reset form
+            loginForm.reset();
+            const loginBtn = document.querySelector('.login-btn');
+            loginBtn.textContent = 'Login & Continue';
+            loginBtn.disabled = false;
+        }
+        const testDescriptions = {
+            lft: { name: 'LFT (Liver Function Test)', desc: 'Comprehensive liver health assessment including enzyme levels' },
+            rft: { name: 'RFT (Kidney Function Test)', desc: 'Complete kidney function evaluation and health screening' },
+            lipid: { name: 'Lipid Profile', desc: 'Cholesterol and heart health screening for cardiovascular risk' },
+            hba1c: { name: 'Glyco HB (HbA1c)', desc: 'Long-term diabetes monitoring and blood sugar control assessment' },
+            thyroid: { name: 'Thyroid Profile (T3 + T4 + TSH)', desc: 'Complete thyroid function assessment for metabolic health' }
+        };
+
+        function updateSelections() {
+            const group1 = document.querySelector('input[name="group1"]:checked');
+            const group2 = document.querySelector('input[name="group2"]:checked');
+            const summary = document.getElementById('selectionSummary');
+            const group1Selection = document.getElementById('group1Selection');
+            const group2Selection = document.getElementById('group2Selection');
+            const addToCartBtn = document.getElementById('addToCartBtn');
+            const group1Test = document.getElementById('group1Test');
+            const group2Test = document.getElementById('group2Test');
+
+            // Update selection summary
+            if (group1) {
+                const test = testDescriptions[group1.value];
+                group1Selection.textContent = `• ${test.name}`;
+                group1Test.querySelector('h4').innerHTML = `<span class="icon"></span>${test.name}`;
+                group1Test.querySelector('p').textContent = test.desc;
+            } else {
+                group1Selection.textContent = '• Please select from first group';
+                group1Test.querySelector('h4').innerHTML = `<span class="icon"></span>Your Selected Test from Group 1`;
+                group1Test.querySelector('p').textContent = 'Choose between Liver Function, Kidney Function, or Cholesterol testing';
+            }
+
+            if (group2) {
+                const test = testDescriptions[group2.value];
+                group2Selection.textContent = `• ${test.name}`;
+                group2Test.querySelector('h4').innerHTML = `<span class="icon"></span>${test.name}`;
+                group2Test.querySelector('p').textContent = test.desc;
+            } else {
+                group2Selection.textContent = '• Please select from second group';
+                group2Test.querySelector('h4').innerHTML = `<span class="icon"></span>Your Selected Test from Group 2`;
+                group2Test.querySelector('p').textContent = 'Select either long-term diabetes monitoring or complete thyroid function';
+            }
+
+            // Show/hide summary and enable/disable button
+            if (group1 || group2) {
+                summary.classList.add('show');
+            } else {
+                summary.classList.remove('show');
+            }
+
+            if (group1 && group2) {
+                addToCartBtn.disabled = false;
+                addToCartBtn.querySelector('span').textContent = 'Add to Cart';
+            } else {
+                addToCartBtn.disabled = true;
+                addToCartBtn.querySelector('span').textContent = 'Select Both Options First';
+            }
+        }
+
+        // Add event listeners to all radio buttons
+        document.querySelectorAll('input[type="radio"]').forEach(radio => {
+            radio.addEventListener('change', updateSelections);
+        });
+
+        function addToCart() {
+            const group1 = document.querySelector('input[name="group1"]:checked');
+            const group2 = document.querySelector('input[name="group2"]:checked');
+            
+            if (!group1 || !group2) {
+                alert('Please select one option from each group before adding to cart.');
+                return;
+            }
+
+           const btn = addToCartBtn;
+            const originalHTML = btn.innerHTML;
+            
+            // Success feedback
+            btn.innerHTML = '<span>✓ Added to Cart!</span>';
+            btn.style.background = 'rgba(46, 204, 113, 0.2)';
+            btn.style.borderColor = '#2ecc71';
+            btn.style.color = '#2ecc71';
+            btn.style.transform = 'scale(1.05)';
+
+            
+            // Show success message with selected tests
+            const group1Test = testDescriptions[group1.value].name;
+            const group2Test = testDescriptions[group2.value].name;
+            
+            const successMsg = document.createElement('div');
+            successMsg.style.cssText = `
+                position: fixed;
+                top: 20px;
+                right: 20px;
+                background: linear-gradient(135deg, #2ecc71 0%, #27ae60 100%);
+                color: white;
+                padding: 15px 25px;
+                border-radius: 10px;
+                box-shadow: 0 10px 25px rgba(0,0,0,0.2);
+                z-index: 1000;
+                animation: slideInRight 0.5s ease-out;
+                max-width: 300px;
+            `;
+            successMsg.innerHTML = `
+                <strong>Smart Selection Package Added!</strong><br>
+                <small>• ${group1Test}</small><br>
+                <small>• ${group2Test}</small>
+            `;
+            document.body.appendChild(successMsg);
+            
+            setTimeout(() => {
+                btn.innerHTML = originalHTML;
+                btn.style.background = 'linear-gradient(135deg, #ff6b6b 0%, #ee5a24 100%)';
+                btn.style.transform = 'scale(1)';
+                successMsg.remove();
+            }, 3000);
+        }
+
+        // Add smooth scrolling and interactive elements
+        document.addEventListener('DOMContentLoaded', function() {
+            const cards = document.querySelectorAll('.radio-option, .test-item');
+            
+            const observer = new IntersectionObserver((entries) => {
+                entries.forEach((entry, index) => {
+                    if (entry.isIntersecting) {
+                        setTimeout(() => {
+                            entry.target.style.animation = 'fadeInUp 0.6s ease-out';
+                            entry.target.style.opacity = '1';
+                        }, index * 100);
+                    }
+                });
+            }, {
+                threshold: 0.1
+            });
+
+            cards.forEach(card => {
+                card.style.opacity = '0';
+                observer.observe(card);
+            });
+
+            // Initialize selections
+            updateSelections();
+        });
+
+        // Add keyframes for slideInRight animation
+        const style = document.createElement('style');
+        style.textContent = `
+            @keyframes slideInRight {
+                from {
+                    transform: translateX(100%);
+                    opacity: 0;
+                }
+                to {
+                    transform: translateX(0);
+                    opacity: 1;
+                }
+            }
+        `;
+        document.head.appendChild(style);
+    </script>
+</body>
+</html>

@@ -1,0 +1,246 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>HealthLink - Sonography Services</title>
+    <link rel="stylesheet" href="sono.css">
+
+<body>
+    <header class="header">
+        <div class="container">
+            <div class="header-content">
+                <div class="logo">
+                    <img src="/Healthlink/Diagnostics/Patient/pictures/logo.png" alt="HealthLink Logo" width="130px" height="80px">
+                </div>
+                <div class="contact-info">
+                    Call +91 8291271698
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <main class="main-content">
+        <div class="container">
+            <section class="hero-section">
+                <div class="hero-text">
+                    <h1 class="main-heading">
+                        Sonography Services for<br>
+                        Detailed Internal<br>
+                        Imaging & Diagnosis
+                    </h1>
+                </div>
+                <div class="hero-form">
+                    <h2>Sonography Services in your City</h2>
+                    <p>Get expert sonography services including abdominal ultrasound, pelvic scan, pregnancy ultrasound, and more. Book your appointment today for accurate imaging and diagnosis.</p>
+                     <button class="book-btn" id="bookBtn">
+                        Book Appointment</button>
+                </div>
+            </section>
+
+            <section class="booking-section">
+                <h2 class="section-title">How to book your test?</h2>
+                <div class="booking-steps">
+                    <div class="step">
+                        <div class="step-number">1</div>
+                        <h3>📝 Click on the Book Appointment button.</h3>
+                    </div>
+                    <div class="step">
+                        <div class="step-number">2</div>
+                        <h3>📄 Fill in the appointment form.</h3>
+                    </div>
+                    <div class="step">
+                        <div class="step-number">3</div>
+                        <h3>💰 Review Charges and Grand Total before submission.</h3>
+                    </div>
+                    <div class="step">
+                        <div class="step-number">4</div>
+                        <h3>✅ Submit the form to confirm.</h3>
+                    </div>
+                </div>
+            </section>
+
+            <section class="services-section">
+                <h2 class="section-title">Learn More About Sonography Services</h2>
+                <div class="services-grid">
+                    <div class="service-item">
+                        <div class="service-number">1</div>
+                        <div class="service-content">
+                            <h3>What sonography services are available at HealthLink?</h3>
+                            <p>We offer a comprehensive range of sonography services including abdominal ultrasound, pelvic scanning, pregnancy monitoring, thyroid ultrasound, cardiac echo, and specialized diagnostic imaging for accurate health assessment.</p>
+                        </div>
+                    </div>
+
+                    <div class="service-item">
+                        <div class="service-number">2</div>
+                        <div class="service-content">
+                            <h3>How does sonography help in medical diagnosis?</h3>
+                            <p>Sonography uses high-frequency sound waves to create detailed images of internal organs, tissues, and blood flow. It helps diagnose conditions in the abdomen, pelvis, heart, blood vessels, and monitor pregnancy development safely without radiation exposure.</p>
+                        </div>
+                    </div>
+
+                    <div class="service-item">
+                        <div class="service-number">3</div>
+                        <div class="service-content">
+                            <h3>What are the benefits of ultrasound imaging?</h3>
+                            <p>Ultrasound imaging is non-invasive, painless, and radiation-free. It provides real-time imaging, helps guide procedures, monitors treatment progress, and is particularly valuable for pregnancy care, organ assessment, and detecting abnormalities early.</p>
+                        </div>
+                    </div>
+
+                    <div class="service-item">
+                        <div class="service-number">4</div>
+                        <div class="service-content">
+                            <h3>How quickly can you receive your sonography results?</h3>
+                            <p>Sonography results are typically available within 2 to 4 hours after the scan. For routine examinations, reports are provided the same day. Emergency cases receive immediate preliminary findings with detailed reports following within 24 hours.</p>
+                        </div>
+                    </div>
+                </div>
+            </section>
+        </div>
+    </main>
+     <footer>
+            &copy; 2025 Healthlink Diagnostics & Pvt Ltd. All rights reserved.
+        </footer>
+
+    <!-- Login Modal -->
+    <div class="modal-overlay" id="loginModal">
+        <div class="login-modal">
+            <button class="close-modal" id="closeModal">&times;</button>
+            <div class="login-header">
+                <h2>🔐 Login Required</h2>
+                <p>Please login to book your appointment</p>
+            </div>
+            <form class="login-form" id="loginForm">
+                <div class="form-group">
+                     <label for="loginUserId">User ID</label>
+                    <input type="text" id="loginUserId" name="loginUserId" required>
+                </div>
+                <div class="form-group">
+                    <label for="password">Password</label>
+                    <input type="password" id="password" name="password" required>
+                </div>
+                <button type="submit" class="login-btn">Login & Continue</button>
+            </form>
+            <div class="forgot-password">
+                <a href="/Healthlink/Diagnostics/Patient/frontend/signup.html" id="forgotPassword">Don't have an
+                    account? Signup</a>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Global variables
+        let isSearchActive = false;
+
+        // Modal functionality
+        const bookBtn = document.getElementById('bookBtn');
+        const loginModal = document.getElementById('loginModal');
+        const closeModal = document.getElementById('closeModal');
+        const loginForm = document.getElementById('loginForm');
+        const body = document.body;
+
+        // Show login modal when book button is clicked
+        bookBtn.addEventListener('click', function (e) {
+            e.preventDefault();
+            showLoginModal();
+        });
+
+        // Close modal when X is clicked
+        closeModal.addEventListener('click', function () {
+            hideLoginModal();
+        });
+
+        // Close modal when clicking outside of it
+        loginModal.addEventListener('click', function (e) {
+            if (e.target === loginModal) {
+                hideLoginModal();
+            }
+        });
+
+        // Handle login form submission
+        loginForm.addEventListener('submit', function (e) {
+            e.preventDefault();
+
+            // Simulate login process
+            const loginUserId = document.getElementById('loginUserId').value;
+            const password = document.getElementById('password').value;
+
+            if (loginUserId && password) {
+                // Show loading state
+                const loginBtn = document.querySelector('.login-btn');
+                const originalText = loginBtn.textContent;
+                loginBtn.textContent = 'Logging in...';
+                loginBtn.disabled = true;
+
+                // Simulate API call delay
+                setTimeout(() => {
+                    // Hide modal
+                    hideLoginModal();
+
+                    // Show success message
+                    alert('Login successful! Redirecting to booking page...');
+
+                    // Redirect to booking page (replace with your actual URL)
+                    window.location.href = '/Healthlink/Diagnostics/Patient/main.html';
+                }, 1500);
+            }
+        });
+
+        // Forgot password functionality
+        document.getElementById('forgotPassword').addEventListener('click', function (e) {
+            e.preventDefault();
+            window.location.href = '/Healthlink/Diagnostics/Patient/frontend/signup.html';
+        });
+
+        function showLoginModal() {
+            loginModal.classList.add('active');
+            body.classList.add('modal-open');
+            document.getElementById('loginUserId').focus();
+        }
+
+        function hideLoginModal() {
+            loginModal.classList.remove('active');
+            body.classList.remove('modal-open');
+
+            // Reset form
+            loginForm.reset();
+            const loginBtn = document.querySelector('.login-btn');
+            loginBtn.textContent = 'Login & Continue';
+            loginBtn.disabled = false;
+        }
+
+        // Close modal with Escape key
+        document.addEventListener('keydown', function (e) {
+            if (e.key === 'Escape' && loginModal.classList.contains('active')) {
+                hideLoginModal();
+            }
+        });
+
+        // Page load animations
+        document.addEventListener('DOMContentLoaded', function () {
+            const serviceItems = document.querySelectorAll('.service-item, .step');
+
+            // Initial setup for animation
+            serviceItems.forEach((item, index) => {
+                item.style.opacity = '0';
+                item.style.transform = 'translateY(30px)';
+
+                // Staggered animation
+                setTimeout(() => {
+                    item.style.transition = 'all 0.6s ease';
+                    item.style.opacity = '1';
+                    item.style.transform = 'translateY(0)';
+                }, index * 100);
+            });
+        });
+
+        function bookAppointment() {
+            alert('Redirecting to appointment booking...\n\nOr call us at +91 8291271698 to book your appointment.');
+            // Example: Redirect to a booking page
+            // window.location.href = '/Healthlink/Diagnostics/Patient/tabs/book.html';
+        }
+    </script>
+</body>
+
+</html>

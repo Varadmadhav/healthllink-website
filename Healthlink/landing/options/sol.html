@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Healthcare Diagnostics & Pharmacy Solutions</title>
+    <link rel="stylesheet" href="sol.css">
+</head>
+
+<body>
+    <!-- Animated background particles -->
+    <div class="particles" id="particles"></div>
+
+    <!-- Fixed header with logo -->
+    <header class="header" id="header">
+        <img src="/Healthlink/Diagnostics/patient/pictures/logo.png" width="130px" height="80px">
+    </header>
+    <div class="container">
+        <!-- Hero section -->
+        <div class="hero-section">
+        </div>
+        <!-- Solutions grid -->
+        <div class="solutions-grid">
+            <div class="solution-card medical loading" onclick="handleLogin('medical')">
+                <div class="card-icon">👨‍💼</div>
+                <h2>Healthcare Solution</h2>
+                <p>Delivering trusted, innovative medical solutions for a healthier tomorrow</p>
+                <button class="login-btn"
+                    onclick="window.location.href='/Healthlink/Solutions/diag_sol/dig_sol.html'">
+                    <span>Enter Healthcare Portal</span>
+                </button>
+            </div>
+
+            <div class="solution-card corporate loading" onclick="handleLogin('corporate')">
+                <div class="card-icon">👨‍⚕️</div>
+                <h2>Corporate Solution</h2>
+                <p>Empowering businesses with smart, scalable corporate solutions for lasting success</p>
+                <button class="login-btn" onclick="window.location.href='/Healthlink/Solutions/corp_sol/corp_sol.html'">
+                    <span>Enter Corporate Portal</span>
+                </button>
+            </div>
+
+            <div class="solution-card pharmacutical loading" onclick="handleLogin('pharmacutical')">
+                <div class="card-icon">👨‍⚕️</div>
+                <h2>Pharma Solution</h2>
+                <p>Advancing healthcare through reliable and innovative pharma solutions.</p>
+                <button class="login-btn" onclick="window.location.href='/Healthlink/Solutions/pharma_sol/pharma.html'">
+                    <span>Enter Pharma Portal</span>
+                </button>
+            </div>
+
+            </div>
+        </div>
+    </div>
+
+    <script src="sol.js"></script>
+</body>
+
+</html>

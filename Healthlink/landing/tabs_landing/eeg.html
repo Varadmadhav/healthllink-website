@@ -1,0 +1,391 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>HealthLink - EEG/EMG Services</title>
+    <link rel="stylesheet" href="eeg.css">
+</head>
+<body>
+    <header class="header">
+        <div>
+            <img src="/Healthlink/Diagnostics/Patient/pictures/logo.png" alt="HealthLink Logo" class="logo-image" height="80px" width="130px">
+        </div>
+        <div class="contact-info">
+            Call +91 8291271698
+        </div>
+    </header>
+
+    <div class="main-container">
+        <div class="left-content">
+            <h1 class="main-heading">
+                EEG/EMG Services for<br>
+                Neurological Assessment and<br>
+                Accurate Diagnosis
+            </h1>
+        </div>
+
+        <div class="appointment-container">
+            <h2 class="appointment-title">EEG/EMG Services in your City</h2>
+            <p class="appointment-description">
+                Get expert neurological testing services including EEG (Electroencephalogram) and EMG (Electromyography). 
+                Book your appointment today for accurate diagnosis and comprehensive neurological assessment.
+            </p>
+            <button class="book-btn" id="bookBtn">
+                Book Appointment
+            </button>
+        </div>
+    </div>
+
+   <section class="process-section">
+        <h2 class="process-title">How to book your test?</h2>
+        <div class="process-steps">
+            <div class="process-step">
+                <div class="step-number">1</div>
+                <div class="step-text">📝 Click on the Book Appointment button.</div>
+            </div>
+            <div class="process-step">
+                <div class="step-number">2</div>
+                <div class="step-text">📄 Fill in the appointment form.</div>
+            </div>
+            <div class="process-step">
+                <div class="step-number">3</div>
+                <div class="step-text">💰 Review Charges and Grand Total.</div>
+            </div>
+            <div class="process-step">
+                <div class="step-number">4</div>
+                <div class="step-text">✅ Submit the form to confirm.</div>
+            </div>
+        </div>
+    </section>
+
+    <section class="info-section">
+        <h2 class="info-title">Learn More About EEG/EMG Services</h2>
+        <div class="info-content">
+            <div class="info-item">
+                <div class="info-number">1</div>
+                <div class="info-text">
+                    <div class="info-question">What EEG/EMG services are available at HealthLink?</div>
+                    <div class="info-answer">
+                        We offer comprehensive neurological testing services including EEG (Electroencephalogram) for brain activity monitoring and EMG (Electromyography) for muscle and nerve function assessment.
+                    </div>
+                </div>
+            </div>
+            
+            <div class="info-item">
+                <div class="info-number">2</div>
+                <div class="info-text">
+                    <div class="info-question">How can EEG/EMG help in diagnosing neurological conditions?</div>
+                    <div class="info-answer">
+                        EEG/EMG tests help in diagnosing neurological conditions by measuring electrical activity in the brain and muscles. These tests can detect seizures, epilepsy, sleep disorders, muscle weakness, and nerve damage.
+                    </div>
+                </div>
+            </div>
+            
+            <div class="info-item">
+                <div class="info-number">3</div>
+                <div class="info-text">
+                    <div class="info-question">How do EEG/EMG tests contribute to neurological treatment planning?</div>
+                    <div class="info-answer">
+                        EEG/EMG tests play a crucial role in neurological treatment by providing detailed information about brain wave patterns and muscle function. This helps doctors plan appropriate treatments, monitor disease progression, and evaluate treatment effectiveness for conditions like epilepsy, neuropathy, and myopathy.
+                    </div>
+                </div>
+            </div>
+            
+            <div class="info-item">
+                <div class="info-number">4</div>
+                <div class="info-text">
+                    <div class="info-question">How quickly can you receive your EEG/EMG results?</div>
+                    <div class="info-answer">
+                        EEG/EMG results typically range from 24 to 48 hours, depending on the complexity of the test and the urgency of the case. Preliminary findings may be available immediately after the test.
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+     <footer>
+            &copy; 2025 Healthlink Diagnostics & Pvt Ltd. All rights reserved.
+        </footer>
+
+    <!-- Login Modal -->
+    <div class="modal-overlay" id="loginModal">
+        <div class="login-modal">
+            <button class="close-modal" id="closeModal">&times;</button>
+            <div class="login-header">
+                <h2>🔐 Login Required</h2>
+                <p>Please login to book your appointment</p>
+            </div>
+            <form class="login-form" id="loginForm">
+                <div class="form-group">
+                    <label for="loginUserId">User ID</label>
+                    <input type="text" id="loginUserId" name="loginUserId" required>
+                </div>
+                <div class="form-group">
+                    <label for="password">Password</label>
+                    <input type="password" id="password" name="password" required>
+                </div>
+                <button type="submit" class="login-btn">Login & Continue</button>
+            </form>
+            <div class="forgot-password">
+                <a href="/Healthlink/Diagnostics/Patient/frontend/signup.html" id="forgotPassword">Don't have an
+                    account? Signup</a>
+            </div>
+        </div>
+
+
+    </div>
+
+    <script>
+        // Global variables
+        let isSearchActive = false;
+
+        // Modal functionality
+        const bookBtn = document.getElementById('bookBtn');
+        const loginModal = document.getElementById('loginModal');
+        const closeModal = document.getElementById('closeModal');
+        const loginForm = document.getElementById('loginForm');
+        const body = document.body;
+
+        // Show login modal when book button is clicked
+        bookBtn.addEventListener('click', function (e) {
+            e.preventDefault();
+            showLoginModal();
+        });
+
+        // Close modal when X is clicked
+        closeModal.addEventListener('click', function () {
+            hideLoginModal();
+        });
+
+        // Close modal when clicking outside of it
+        loginModal.addEventListener('click', function (e) {
+            if (e.target === loginModal) {
+                hideLoginModal();
+            }
+        });
+
+        // Handle login form submission
+        loginForm.addEventListener('submit', function (e) {
+            e.preventDefault();
+
+            // Simulate login process
+            const loginUserId = document.getElementById('loginUserId').value;
+            const password = document.getElementById('password').value;
+
+            if (loginUserId && password) {
+                // Show loading state
+                const loginBtn = document.querySelector('.login-btn');
+                const originalText = loginBtn.textContent;
+                loginBtn.textContent = 'Logging in...';
+                loginBtn.disabled = true;
+
+                // Simulate API call delay
+                setTimeout(() => {
+                    // Hide modal
+                    hideLoginModal();
+
+                    // Show success message
+                    alert('Login successful! Redirecting to booking page...');
+
+                    // Redirect to booking page (replace with your actual URL)
+                    window.location.href = '/Healthlink/Diagnostics/Patient/main.html';
+                }, 1500);
+            }
+        });
+
+        // Forgot password functionality
+        document.getElementById('forgotPassword').addEventListener('click', function (e) {
+            e.preventDefault();
+            window.location.href = '/Healthlink/Diagnostics/Patient/frontend/signup.html'; // replace with your actual URL
+        });
+
+
+        function showLoginModal() {
+            loginModal.classList.add('active');
+            body.classList.add('modal-open');
+            document.getElementById('loginUserId').focus();
+        }
+
+        function hideLoginModal() {
+            loginModal.classList.remove('active');
+            body.classList.remove('modal-open');
+
+            // Reset form
+            loginForm.reset();
+            const loginBtn = document.querySelector('.login-btn');
+            loginBtn.textContent = 'Login & Continue';
+            loginBtn.disabled = false;
+        }
+
+        // Close modal with Escape key
+        document.addEventListener('keydown', function (e) {
+            if (e.key === 'Escape' && loginModal.classList.contains('active')) {
+                hideLoginModal();
+            }
+        });
+
+        // Search functionality
+        document.getElementById('searchInput').addEventListener('input', function () {
+            const searchTerm = this.value.toLowerCase().trim();
+            const testCards = document.querySelectorAll('.test-card');
+            const categories = document.querySelectorAll('.category');
+            const noResults = document.getElementById('noResults');
+
+            isSearchActive = searchTerm.length > 0;
+            let hasVisibleCards = false;
+
+            if (isSearchActive) {
+                // Hide category filter buttons during search
+                document.querySelectorAll('.filter-btn').forEach(btn => {
+                    if (btn.getAttribute('data-filter') !== 'all') {
+                        btn.style.opacity = '0.5';
+                        btn.style.pointerEvents = 'none';
+                    }
+                });
+
+                // Search through all test cards
+                testCards.forEach(card => {
+                    const testName = card.querySelector('.test-name').textContent.toLowerCase();
+                    const testDescription = card.querySelector('.test-description').textContent.toLowerCase();
+                    const category = card.closest('.category');
+
+                    if (testName.includes(searchTerm) || testDescription.includes(searchTerm)) {
+                        card.style.display = 'block';
+                        category.style.display = 'block';
+                        hasVisibleCards = true;
+                    } else {
+                        card.style.display = 'none';
+                    }
+                });
+
+                // Hide categories that have no visible cards
+                categories.forEach(category => {
+                    const visibleCards = category.querySelectorAll('.test-card[style*="display: block"], .test-card:not([style*="display: none"])');
+                    const actuallyVisibleCards = Array.from(visibleCards).filter(card =>
+                        card.style.display !== 'none'
+                    );
+
+                    if (actuallyVisibleCards.length === 0) {
+                        category.style.display = 'none';
+                    }
+                });
+
+                // Show/hide no results message
+                noResults.style.display = hasVisibleCards ? 'none' : 'block';
+
+            } else {
+                // Reset everything when search is cleared
+                document.querySelectorAll('.filter-btn').forEach(btn => {
+                    btn.style.opacity = '1';
+                    btn.style.pointerEvents = 'auto';
+                });
+
+                // Show all cards and categories
+                testCards.forEach(card => {
+                    card.style.display = 'block';
+                });
+
+                categories.forEach(category => {
+                    category.style.display = 'block';
+                });
+
+                noResults.style.display = 'none';
+
+                // Apply current filter
+                const activeFilter = document.querySelector('.filter-btn.active');
+                if (activeFilter) {
+                    const filter = activeFilter.getAttribute('data-filter');
+                    applyFilter(filter);
+                }
+            }
+        });
+
+        // Filter functionality
+        function applyFilter(filter) {
+            if (isSearchActive) return; // Don't apply filters during search
+
+            const categories = document.querySelectorAll('.category');
+
+            categories.forEach(category => {
+                if (filter === 'all' || category.classList.contains(filter)) {
+                    category.style.display = 'block';
+                } else {
+                    category.style.display = 'none';
+                }
+            });
+        }
+
+        // Event listeners for filter buttons
+        document.querySelectorAll('.filter-btn').forEach(btn => {
+            btn.addEventListener('click', function () {
+                if (isSearchActive) return; // Prevent filter changes during search
+
+                // Remove active class from all buttons
+                document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+                // Add active class to clicked button
+                this.classList.add('active');
+
+                const filter = this.getAttribute('data-filter');
+                applyFilter(filter);
+            });
+        });
+
+        // Page load animations
+        document.addEventListener('DOMContentLoaded', function () {
+            const categories = document.querySelectorAll('.category');
+
+            // Initial setup for animation
+            categories.forEach((category, index) => {
+                category.style.opacity = '0';
+                category.style.transform = 'translateY(30px)';
+
+                // Staggered animation
+                setTimeout(() => {
+                    category.style.transition = 'all 0.6s ease';
+                    category.style.opacity = '1';
+                    category.style.transform = 'translateY(0)';
+                }, index * 200);
+            });
+        });
+
+        // Additional utility functions
+        function clearSearch() {
+            const searchInput = document.getElementById('searchInput');
+            searchInput.value = '';
+            // Trigger input event to reset search
+            searchInput.dispatchEvent(new Event('input'));
+        }
+
+        // Enhanced search functionality - search by category keywords
+        function searchByKeywords(searchTerm) {
+            const categoryKeywords = {
+                'routine': ['routine', 'basic', 'general', 'common', 'standard'],
+                'cardiac': ['heart', 'cardiac', 'cardiovascular', 'chest'],
+                'diabetes': ['diabetes', 'sugar', 'glucose', 'insulin', 'diabetic'],
+                'thyroid': ['thyroid', 'hormone', 'metabolism'],
+                'liver': ['liver', 'hepatic', 'bile'],
+                'kidney': ['kidney', 'renal', 'urine']
+            };
+
+            for (let category in categoryKeywords) {
+                if (categoryKeywords[category].some(keyword =>
+                    keyword.includes(searchTerm) || searchTerm.includes(keyword)
+                )) {
+                    return category;
+                }
+            }
+            return null;
+        }
+        function bookAppointment() {
+            // You can customize this function to handle the appointment booking
+            alert('Redirecting to appointment booking...\n\nOr call us at +91 8291271698 to book your appointment.');
+
+            // Example: Redirect to a booking page
+            window.location.href = '/Healthlink/Diagnostics/Patient/tabs/book.html';
+
+            // Example: Open phone dialer
+            // window.location.href = 'tel:+918291271698';
+        }
+    </script>
+</body>
+</html>

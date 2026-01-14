@@ -1,0 +1,197 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Specific Health Profiles</title>
+    <link rel="stylesheet" href="packages.css" />
+</head>
+
+<body>
+    <!-- Login Modal -->
+    <div class="modal-overlay" id="loginModal">
+        <div class="login-modal">
+            <button class="close-modal" id="closeModal">&times;</button>
+            <div class="login-header">
+                <h2>🔐 Login Required</h2>
+                <p>Please login to add items to your cart</p>
+            </div>
+            <form class="login-form" id="loginForm">
+                <div class="form-group">
+                    <label for="loginUserId">User ID</label>
+                    <input type="text" id="loginUserId" name="loginUserId" required>
+                </div>
+                <div class="form-group">
+                    <label for="password">Password</label>
+                    <input type="password" id="password" name="password" required>
+                </div>
+                <button type="submit" class="login-btn">Login & Continue</button>
+            </form>
+            <div class="forgot-password">
+                <a href="/Healthlink/Diagnostics/Patient/frontend/signup.html" id="forgotPassword">Don't have an
+                    account? Signup</a>
+            </div>
+        </div>
+    </div>
+    <div class="container">
+        <div class="header">
+            <h1>Fever Profile</h1>
+            <p>Detects common infections and underlying causes of fever for accurate diagnosis.</p>
+        </div>
+
+        <div class="main-card">
+            <div class="card-header">
+                <h2>Fever Profile</h2>
+                <p class="subtitle">Choose a profile tailored to your needs</p>
+            </div>
+
+            <div class="card-body">
+                <div class="pricing-section">
+                    <div class="price-tag">Fever Profile</div>
+                    <div class="price">₹1240</div>
+                    <button class="book-btn" id="addToCartBtn">
+                        Add to Cart</button>
+                </div>
+
+                <h3 class="section-title">Tests Included</h3>
+                <div class="tests-grid">
+                    <div class="test-item">
+                        <h4><span class="icon"></span>CBC</h4>
+                        <p>Measures red cells, white cells, and platelets to assess overall blood health</p>
+                    </div>
+                    <div class="test-item">
+                        <h4><span class="icon"></span>Malaria Parasite</h4>
+                        <p>Detects malaria parasites in the blood</p>
+                    </div>
+                    <div class="test-item">
+                        <h4><span class="icon"></span>Dengue NS1 Antigen</h4>
+                        <p>Early detection of dengue infection</p>
+                    </div>
+                    <div class="test-item">
+                        <h4><span class="icon"></span>Widal</h4>
+                        <p>Checks for typhoid fever by detecting antibodies</p>
+                    </div>
+                    <div class="test-item">
+                        <h4><span class="icon"></span>Urine Routine</h4>
+                        <p>Analyzes urine for infections, kidney health, and other conditions</p>
+                    </div>
+                </div>
+            </div>
+
+            <script>
+                // Modal functionality
+                const addToCartBtn = document.getElementById('addToCartBtn');
+                const loginModal = document.getElementById('loginModal');
+                const closeModal = document.getElementById('closeModal');
+                const loginForm = document.getElementById('loginForm');
+                const body = document.body;
+
+                // Show login modal when add to cart button is clicked
+                addToCartBtn.addEventListener('click', function (e) {
+                    e.preventDefault();
+                    showLoginModal();
+                });
+
+                // Close modal when X is clicked
+                closeModal.addEventListener('click', function () {
+                    hideLoginModal();
+                });
+
+                // Close modal when clicking outside of it
+                loginModal.addEventListener('click', function (e) {
+                    if (e.target === loginModal) {
+                        hideLoginModal();
+                    }
+                });
+
+                // Handle login form submission
+                loginForm.addEventListener('submit', function (e) {
+                    e.preventDefault();
+
+                    // Simulate login process
+                    const loginUserId = document.getElementById('loginUserId').value;
+                    const password = document.getElementById('password').value;
+
+                    if (loginUserId && password) {
+                        // Show loading state
+                        const loginBtn = document.querySelector('.login-btn');
+                        const originalText = loginBtn.textContent;
+                        loginBtn.textContent = 'Logging in...';
+                        loginBtn.disabled = true;
+
+                        // Simulate API call delay
+                        setTimeout(() => {
+                            // Hide modal
+                            hideLoginModal();
+
+                            // Show success message and add to cart
+                            showSuccessMessage();
+
+                            // Reset login button
+                            loginBtn.textContent = originalText;
+                            loginBtn.disabled = false;
+                        }, 1500);
+                    }
+                });
+
+                // Forgot password functionality
+                document.getElementById('forgotPassword').addEventListener('click', function (e) {
+                    e.preventDefault();
+                    alert('Redirecting to signup page...');
+                    window.location.href = '/Healthlink/Diagnostics/Patient/frontend/signup.html'; // Replace with your actual signup URL
+                });
+
+                function showLoginModal() {
+                    loginModal.classList.add('active');
+                    body.classList.add('modal-open');
+                    document.getElementById('loginUserId').focus();
+                }
+
+                function hideLoginModal() {
+                    loginModal.classList.remove('active');
+                    body.classList.remove('modal-open');
+
+                    // Reset form
+                    loginForm.reset();
+                    const loginBtn = document.querySelector('.login-btn');
+                    loginBtn.textContent = 'Login & Continue';
+                    loginBtn.disabled = false;
+                }
+                function showSuccessMessage() {
+                    // Update button to show success
+                    const btn = addToCartBtn;
+                    const originalHTML = btn.innerHTML;
+
+                    btn.innerHTML = '<span>✓ Added to Cart!</span>';
+                    btn.style.background = 'rgba(46, 204, 113, 0.2)';
+                    btn.style.borderColor = '#2ecc71';
+                    btn.style.color = '#2ecc71';
+                    btn.style.transform = 'scale(1.05)';
+
+
+                    const successMsg = document.createElement('div');
+                    successMsg.style.cssText = `
+                position: fixed;
+                top: 20px;
+                right: 20px;
+                background: linear-gradient(135deg, #2ecc71 0%, #27ae60 100%);
+                color: white;
+                padding: 15px 25px;
+                border-radius: 10px;
+                box-shadow: 0 10px 25px rgba(0,0,0,0.2);
+                z-index: 1000;
+            `;
+                    successMsg.textContent = 'Specific Health Profiles added to cart!';
+                    document.body.appendChild(successMsg);
+                    setTimeout(() => {
+                        btn.innerHTML = originalHTML;
+                        btn.style.background = 'linear-gradient(135deg, #ff6b6b 0%, #ee5a24 100%)';
+                        btn.style.transform = 'scale(1)';
+                        successMsg.remove();
+                    }, 3000);
+                }
+            </script>
+</body>
+
+</html>

@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Perfect Food Plan(Male) Package</title>
+    <link rel="stylesheet" href="packages.css">
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <div class="badge">Perfect Food Plan(Male) Package</div>
+            <h1>Perfect Food Plan(Male) Package</h1>
+            <p>A comprehensive health check-up tailored for men to support a balanced diet and wellnes</p>
+        </div>
+
+        <div class="main-card">
+            <div class="card-header">
+                <h2>Perfect Food Plan(Male) Package</h2>
+                <p class="subtitle">Comprehensive diagnostics for total health assessment</p>
+            </div>
+
+            <div class="card-body">
+                <div class="pricing-section">
+                    <div class="price-tag">Perfect Food Plan(Male) Package</div>
+                    <div class="price">₹4250</div>
+                    <button class="add-to-cart-btn" onclick="addToCart()">
+                        <span>Add to Cart</span>
+                    </button>
+                </div>
+
+                <div class="tests-section">
+                    <h3 class="section-title">Test Details</h3>
+                    <div class="test-details">
+                        <p>A tailored nutrition package designed to help men achieve optimal health and vitality through balanced dietary insights.</p>
+                    </div>
+
+                    <h3 class="section-title">Tests Included</h3>
+                    <div class="tests-grid">
+                        <div class="test-item">
+                            <h4><span class="icon"></span>CBC</h4>
+                            <p>Measures red cells, white cells, and platelets to assess overall blood health</p>
+                        </div>
+                        <div class="test-item">
+                            <h4><span class="icon"></span>HBA1C</h4>
+                            <p>Long-term diabetes monitoring</p>
+                        </div>
+                        <div class="test-item">
+                            <h4><span class="icon"></span>Lipid Profile</h4>
+                            <p>Comprehensive check of cholesterol and triglyceride levels to evaluate heart health</p>
+                        </div>
+                         <div class="test-item">
+                            <h4><span class="icon"></span>Insulin Fasting</h4>
+                            <p>Measures insulin levels after fasting to assess diabetes and insulin resistance</p>
+                        </div>
+                        <div class="test-item">
+                            <h4><span class="icon"></span>Fasting Sugar</h4>
+                            <p>Measures blood glucose levels to assess risk of diabetes and monitor sugar control</p>
+                        </div>
+                        <div class="test-item">
+                            <h4><span class="icon"></span>Vitamin B12, Vitamin D3</h4>
+                            <p>Essential vitamin levels for energy and bone health</p>
+                        </div>
+                        <div class="test-item">
+                            <h4><span class="icon"></span>T3,T4,TSH</h4>
+                            <p>Evaluates thyroid gland function to detect hypo- or hyperthyroidism</p>
+                        </div>
+                        <div class="test-item">
+                            <h4><span class="icon"></span>LFT</h4>
+                            <p>Checks liver health by measuring enzymes, proteins, and bilirubin levels</p>
+                        </div>
+                        <div class="test-item">
+                            <h4><span class="icon"></span>RFT(including GFR)</h4>
+                            <p>Assesses kidney function and filtration efficiency for early detection of renal issues</p>
+                        </div>
+                        <div class="test-item">
+                            <h4><span class="icon"></span>CRP</h4>
+                            <p>Detects inflammation in the body, indicating infection or chronic disease</p>
+                        </div>
+                         <div class="test-item">
+                            <h4><span class="icon"></span>Homocystein</h4>
+                            <p>Checks homocysteine levels to assess heart disease and stroke risk</p>
+                        </div>
+                         <div class="test-item">
+                            <h4><span class="icon"></span>PSA</h4>
+                            <p> Screens for prostate gland health and helps detect prostate disorders</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function addToCart() {
+            const btn = document.querySelector('.add-to-cart-btn');
+            const originalHTML = btn.innerHTML;
+            
+            // Success feedback
+            btn.innerHTML = '<span>✓ Added to Cart!</span>';
+            btn.style.background = 'linear-gradient(135deg, #2ecc71 0%, #27ae60 100%)';
+            btn.style.transform = 'scale(1.05)';
+            
+            // Show success message
+            const successMsg = document.createElement('div');
+            successMsg.style.cssText = `
+                position: fixed;
+                top: 20px;
+                right: 20px;
+                background: linear-gradient(135deg, #2ecc71 0%, #27ae60 100%);
+                color: white;
+                padding: 15px 25px;
+                border-radius: 10px;
+                box-shadow: 0 10px 25px rgba(0,0,0,0.2);
+                z-index: 1000;
+                animation: slideInRight 0.5s ease-out;
+            `;
+            successMsg.textContent = 'All In One Package added to cart!';
+            document.body.appendChild(successMsg);
+            
+            setTimeout(() => {
+                btn.innerHTML = originalHTML;
+                btn.style.background = 'linear-gradient(135deg, #ff6b6b 0%, #ee5a24 100%)';
+                btn.style.transform = 'scale(1)';
+                successMsg.remove();
+            }, 3000);
+        }
+
+        // Add smooth scrolling and interactive elements
+        document.addEventListener('DOMContentLoaded', function() {
+            const cards = document.querySelectorAll('.test-item');
+            
+            const observer = new IntersectionObserver((entries) => {
+                entries.forEach((entry, index) => {
+                    if (entry.isIntersecting) {
+                        setTimeout(() => {
+                            entry.target.style.animation = 'fadeInUp 0.6s ease-out';
+                            entry.target.style.opacity = '1';
+                        }, index * 100);
+                    }
+                });
+            }, {
+                threshold: 0.1
+            });
+
+            cards.forEach(card => {
+                card.style.opacity = '0';
+                observer.observe(card);
+            });
+        });
+    </script>
+</body>
+</html>

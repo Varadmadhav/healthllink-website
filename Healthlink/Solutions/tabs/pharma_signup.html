@@ -1,0 +1,293 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sign Up / Login</title>
+    <link rel="stylesheet" href="pharma_signup.css">
+</head>
+<body>
+    <div class="container">
+        <div class="form-toggle">
+            <button class="toggle-btn active" onclick="showForm('signup')">Sign Up</button>
+            <button class="toggle-btn" onclick="showForm('login')">Login</button>
+        </div>
+
+        <div class="form-container">
+            <div class="success-message" id="successMessage"></div>
+
+            <!-- Sign Up Form -->
+            <form class="form active" id="signupForm">
+                <div class="form-group">
+                    <label>Role <span class="required">*</span></label>
+                    <div class="role-selection">
+                        <div class="role-option" onclick="selectRole('manager')">
+                            <input type="radio" name="role" value="manager" required>
+                            <div>Manager</div>
+                        </div>
+                        <div class="role-option" onclick="selectRole('regional_manager')">
+                            <input type="radio" name="role" value="regional_manager" required>
+                            <div>Regional Manager</div>
+                        </div>
+                        <div class="role-option" onclick="selectRole('mr')">
+                            <input type="radio" name="role" value="mr" required>
+                            <div>MR</div>
+                        </div>
+                    </div>
+                    <div class="error-message" id="roleError">Please select a role</div>
+                </div>
+
+                <div class="form-group">
+                    <label for="name">Full Name <span class="required">*</span></label>
+                    <input type="text" id="name" name="name" required>
+                    <div class="error-message" id="nameError">Please enter your full name</div>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="mobile">Mobile Number <span class="required">*</span></label>
+                        <input type="tel" id="mobile" name="mobile" required>
+                        <div class="error-message" id="mobileError">Please enter a valid mobile number</div>
+                    </div>
+                    <div class="form-group">
+                        <label for="pincode">Pincode <span class="required">*</span></label>
+                        <input type="text" id="pincode" name="pincode" required>
+                        <div class="error-message" id="pincodeError">Please enter a valid pincode</div>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label for="email">Email Address <span class="required">*</span></label>
+                    <input type="email" id="email" name="email" required>
+                    <div class="error-message" id="emailError">Please enter a valid email address</div>
+                </div>
+
+                <div class="form-group">
+                    <label for="address">Address <span class="optional">(Optional)</span></label>
+                    <textarea id="address" name="address" placeholder="Enter your complete address"></textarea>
+                </div>
+
+                <button type="submit" class="submit-btn">Sign Up</button>
+            </form>
+
+            <!-- Login Form -->
+            <form class="form" id="loginForm">
+                <div class="form-group">
+                    <label for="loginEmail">Email Address <span class="required">*</span></label>
+                    <input type="email" id="loginEmail" name="email" required>
+                    <div class="error-message" id="loginEmailError">Please enter a valid email address</div>
+                </div>
+
+                <div class="form-group">
+                    <label for="loginMobile">Mobile Number <span class="required">*</span></label>
+                    <input type="tel" id="loginMobile" name="mobile" required>
+                    <div class="error-message" id="loginMobileError">Please enter your mobile number</div>
+                </div>
+
+                <button type="submit" class="submit-btn">Login</button>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        // Store user data
+        let userData = {};
+
+        // Form toggle functionality
+        function showForm(formType) {
+            const signupForm = document.getElementById('signupForm');
+            const loginForm = document.getElementById('loginForm');
+            const toggleBtns = document.querySelectorAll('.toggle-btn');
+            
+            toggleBtns.forEach(btn => btn.classList.remove('active'));
+            
+            if (formType === 'signup') {
+                signupForm.classList.add('active');
+                loginForm.classList.remove('active');
+                toggleBtns[0].classList.add('active');
+            } else {
+                loginForm.classList.add('active');
+                signupForm.classList.remove('active');
+                toggleBtns[1].classList.add('active');
+            }
+            
+            // Clear success message
+            document.getElementById('successMessage').style.display = 'none';
+        }
+
+        // Role selection functionality
+        function selectRole(role) {
+            const roleOptions = document.querySelectorAll('.role-option');
+            roleOptions.forEach(option => option.classList.remove('selected'));
+            
+            event.target.closest('.role-option').classList.add('selected');
+            document.querySelector(`input[value="${role}"]`).checked = true;
+            
+            // Clear role error
+            document.getElementById('roleError').style.display = 'none';
+        }
+
+        // Validation functions
+        function validateName(name) {
+            return name.trim().length >= 2;
+        }
+
+        function validateMobile(mobile) {
+            const mobileRegex = /^[6-9]\d{9}$/;
+            return mobileRegex.test(mobile.replace(/\s+/g, ''));
+        }
+
+        function validateEmail(email) {
+            const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+            return emailRegex.test(email);
+        }
+
+        function validatePincode(pincode) {
+            const pincodeRegex = /^\d{6}$/;
+            return pincodeRegex.test(pincode);
+        }
+
+        function showError(fieldId, show = true) {
+            const errorElement = document.getElementById(fieldId + 'Error');
+            if (errorElement) {
+                errorElement.style.display = show ? 'block' : 'none';
+            }
+        }
+
+        function showSuccess(message) {
+            const successElement = document.getElementById('successMessage');
+            successElement.textContent = message;
+            successElement.style.display = 'block';
+            
+            // Hide after 5 seconds
+            setTimeout(() => {
+                successElement.style.display = 'none';
+            }, 5000);
+        }
+
+        // Real-time validation
+        document.getElementById('name').addEventListener('input', function() {
+            showError('name', !validateName(this.value));
+        });
+
+        document.getElementById('mobile').addEventListener('input', function() {
+            showError('mobile', !validateMobile(this.value));
+        });
+
+        document.getElementById('email').addEventListener('input', function() {
+            showError('email', !validateEmail(this.value));
+        });
+
+        document.getElementById('pincode').addEventListener('input', function() {
+            showError('pincode', !validatePincode(this.value));
+        });
+
+        document.getElementById('loginEmail').addEventListener('input', function() {
+            showError('loginEmail', !validateEmail(this.value));
+        });
+
+        document.getElementById('loginMobile').addEventListener('input', function() {
+            showError('loginMobile', !validateMobile(this.value));
+        });
+
+        // Sign up form submission
+        document.getElementById('signupForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            const formData = new FormData(this);
+            const role = formData.get('role');
+            const name = formData.get('name');
+            const mobile = formData.get('mobile');
+            const email = formData.get('email');
+            const pincode = formData.get('pincode');
+            const address = formData.get('address');
+            
+            let isValid = true;
+            
+            // Validate all required fields
+            if (!role) {
+                showError('role', true);
+                isValid = false;
+            }
+            
+            if (!validateName(name)) {
+                showError('name', true);
+                isValid = false;
+            }
+            
+            if (!validateMobile(mobile)) {
+                showError('mobile', true);
+                isValid = false;
+            }
+            
+            if (!validateEmail(email)) {
+                showError('email', true);
+                isValid = false;
+            }
+            
+            if (!validatePincode(pincode)) {
+                showError('pincode', true);
+                isValid = false;
+            }
+            
+            if (isValid) {
+                // Store user data
+                userData = {
+                    role: role,
+                    name: name,
+                    mobile: mobile,
+                    email: email,
+                    pincode: pincode,
+                    address: address || ''
+                };
+                
+                showSuccess('Account created successfully! You can now login.');
+                
+                // Reset form
+                this.reset();
+                document.querySelectorAll('.role-option').forEach(option => {
+                    option.classList.remove('selected');
+                });
+                
+                // Switch to login form after a delay
+                setTimeout(() => {
+                    showForm('login');
+                }, 2000);
+            }
+        });
+
+        // Login form submission
+        document.getElementById('loginForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            const formData = new FormData(this);
+            const email = formData.get('email');
+            const mobile = formData.get('mobile');
+            
+            let isValid = true;
+            
+            if (!validateEmail(email)) {
+                showError('loginEmail', true);
+                isValid = false;
+            }
+            
+            if (!validateMobile(mobile)) {
+                showError('loginMobile', true);
+                isValid = false;
+            }
+            
+            if (isValid) {
+                // Check if user exists
+                if (userData.email === email && userData.mobile === mobile) {
+                    showSuccess(`Welcome back, ${userData.name}! (${userData.role.replace('_', ' ').toUpperCase()})`);
+                    
+                    // Reset form
+                    this.reset();
+                } else {
+                    showSuccess('Login failed. Please check your credentials or sign up first.');
+                }
+            }
+        });
+    </script>
+</body>
+</html>

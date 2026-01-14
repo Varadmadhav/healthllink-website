@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Signup & Login System</title>
+    <link href="https://fonts.googleapis.com/css2?family=Segoe+UI:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <!-- EmailJS SDK -->
+    <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
+    <link rel="stylesheet" href="signup.css">
+</head>
+<body>
+    <div class="main-wrapper">
+        <div class="logo">
+            <img src="/Healthlink/Diagnostics/Patient/pictures/logo.png" alt="Healthlink Logo" width="250" height="180">
+        </div>
+
+        <div class="container">
+            <!-- Signup Form -->
+            <div id="signupForm" class="form-container active">
+                <h2>Get Started</h2>
+                <div id="signupMessage"></div>
+                <form id="signupFormElement">
+                    <div class="form-group">
+                        <label for="name">Full Name *</label>
+                        <input type="text" id="name" name="name" required placeholder="Enter your full name">
+                    </div>
+
+                    <div class="form-group">
+                        <label for="mobile">Mobile Number *</label>
+                        <input type="tel" id="mobile" name="mobile" required pattern="[0-9]{10}" maxlength="10" placeholder="Enter 10-digit mobile number">
+                    </div>
+
+                    <div class="form-group">
+                        <label for="email">Email ID *</label>
+                        <input type="email" id="email" name="email" required placeholder="Enter your email address">
+                    </div>
+
+                    <div class="form-group">
+                        <label for="location">Location *</label>
+                        <select id="location" name="location" required>
+                            <option value="">Select Location</option>
+                            <option value="Mumbai">Mumbai</option>
+                            <option value="Delhi">Delhi</option>
+                            <option value="Bangalore">Bangalore</option>
+                            <option value="Chennai">Chennai</option>
+                            <option value="Kolkata">Kolkata</option>
+                            <option value="Hyderabad">Hyderabad</option>
+                            <option value="Pune">Pune</option>
+                            <option value="Ahmedabad">Ahmedabad</option>
+                            <option value="Jaipur">Jaipur</option>
+                            <option value="Lucknow">Lucknow</option>
+                            <option value="Kanpur">Kanpur</option>
+                            <option value="Nagpur">Nagpur</option>
+                            <option value="Indore">Indore</option>
+                            <option value="Thane">Thane</option>
+                            <option value="Bhopal">Bhopal</option>
+                            <option value="Visakhapatnam">Visakhapatnam</option>
+                            <option value="Patna">Patna</option>
+                            <option value="Vadodara">Vadodara</option>
+                            <option value="Ghaziabad">Ghaziabad</option>
+                            <option value="Ludhiana">Ludhiana</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="pincode">Pin Code *</label>
+                        <input type="text" id="pincode" name="pincode" required pattern="[0-9]{6}" maxlength="6" placeholder="Enter 6-digit pin code">
+                    </div>
+
+                    <div class="checkbox-group">
+                        <input type="checkbox" id="terms" name="terms" required>
+                        <label for="terms" class="checkbox-label">I agree to the Terms and Conditions *</label>
+                    </div>
+
+                    <button type="submit" id="signupSubmitBtn" class="btn" disabled>Sign Up</button>
+                </form>
+
+                <a href="javascript:void(0)" class="switch-link" id="goToLogin">
+                    Already have an account? Login here
+                </a>
+            </div>
+
+            <!-- Login Form -->
+            <div id="loginForm" class="form-container">
+                <h2>Login</h2>
+                <div id="loginMessage"></div>
+                <form id="loginFormElement">
+                    <div class="form-group">
+                        <label for="loginUserId">User ID</label>
+                        <input type="text" id="loginUserId" name="loginUserId" required placeholder="Enter your User ID">
+                    </div>
+
+                    <div class="form-group">
+                        <label for="loginPassword">Password</label>
+                        <input type="password" id="loginPassword" name="loginPassword" required placeholder="Enter your password">
+                    </div>
+
+                    <button type="submit" id="loginSubmitBtn" class="btn" disabled>Log In</button>
+                </form>
+
+                <a href="javascript:void(0)" class="switch-link" id="goToSignup">
+                    Don't have an account? Sign up here
+                </a>
+            </div>
+
+            <!-- Dashboard -->
+            <div id="dashboard" class="form-container">
+                <div class="welcome-text">Welcome to Your Dashboard!</div>
+                <div id="userInfo" class="user-info"></div>
+                <button class="btn main-btn" onclick="goToMainPage()">Go to Main Page</button>
+                <button class="btn logout-btn" onclick="logout()">Logout</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="signup.js"></script>
+</body>
+</html>

@@ -1,0 +1,254 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pharmacy Medicine Booking</title>
+    <link rel="stylesheet" href="pharmacy.css">
+</head>
+<body>
+     <!-- Login Modal -->
+    <div class="login-modal-overlay" id="loginModal">
+        <div class="login-modal">
+            <button class="login-close-btn" onclick="closeModal()">&times;</button>
+            <div class="login-modal-header">
+                <h2 class="login-modal-title">Welcome to Healthlink</h2>
+                <p class="login-modal-subtitle">Please login to continue with partner registration</p>
+            </div>
+            
+            <div class="login-buttons">
+                <a href="/Healthlink/Diagnostics/Patient/frontend/signup.html" class="login-btn login-btn-primary">
+                    Login
+                </a>
+            </div>
+        </div>
+    </div>
+     <!-- Main Page Content (Initially Blurred) -->
+    <div id="pageContent" class="page-blur">
+    <div class="container">
+        <div class="header">
+        <img src="/Healthlink/Diagnostics/Patient/pictures/logo.png" alt="HealthLink Logo" width="130px" height="80px">
+        </div>
+        
+        <div class="form-container">
+            <form id="bookingForm">
+                <div class="form-group">
+                    <label for="name">Full Name *</label>
+                    <input type="text" id="name" name="name" required placeholder="Enter your full name">
+                </div>
+
+                <div class="form-group">
+                    <label for="mobile">Mobile Number *</label>
+                    <input type="tel" id="mobile" name="mobile" required placeholder="Enter your mobile number" pattern="[0-9]{10}">
+                </div>
+
+                <div class="form-group">
+                    <label for="email">Email Address *</label>
+                    <input type="email" id="email" name="email" required placeholder="Enter your email address">
+                </div>
+
+                <div class="drug-selection">
+                    <h3>Select Medicine Option</h3>
+                    <div class="selection-options">
+                        <div class="radio-group">
+                            <input type="radio" id="selectDrugs" name="medicineOption" value="select" checked>
+                            <label for="selectDrugs">Select Medicines</label>
+                        </div>
+                        <div class="radio-group">
+                            <input type="radio" id="uploadPrescription" name="medicineOption" value="upload">
+                            <label for="uploadPrescription">Upload Prescription</label>
+                        </div>
+                    </div>
+
+                    <div id="drugDropdown" class="form-group">
+                        <label for="drugs">Select Medicines *</label>
+                        <div class="custom-dropdown">
+                            <div class="dropdown-header" id="dropdownHeader">
+                                <span class="dropdown-text">Choose medicines...</span>
+                                <span class="dropdown-arrow">▼</span>
+                            </div>
+                            <div class="dropdown-content" id="dropdownContent">
+                                <div class="search-box">
+                                    <input type="text" id="medicineSearch" placeholder="🔍 Search medicines..." autocomplete="off">
+                                </div>
+                                <div class="medicine-grid">
+                                    <div class="medicine-item" data-value="paracetamol" data-price="₹25">
+                                        <div class="medicine-icon">💊</div>
+                                        <div class="medicine-info">
+                                            <div class="medicine-name">Paracetamol</div>
+                                            <div class="medicine-dose">500mg</div>
+                                            <div class="medicine-price">₹25</div>
+                                        </div>
+                                        <div class="quantity-controls">
+                                            <button type="button" class="qty-btn minus">-</button>
+                                            <span class="qty-display">0</span>
+                                            <button type="button" class="qty-btn plus">+</button>
+                                        </div>
+                                    </div>
+                                    <div class="medicine-item" data-value="ibuprofen" data-price="₹35">
+                                        <div class="medicine-icon">💊</div>
+                                        <div class="medicine-info">
+                                            <div class="medicine-name">Ibuprofen</div>
+                                            <div class="medicine-dose">400mg</div>
+                                            <div class="medicine-price">₹35</div>
+                                        </div>
+                                        <div class="quantity-controls">
+                                            <button type="button" class="qty-btn minus">-</button>
+                                            <span class="qty-display">0</span>
+                                            <button type="button" class="qty-btn plus">+</button>
+                                        </div>
+                                    </div>
+                                    <div class="medicine-item" data-value="amoxicillin" data-price="₹65">
+                                        <div class="medicine-icon">💉</div>
+                                        <div class="medicine-info">
+                                            <div class="medicine-name">Amoxicillin</div>
+                                            <div class="medicine-dose">250mg</div>
+                                            <div class="medicine-price">₹65</div>
+                                        </div>
+                                        <div class="quantity-controls">
+                                            <button type="button" class="qty-btn minus">-</button>
+                                            <span class="qty-display">0</span>
+                                            <button type="button" class="qty-btn plus">+</button>
+                                        </div>
+                                    </div>
+                                    <div class="medicine-item" data-value="aspirin" data-price="₹20">
+                                        <div class="medicine-icon">💊</div>
+                                        <div class="medicine-info">
+                                            <div class="medicine-name">Aspirin</div>
+                                            <div class="medicine-dose">75mg</div>
+                                            <div class="medicine-price">₹20</div>
+                                        </div>
+                                        <div class="quantity-controls">
+                                            <button type="button" class="qty-btn minus">-</button>
+                                            <span class="qty-display">0</span>
+                                            <button type="button" class="qty-btn plus">+</button>
+                                        </div>
+                                    </div>
+                                    <div class="medicine-item" data-value="omeprazole" data-price="₹45">
+                                        <div class="medicine-icon">💊</div>
+                                        <div class="medicine-info">
+                                            <div class="medicine-name">Omeprazole</div>
+                                            <div class="medicine-dose">20mg</div>
+                                            <div class="medicine-price">₹45</div>
+                                        </div>
+                                        <div class="quantity-controls">
+                                            <button type="button" class="qty-btn minus">-</button>
+                                            <span class="qty-display">0</span>
+                                            <button type="button" class="qty-btn plus">+</button>
+                                        </div>
+                                    </div>
+                                    <div class="medicine-item" data-value="metformin" data-price="₹30">
+                                        <div class="medicine-icon">💊</div>
+                                        <div class="medicine-info">
+                                            <div class="medicine-name">Metformin</div>
+                                            <div class="medicine-dose">500mg</div>
+                                            <div class="medicine-price">₹30</div>
+                                        </div>
+                                        <div class="quantity-controls">
+                                            <button type="button" class="qty-btn minus">-</button>
+                                            <span class="qty-display">0</span>
+                                            <button type="button" class="qty-btn plus">+</button>
+                                        </div>
+                                    </div>
+                                    <div class="medicine-item" data-value="atorvastatin" data-price="₹55">
+                                        <div class="medicine-icon">💊</div>
+                                        <div class="medicine-info">
+                                            <div class="medicine-name">Atorvastatin</div>
+                                            <div class="medicine-dose">10mg</div>
+                                            <div class="medicine-price">₹55</div>
+                                        </div>
+                                        <div class="quantity-controls">
+                                            <button type="button" class="qty-btn minus">-</button>
+                                            <span class="qty-display">0</span>
+                                            <button type="button" class="qty-btn plus">+</button>
+                                        </div>
+                                    </div>
+                                    <div class="medicine-item" data-value="cetirizine" data-price="₹40">
+                                        <div class="medicine-icon">💊</div>
+                                        <div class="medicine-info">
+                                            <div class="medicine-name">Cetirizine</div>
+                                            <div class="medicine-dose">10mg</div>
+                                            <div class="medicine-price">₹40</div>
+                                        </div>
+                                        <div class="quantity-controls">
+                                            <button type="button" class="qty-btn minus">-</button>
+                                            <span class="qty-display">0</span>
+                                            <button type="button" class="qty-btn plus">+</button>
+                                        </div>
+                                    </div>
+                                    <div class="medicine-item" data-value="vitamin-d" data-price="₹80">
+                                        <div class="medicine-icon">🌟</div>
+                                        <div class="medicine-info">
+                                            <div class="medicine-name">Vitamin D</div>
+                                            <div class="medicine-dose">1000 IU</div>
+                                            <div class="medicine-price">₹80</div>
+                                        </div>
+                                        <div class="quantity-controls">
+                                            <button type="button" class="qty-btn minus">-</button>
+                                            <span class="qty-display">0</span>
+                                            <button type="button" class="qty-btn plus">+</button>
+                                        </div>
+                                    </div>
+                                    <div class="medicine-item" data-value="calcium" data-price="₹50">
+                                        <div class="medicine-icon">🦴</div>
+                                        <div class="medicine-info">
+                                            <div class="medicine-name">Calcium</div>
+                                            <div class="medicine-dose">500mg</div>
+                                            <div class="medicine-price">₹50</div>
+                                        </div>
+                                        <div class="quantity-controls">
+                                            <button type="button" class="qty-btn minus">-</button>
+                                            <span class="qty-display">0</span>
+                                            <button type="button" class="qty-btn plus">+</button>
+                                        </div>
+                                    </div>
+                                    <div class="medicine-item" data-value="multivitamin" data-price="₹120">
+                                        <div class="medicine-icon">🌈</div>
+                                        <div class="medicine-info">
+                                            <div class="medicine-name">Multivitamin</div>
+                                            <div class="medicine-dose">Tablets</div>
+                                            <div class="medicine-price">₹120</div>
+                                        </div>
+                                        <div class="quantity-controls">
+                                            <button type="button" class="qty-btn minus">-</button>
+                                            <span class="qty-display">0</span>
+                                            <button type="button" class="qty-btn plus">+</button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="selected-medicines" id="selectedMedicines"></div>
+                        <div class="total-price" id="totalPrice">Total: ₹0</div>
+                    </div>
+
+                    <div id="prescriptionUpload" class="form-group hidden">
+                        <label>Upload Prescription *</label>
+                        <div class="file-upload">
+                            <input type="file" id="prescription" name="prescription" accept="image/*,.pdf">
+                            <label for="prescription" class="file-upload-label">
+                                <i>📄</i>
+                                <span>Click to upload prescription</span>
+                                <small style="display: block; margin-top: 5px; color: #666;">Supported formats: JPG, PNG, PDF</small>
+                            </label>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label for="notes">Additional Notes (Optional)</label>
+                    <textarea id="notes" name="notes" rows="3" placeholder="Any special instructions or notes..."></textarea>
+                </div>
+
+                <button type="submit" class="submit-btn">
+                    Confirm Booking
+                </button>
+            </form>
+
+            <div id="successMessage" class="success-message hidden">
+                <strong>Booking Confirmed!</strong> We have received your medicine booking request. You will be contacted shortly for confirmation and delivery details.
+            </div>
+        </div>
+    </div>
+
+    <script src="pharmacy.js"></script>

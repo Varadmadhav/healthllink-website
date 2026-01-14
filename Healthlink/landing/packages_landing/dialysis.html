@@ -1,0 +1,256 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dialysis Profile</title>
+    <link rel="stylesheet" href="packages.css">
+</head>
+
+<body>
+    <!-- Login Modal -->
+    <div class="modal-overlay" id="loginModal">
+        <div class="login-modal">
+            <button class="close-modal" id="closeModal">&times;</button>
+            <div class="login-header">
+                <h2>🔐 Login Required</h2>
+                <p>Please login to add items to your cart</p>
+            </div>
+            <form class="login-form" id="loginForm">
+                <div class="form-group">
+                    <label for="loginUserId">User ID</label>
+                    <input type="text" id="loginUserId" name="loginUserId" required>
+                </div>
+                <div class="form-group">
+                    <label for="password">Password</label>
+                    <input type="password" id="password" name="password" required>
+                </div>
+                <button type="submit" class="login-btn">Login & Continue</button>
+            </form>
+            <div class="forgot-password">
+                <a href="/Healthlink/Diagnostics/Patient/frontend/signup.html" id="forgotPassword">Don't have an account? Signup</a>
+            </div>
+        </div>
+    </div>
+    <div class="container">
+        <div class="header">
+            <div class="badge">Dialysis Profile</div>
+            <h1>Dialysis Profile</h1>
+            <p>Complete health check-up with basic to advanced tests for total reassurance</p>
+        </div>
+
+        <div class="main-card">
+            <div class="card-header">
+                <h2>Dialysis Profile</h2>
+                <p class="subtitle">Comprehensive health evaluation offering a full view of your body’s condition</p>
+            </div>
+
+            <div class="card-body">
+                <div class="pricing-section">
+                    <div class="price-tag">Dialysis Profile</div>
+                    <div class="price">₹1830</div>
+                   <button class="book-btn" id="addToCartBtn">
+                        <span>Add to Cart</span>
+                    </button>
+                </div>
+
+                <div class="tests-section">
+                    <h3 class="section-title">Test Details</h3>
+                    <div class="test-details">
+                        <p>Full body diagnostic plan combining lab work, cardiac screening, and imaging in one package.</p>
+                    </div>
+
+                    <h3 class="section-title">Tests Included</h3>
+                    <div class="tests-grid">
+                        <div class="test-item">
+                            <h4><span class="icon"></span>CBC</h4>
+                            <p>Monitors overall blood health, important for patients undergoing dialysis.</p>
+                        </div>
+                        <div class="test-item">
+                            <h4><span class="icon"></span>BUN</h4>
+                            <p>Assesses kidney function and dialysis effectiveness by measuring urea levels.</p>
+                        </div>
+                        <div class="test-item">
+                            <h4><span class="icon"></span>Creatinine</h4>
+                            <p>Key indicator of kidney performance and dialysis needs.</p>
+                        </div>
+                        <div class="test-item">
+                            <h4><span class="icon"></span>Uric Acid</h4>
+                            <p>Monitors waste buildup in the blood when kidneys are not functioning well.</p>
+                        </div>
+                        <div class="test-item">
+                            <h4><span class="icon"></span>Calcium</h4>
+                            <p>Checks bone and heart health, often disrupted in kidney disorders.</p>
+                        </div>
+                        <div class="test-item">
+                            <h4><span class="icon"></span>Phosphorous</h4>
+                            <p>Assesses mineral levels to manage bone and cardiovascular health in dialysis patients.
+                            </p>
+                        </div>
+                        <div class="test-item">
+                            <h4><span class="icon"></span>Proteins</h4>
+                            <p>Measures protein levels to evaluate nutritional status and kidney function.</p>
+                        </div>
+                        <div class="test-item">
+                            <h4><span class="icon"></span>Bicarbonate</h4>
+                            <p>Monitors acid-base balance in the blood to detect metabolic imbalances.</p>
+                        </div>
+                        <div class="test-item">
+                            <h4><span class="icon"></span>Electrolyte</h4>
+                            <p>Keeps track of sodium, potassium, and chloride levels for cellular balance.</p>
+                        </div>
+                        <div class="test-item">
+                            <h4><span class="icon"></span>Urine Routine</h4>
+                            <p>Provides insights into residual kidney function and infections.</p>
+                        </div>
+
+
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+          // Modal functionality
+        const addToCartBtn = document.getElementById('addToCartBtn');
+        const loginModal = document.getElementById('loginModal');
+        const closeModal = document.getElementById('closeModal');
+        const loginForm = document.getElementById('loginForm');
+        const body = document.body;
+
+        // Show login modal when add to cart button is clicked
+        addToCartBtn.addEventListener('click', function (e) {
+            e.preventDefault();
+            showLoginModal();
+        });
+
+        // Close modal when X is clicked
+        closeModal.addEventListener('click', function () {
+            hideLoginModal();
+        });
+
+        // Close modal when clicking outside of it
+        loginModal.addEventListener('click', function (e) {
+            if (e.target === loginModal) {
+                hideLoginModal();
+            }
+        });
+
+        // Handle login form submission
+        loginForm.addEventListener('submit', function (e) {
+            e.preventDefault();
+
+            // Simulate login process
+            const userId = document.getElementById('loginUserId').value;
+            const password = document.getElementById('password').value;
+
+           if (userId && password)  {
+                // Show loading state
+                const loginBtn = document.querySelector('.login-btn');
+                const originalText = loginBtn.textContent;
+                loginBtn.textContent = 'Logging in...';
+                loginBtn.disabled = true;
+
+                // Simulate API call delay
+                setTimeout(() => {
+                    // Hide modal
+                    hideLoginModal();
+
+                    // Show success message and add to cart
+                    showSuccessMessage();
+                    
+                    // Reset login button
+                    loginBtn.textContent = originalText;
+                    loginBtn.disabled = false;
+                }, 1500);
+            }
+        });
+
+        // Forgot password functionality
+        document.getElementById('forgotPassword').addEventListener('click', function (e) {
+            e.preventDefault();
+            alert('Redirecting to signup page...');
+             window.location.href = '/Healthlink/Diagnostics/Patient/frontend/signup.html'; // Replace with your actual signup URL
+        });
+
+        function showLoginModal() {
+            loginModal.classList.add('active');
+            body.classList.add('modal-open');
+            document.getElementById('loginUserId').focus();
+        }
+
+        function hideLoginModal() {
+            loginModal.classList.remove('active');
+            body.classList.remove('modal-open');
+
+            // Reset form
+            loginForm.reset();
+            const loginBtn = document.querySelector('.login-btn');
+            loginBtn.textContent = 'Login & Continue';
+            loginBtn.disabled = false;
+        }
+
+        function showSuccessMessage() {
+            // Update button to show success
+            const btn = addToCartBtn;
+            const originalHTML = btn.innerHTML;
+            
+            btn.innerHTML = '<span>✓ Added to Cart!</span>';
+            btn.style.background = 'rgba(46, 204, 113, 0.2)';
+            btn.style.borderColor = '#2ecc71';
+            btn.style.color = '#2ecc71';
+            btn.style.transform = 'scale(1.05)';
+
+            // Show success message
+            const successMsg = document.createElement('div');
+            successMsg.style.cssText = `
+                position: fixed;
+                top: 20px;
+                right: 20px;
+                background: linear-gradient(135deg, #2ecc71 0%, #27ae60 100%);
+                color: white;
+                padding: 15px 25px;
+                border-radius: 10px;
+                box-shadow: 0 10px 25px rgba(0,0,0,0.2);
+                z-index: 1000;
+                animation: slideInRight 0.5s ease-out;
+            `;
+            successMsg.textContent = 'All In One Package added to cart!';
+            document.body.appendChild(successMsg);
+
+            setTimeout(() => {
+                btn.innerHTML = originalHTML;
+                btn.style.background = 'linear-gradient(135deg, #ff6b6b 0%, #ee5a24 100%)';
+                btn.style.transform = 'scale(1)';
+                successMsg.remove();
+            }, 3000);
+        }
+
+        // Add smooth scrolling and interactive elements
+        document.addEventListener('DOMContentLoaded', function () {
+            const cards = document.querySelectorAll('.test-item');
+
+            const observer = new IntersectionObserver((entries) => {
+                entries.forEach((entry, index) => {
+                    if (entry.isIntersecting) {
+                        setTimeout(() => {
+                            entry.target.style.animation = 'fadeInUp 0.6s ease-out';
+                            entry.target.style.opacity = '1';
+                        }, index * 100);
+                    }
+                });
+            }, {
+                threshold: 0.1
+            });
+
+            cards.forEach(card => {
+                card.style.opacity = '0';
+                observer.observe(card);
+            });
+        });
+    </script>
+</body>
+
+</html>

@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Healthcare Diagnostics & Pharmacy Solutions</title>
+    <link rel="stylesheet" href="dig.css">
+</head>
+
+<body>
+    <!-- Animated background particles -->
+    <div class="particles" id="particles"></div>
+
+    <!-- Fixed header with logo -->
+    <header class="header" id="header">
+        <img src="/Healthlink/Diagnostics/patient/pictures/logo.png" width="130px" height="80px">
+    </header>
+    <div class="container">
+        <!-- Hero section -->
+        <div class="hero-section">
+        </div>
+        <!-- Solutions grid -->
+        <div class="solutions-grid">
+            <div class="solution-card patient loading" onclick="handleLogin('patient')">
+                <div class="card-icon">👨‍💼</div>
+                <h2>Patient Login</h2>
+                <p>Access your test results, medical history, and appointment scheduling</p>
+                <button class="login-btn"
+                    onclick="window.location.href='/Healthlink/Diagnostics/Patient/frontend/signup.html'">
+                    <span>Enter Patient Portal</span>
+                </button>
+            </div>
+
+            <div class="solution-card doctor loading" onclick="handleLogin('doctor')">
+                <div class="card-icon">👨‍⚕️</div>
+                <h2>Doctor Login</h2>
+                <p>Review patient reports, manage diagnostics, and access clinical tools</p>
+                <button class="login-btn" onclick="window.location.href='/Healthlink/Diagnostics/Dr/page.html'">
+                    <span>Enter Doctor Portal</span>
+                </button>
+            </div>
+
+            </div>
+        </div>
+    </div>
+
+    <script src="dig.js"></script>
+</body>
+
+</html>
