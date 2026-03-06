@@ -1,0 +1,247 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>HealthLink - HR Dashboard</title>
+    <link rel="stylesheet" href="hr_page.css">
+</head>
+<body>
+
+    <!-- Top Header -->
+    <div class="top-header">
+        <img src="/Healthlink/Diagnostics/Patient/pictures/logo.png" alt="Logo" class="logo" onerror="this.src='https://via.placeholder.com/150x50?text=HEALTHLINK'">
+        
+        <div class="user-info">
+            <span><strong>HR Admin</strong> | Acme Corporation</span>
+            <button class="logout-btn" onclick="logout()">Logout</button>
+        </div>
+    </div>
+
+    <!-- Main Container -->
+    <div class="main-container">
+
+        <!-- Direct Dashboard View -->
+        <div class="dashboard">
+            <!-- Tab Navigation -->
+            <div class="tab-navigation">
+                <button class="tab-btn active" onclick="switchTab('tab-upload')">📤 Upload Files</button>
+                <button class="tab-btn" onclick="switchTab('tab-history')">📋 Upload History</button>
+                <button class="tab-btn" onclick="switchTab('tab-records')">👥 Patient Records</button>
+            </div>
+
+            <!-- TAB 1: Upload Files -->
+            <div id="tab-upload" class="tab-content active">
+                <h3>Upload New Patient Data</h3>
+                <p class="subtitle">Upload Excel file (.xlsx or .xls) containing patient information</p>
+
+                <div class="upload-zone" onclick="document.getElementById('dashFileInput').click()" id="dashUploadZone">
+                    <div class="upload-icon">📄</div>
+                    <h3>Click to Upload or Drag & Drop</h3>
+                    <p style="color: #999; margin-top: 10px;">Max file size: 10MB</p>
+                </div>
+
+                <input type="file" id="dashFileInput" accept=".xlsx,.xls" onchange="handleDashboardUpload(event)">
+            </div>
+
+            <!-- TAB 2: Upload History -->
+            <div id="tab-history" class="tab-content">
+                <h3>Upload History</h3>
+                <p class="subtitle">View all previously uploaded files</p>
+
+                <table class="history-table">
+                    <thead>
+                        <tr>
+                            <th>File Name</th>
+                            <th>Upload Date</th>
+                            <th>Records Count</th>
+                            <th>Status</th>
+                        </tr>
+                    </thead>
+                    <tbody id="historyTableBody">
+                        <tr>
+                            <td>patient_list_jan2024.xlsx</td>
+                            <td>2024-01-15 10:30 AM</td>
+                            <td>45 patients</td>
+                            <td><span class="badge badge-info">Processed</span></td>
+                        </tr>
+                        <tr>
+                            <td>employee_health_check.xlsx</td>
+                            <td>2024-01-10 02:15 PM</td>
+                            <td>32 patients</td>
+                            <td><span class="badge badge-info">Processed</span></td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- TAB 3: Patient Records -->
+            <div id="tab-records" class="tab-content">
+                <h3>Patient Records Management</h3>
+                <p class="subtitle">View and manage all patient records</p>
+
+                <!-- Search & Filter Controls -->
+                <div class="controls-bar">
+                    <input type="text" class="search-box" id="searchInput" placeholder="🔍 Search by name, email, mobile..." onkeyup="filterTable()">
+                    
+                    <div class="filter-group">
+                        <label><strong>Date:</strong></label>
+                        <input type="date" class="filter-date" id="dateFilter" onchange="filterTable()">
+                    </div>
+
+                    <div class="filter-group">
+                        <label><strong>Status:</strong></label>
+                        <select class="filter-select" id="statusFilter" onchange="filterTable()">
+                            <option value="">All Status</option>
+                            <option value="Scheduled">Scheduled</option>
+                            <option value="Completed">Completed</option>
+                            <option value="Pending">Pending</option>
+                        </select>
+                    </div>
+                </div>
+
+                <!-- Records Table -->
+                <div class="records-table-container">
+                    <table class="records-table" id="patientTable">
+                        <thead>
+                            <tr>
+                                <th>Name</th>
+                                <th>Gender</th>
+                                <th>Age</th>
+                                <th>Date</th>
+                                <th>Address</th>
+                                <th>Pincode</th>
+                                <th>Mobile</th>
+                                <th>Email</th>
+                                <th>Status</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="recordsTableBody">
+                            <!-- Sample Data -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+        </div>
+
+    </div>
+
+    <script>
+        // Sample Patient Data with dates
+        let patientRecords = [
+            { name: "Rajesh Kumar", gender: "Male", age: 34, date: "2024-01-15", address: "123 MG Road, Mumbai", pincode: "400001", mobile: "9876543210", email: "rajesh@email.com", status: "Scheduled", date: "2024-01-15" },
+            { name: "Priya Sharma", gender: "Female", age: 28, date: "2024-01-10", address: "45 Park Street, Delhi", pincode: "110001", mobile: "9876543211", email: "priya@email.com", status: "Completed" },
+            { name: "Amit Patel", gender: "Male", age: 42, date: "2024-01-20", address: "78 Lake Road, Bangalore", pincode: "560001", mobile: "9876543212", email: "amit@email.com", status: "Pending" },
+            { name: "Sneha Reddy", gender: "Female", age: 31, date: "2024-01-15", address: "90 Beach Road, Chennai", pincode: "600001", mobile: "9876543213", email: "sneha@email.com", status: "Scheduled" },
+            { name: "Vikram Singh", gender: "Male", age: 45, date: "2024-01-05", address: "12 Fort Road, Jaipur", pincode: "302001", mobile: "9876543214", email: "vikram@email.com", status: "Completed" },
+            { name: "Anjali Desai", gender: "Female", age: 29, date: "2024-01-25", address: "34 River Street, Pune", pincode: "411001", mobile: "9876543215", email: "anjali@email.com", status: "Pending" }
+        ];
+
+        // Initialize Table
+        window.onload = function() {
+            renderPatientTable();
+            // Set default date in filter to today
+            document.getElementById('dateFilter').valueAsDate = new Date();
+        };
+
+        // Tab Switching
+        function switchTab(tabId) {
+            document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
+            document.querySelectorAll('.tab-content').forEach(content => content.classList.remove('active'));
+            
+            event.target.classList.add('active');
+            document.getElementById(tabId).classList.add('active');
+        }
+
+        // Dashboard File Upload
+        function handleDashboardUpload(event) {
+            const file = event.target.files[0];
+            if (file) {
+                alert(`File "${file.name}" uploaded successfully!`);
+                
+                // Add to history
+                const tbody = document.getElementById('historyTableBody');
+                const newRow = tbody.insertRow(0);
+                newRow.innerHTML = `
+                    <td>${file.name}</td>
+                    <td>${new Date().toLocaleString()}</td>
+                    <td>${Math.floor(Math.random() * 50) + 10} patients</td>
+                    <td><span class="badge badge-info">Processed</span></td>
+                `;
+            }
+        }
+
+        // Render Patient Table
+        function renderPatientTable(data = patientRecords) {
+            const tbody = document.getElementById('recordsTableBody');
+            tbody.innerHTML = '';
+
+            data.forEach((patient, index) => {
+                const row = tbody.insertRow();
+                const statusClass = `status-${patient.status.toLowerCase()}`;
+                row.innerHTML = `
+                    <td><strong>${patient.name}</strong></td>
+                    <td>${patient.gender}</td>
+                    <td>${patient.age}</td>
+                    <td>${patient.date}</td>
+                    <td>${patient.address}</td>
+                    <td>${patient.pincode}</td>
+                    <td>${patient.mobile}</td>
+                    <td>${patient.email}</td>
+                    <td>
+                        <span class="status-badge ${statusClass}">${patient.status}</span>
+                    </td>
+                    <td>
+                        <div class="action-btns">
+                            <button class="btn-view" onclick="viewReport(${index})">👁 View</button>
+                            <button class="btn-download" onclick="downloadReport(${index})">⬇ Download</button>
+                        </div>
+                    </td>
+                `;
+            });
+        }
+
+        // Search & Filter
+        function filterTable() {
+            const searchTerm = document.getElementById('searchInput').value.toLowerCase();
+            const dateFilter = document.getElementById('dateFilter').value;
+            const statusFilter = document.getElementById('statusFilter').value;
+
+            const filtered = patientRecords.filter(patient => {
+                const matchesSearch = 
+                    patient.name.toLowerCase().includes(searchTerm) ||
+                    patient.email.toLowerCase().includes(searchTerm) ||
+                    patient.mobile.includes(searchTerm);
+                
+                const matchesDate = !dateFilter || patient.date === dateFilter;
+                const matchesStatus = !statusFilter || patient.status === statusFilter;
+
+                return matchesSearch && matchesDate && matchesStatus;
+            });
+
+            renderPatientTable(filtered);
+        }
+
+        // View Report
+        function viewReport(index) {
+            alert(`Viewing report for: ${patientRecords[index].name}\n\nAppointment Date: ${patientRecords[index].date}\nStatus: ${patientRecords[index].status}`);
+        }
+
+        // Download Report
+        function downloadReport(index) {
+            alert(`Downloading report for: ${patientRecords[index].name}`);
+            console.log('Download initiated for:', patientRecords[index]);
+        }
+
+        // Logout
+        function logout() {
+            if (confirm('Are you sure you want to logout?')) {
+                window.location.href = 'index.html';
+            }
+        }
+    </script>
+
+</body>
+</html>

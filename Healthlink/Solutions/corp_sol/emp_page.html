@@ -1,0 +1,511 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Employee Dashboard</title>
+    <link rel="stylesheet" href="emp_page.css">
+</head>
+<body>
+    <div class="container">
+        <!-- Header -->
+        <div class="header">
+            <h1>Employee Dashboard</h1>
+            <p>Welcome back, <span id="employeeName">John Doe</span></p>
+        </div>
+
+        <!-- Upcoming Appointments Section -->
+        <div class="section">
+            <h2 class="section-title">📅 Upcoming Appointments</h2>
+            <div id="appointmentsContainer"></div>
+        </div>
+
+        <!-- Reports Section -->
+        <div class="section">
+            <h2 class="section-title">📄 My Reports</h2>
+            
+            <div class="filter-section">
+                <div class="filter-grid">
+                    <div class="form-group">
+                        <label for="reportFromDate">From Date</label>
+                        <input type="date" id="reportFromDate">
+                    </div>
+                    <div class="form-group">
+                        <label for="reportToDate">To Date</label>
+                        <input type="date" id="reportToDate">
+                    </div>
+                    <button class="btn btn-primary" onclick="filterReports()">
+                        🔍 Filter
+                    </button>
+                    <button class="btn btn-secondary" onclick="resetFilter()">
+                        ↻ Reset
+                    </button>
+                </div>
+            </div>
+
+            <div class="reports-grid" id="reportsContainer"></div>
+        </div>
+    </div>
+
+    <!-- Change Appointment Modal -->
+    <div id="changeAppointmentModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Change Appointment Date</h2>
+            </div>
+            <div class="modal-body">
+                <div class="form-group">
+                    <label for="newAppointmentDate">Select New Date</label>
+                    <input type="date" id="newAppointmentDate">
+                </div>
+                <div class="form-group">
+                    <label for="newAppointmentTime">Select Time Slot</label>
+                    <input type="time" id="newAppointmentTime">
+                </div>
+                <div id="modalAlert"></div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" onclick="closeModal()">Cancel</button>
+                <button class="btn btn-success" onclick="confirmDateChange()">Confirm Change</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- PDF Viewer Modal -->
+    <div id="pdfViewerModal" class="modal pdf-viewer-modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 id="pdfViewerTitle">View Report</h2>
+            </div>
+            <div class="pdf-viewer-container" id="pdfViewerContainer">
+                <!-- PDF will be loaded here -->
+            </div>
+            <div class="modal-footer" style="margin-top: 15px;">
+                <button class="btn btn-secondary" onclick="closePdfViewer()">Close</button>
+                <button class="btn btn-success" id="downloadFromViewer" onclick="downloadCurrentPdf()">
+                    ⬇ Download
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Sample data - Replace with actual API calls
+        let appointments = [
+            {
+                id: 'APT001',
+                employeeName: 'John Doe',
+                age: 32,
+                gender: 'Male',
+                centerName: 'Downtown Medical Center',
+                centerAddress: '123 Medical Center, Downtown, City - 12345',
+                appointmentDate: '2025-03-20',
+                appointmentTime: '10:00'
+            },
+            {
+                id: 'APT002',
+                employeeName: 'John Doe',
+                age: 32,
+                gender: 'Male',
+                centerName: 'Uptown Health Clinic',
+                centerAddress: '456 Health Clinic, Uptown, City - 67890',
+                appointmentDate: '2024-12-18',
+                appointmentTime: '14:30'
+            },
+            {
+                id: 'APT003',
+                employeeName: 'John Doe',
+                age: 32,
+                gender: 'Male',
+                centerName: 'Central Hospital',
+                centerAddress: '789 Central Ave, Midtown - 11111',
+                appointmentDate: '2024-12-25',
+                appointmentTime: '09:00'
+            }
+        ];
+
+        let reports = [
+            {
+                id: 'RPT001',
+                fileName: 'Blood_Test_Report_Nov2024.pdf',
+                date: '2024-11-15',
+                fileUrl: 'path/to/report1.pdf'
+            },
+            {
+                id: 'RPT002',
+                fileName: 'Chest_XRay_Report.pdf',
+                date: '2024-11-20',
+                fileUrl: 'path/to/report2.pdf'
+            },
+            {
+                id: 'RPT003',
+                fileName: 'Annual_Health_Checkup_2024.pdf',
+                date: '2024-12-01',
+                fileUrl: 'path/to/report3.pdf'
+            },
+            {
+                id: 'RPT004',
+                fileName: 'ECG_Report_Dec2024.pdf',
+                date: '2024-12-05',
+                fileUrl: 'path/to/report4.pdf'
+            }
+        ];
+
+        let currentAppointmentId = null;
+        let currentPdfUrl = null;
+        let currentPdfName = null;
+
+        // Initialize page
+        document.addEventListener('DOMContentLoaded', function() {
+            loadAppointments();
+            loadReports();
+            setDefaultDateRange();
+        });
+
+        // Load and display appointments
+        function loadAppointments() {
+            const container = document.getElementById('appointmentsContainer');
+            
+            if (appointments.length === 0) {
+                container.innerHTML = `
+                    <div class="no-data">
+                        <div class="no-data-icon">📅</div>
+                        <p>No upcoming appointments found.</p>
+                    </div>
+                `;
+                return;
+            }
+
+            container.innerHTML = appointments.map(apt => {
+                const canChange = canChangeAppointment(apt.appointmentDate, apt.appointmentTime);
+                const hoursRemaining = getHoursRemaining(apt.appointmentDate, apt.appointmentTime);
+                const daysRemaining = Math.floor(hoursRemaining / 24);
+                
+                return `
+                    <div class="appointment-card">
+                        <div class="appointment-header">
+                            <span class="appointment-id">Appointment ID: ${apt.id}</span>
+                            <span class="status-badge ${canChange ? 'status-changeable' : 'status-confirmed'}">
+                                ${canChange ? '📝 Can Reschedule' : '✓ Appointment Confirmed'}
+                            </span>
+                        </div>
+                        
+                        <div class="appointment-details">
+                            <div class="detail-item">
+                                <span class="detail-label">Employee Name</span>
+                                <span class="detail-value">${apt.employeeName}</span>
+                            </div>
+                            <div class="detail-item">
+                                <span class="detail-label">Age</span>
+                                <span class="detail-value">${apt.age} years</span>
+                            </div>
+                            <div class="detail-item">
+                                <span class="detail-label">Gender</span>
+                                <span class="detail-value">${apt.gender}</span>
+                            </div>
+                            <div class="detail-item">
+                                <span class="detail-label">Appointment Date</span>
+                                <span class="detail-value">${formatDate(apt.appointmentDate)}</span>
+                            </div>
+                            <div class="detail-item">
+                                <span class="detail-label">Time</span>
+                                <span class="detail-value">${formatTime(apt.appointmentTime)}</span>
+                            </div>
+                            <div class="detail-item">
+                                <span class="detail-label">Center Name</span>
+                                <span class="detail-value">${apt.centerName}</span>
+                            </div>
+                            <div class="detail-item" style="grid-column: 1 / -1;">
+                                <span class="detail-label">Center Address</span>
+                                <span class="detail-value">${apt.centerAddress}</span>
+                            </div>
+                        </div>
+                        
+                        <div class="action-buttons">
+                            ${canChange ? `
+                                <button class="btn btn-primary" onclick="openChangeAppointmentModal('${apt.id}')">
+                                    📅 Change Appointment Date
+                                </button>
+                                <span class="time-info">
+                                    You can change until ${getDeadlineDate(apt.appointmentDate, apt.appointmentTime)} (${daysRemaining} days remaining)
+                                </span>
+                            ` : `
+                                <button class="btn" disabled>
+                                    🔒 Cannot Change Appointment
+                                </button>
+                                <span class="time-warning">
+                                    ⚠️ Less than 72 hours remaining - Appointment is confirmed
+                                </span>
+                            `}
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        // Check if appointment can be changed (BEFORE the 72-hour window)
+        // Example: Appointment on March 20 → Can change until March 17 (before 72 hours)
+        function canChangeAppointment(appointmentDate, appointmentTime) {
+            const now = new Date();
+            const aptDateTime = new Date(`${appointmentDate}T${appointmentTime}`);
+            
+            // Calculate hours remaining until appointment
+            const hoursRemaining = (aptDateTime - now) / (1000 * 60 * 60);
+            
+            // Can change only if MORE than 72 hours remaining
+            return hoursRemaining > 72;
+        }
+
+        // Get hours remaining until appointment
+        function getHoursRemaining(appointmentDate, appointmentTime) {
+            const now = new Date();
+            const aptDateTime = new Date(`${appointmentDate}T${appointmentTime}`);
+            const hoursDiff = (aptDateTime - now) / (1000 * 60 * 60);
+            return Math.max(0, hoursDiff);
+        }
+
+        // Get the deadline date (72 hours before appointment)
+        function getDeadlineDate(appointmentDate, appointmentTime) {
+            const aptDateTime = new Date(`${appointmentDate}T${appointmentTime}`);
+            const deadline = new Date(aptDateTime);
+            deadline.setHours(deadline.getHours() - 72);
+            
+            return deadline.toLocaleDateString('en-US', { 
+                month: 'short', 
+                day: 'numeric',
+                year: 'numeric',
+                hour: '2-digit',
+                minute: '2-digit'
+            });
+        }
+
+        // Open change appointment modal
+        function openChangeAppointmentModal(appointmentId) {
+            currentAppointmentId = appointmentId;
+            const appointment = appointments.find(a => a.id === appointmentId);
+            
+            if (appointment) {
+                // Set minimum date to tomorrow
+                const tomorrow = new Date();
+                tomorrow.setDate(tomorrow.getDate() + 1);
+                document.getElementById('newAppointmentDate').min = tomorrow.toISOString().split('T')[0];
+                
+                // Set current values
+                document.getElementById('newAppointmentDate').value = appointment.appointmentDate;
+                document.getElementById('newAppointmentTime').value = appointment.appointmentTime;
+                
+                document.getElementById('changeAppointmentModal').classList.add('active');
+            }
+        }
+
+        // Close modal
+        function closeModal() {
+            document.getElementById('changeAppointmentModal').classList.remove('active');
+            document.getElementById('newAppointmentDate').value = '';
+            document.getElementById('newAppointmentTime').value = '';
+            document.getElementById('modalAlert').innerHTML = '';
+            currentAppointmentId = null;
+        }
+
+        // Confirm date change
+        function confirmDateChange() {
+            const newDate = document.getElementById('newAppointmentDate').value;
+            const newTime = document.getElementById('newAppointmentTime').value;
+            const alertDiv = document.getElementById('modalAlert');
+
+            if (!newDate || !newTime) {
+                alertDiv.innerHTML = '<div class="alert alert-warning">⚠️ Please select both date and time.</div>';
+                return;
+            }
+
+            // Update appointment
+            const aptIndex = appointments.findIndex(a => a.id === currentAppointmentId);
+            if (aptIndex !== -1) {
+                appointments[aptIndex].appointmentDate = newDate;
+                appointments[aptIndex].appointmentTime = newTime;
+                
+                alertDiv.innerHTML = '<div class="alert alert-success">✓ Appointment rescheduled successfully!</div>';
+                
+                setTimeout(() => {
+                    closeModal();
+                    loadAppointments();
+                }, 1500);
+            }
+        }
+
+        // Load and display reports
+        function loadReports(filteredReports = null) {
+            const container = document.getElementById('reportsContainer');
+            const reportsToShow = filteredReports || reports;
+            
+            if (reportsToShow.length === 0) {
+                container.innerHTML = `
+                    <div class="no-data">
+                        <div class="no-data-icon">📄</div>
+                        <p>No reports found for the selected date range.</p>
+                    </div>
+                `;
+                return;
+            }
+
+            container.innerHTML = reportsToShow.map(report => `
+                <div class="pdf-card">
+                    <div class="pdf-icon"></div>
+                    <div class="pdf-name">${report.fileName}</div>
+                    <div class="pdf-date">${formatDate(report.date)}</div>
+                    <div class="pdf-actions">
+                        <button class="btn btn-view" onclick="viewPdf('${report.id}')">
+                            👁 View
+                        </button>
+                        <button class="btn btn-success" onclick="downloadPdf('${report.id}')">
+                            ⬇ Download
+                        </button>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        // Filter reports by date
+        function filterReports() {
+            const fromDate = document.getElementById('reportFromDate').value;
+            const toDate = document.getElementById('reportToDate').value;
+
+            let filtered = reports;
+
+            if (fromDate) {
+                filtered = filtered.filter(r => new Date(r.date) >= new Date(fromDate));
+            }
+
+            if (toDate) {
+                filtered = filtered.filter(r => new Date(r.date) <= new Date(toDate));
+            }
+
+            loadReports(filtered);
+        }
+
+        // Reset filter
+        function resetFilter() {
+            setDefaultDateRange();
+            loadReports();
+        }
+
+        // View PDF
+        function viewPdf(reportId) {
+            const report = reports.find(r => r.id === reportId);
+            if (report) {
+                currentPdfUrl = report.fileUrl;
+                currentPdfName = report.fileName;
+                
+                document.getElementById('pdfViewerTitle').textContent = report.fileName;
+                
+                // In production, load actual PDF
+                // For demo, showing placeholder
+                document.getElementById('pdfViewerContainer').innerHTML = `
+                    <div style="text-align: center;">
+                        <div style="font-size: 80px; margin-bottom: 20px;">📄</div>
+                        <h3>${report.fileName}</h3>
+                        <p style="margin-top: 10px; opacity: 0.7;">PDF Preview</p>
+                        <p style="margin-top: 5px; font-size: 12px; opacity: 0.5;">
+                            In production, the PDF will be displayed here using an iframe or PDF.js
+                        </p>
+                    </div>
+                `;
+                
+                // For actual PDF loading, use:
+                // document.getElementById('pdfViewerContainer').innerHTML = `
+                //     <iframe src="${report.fileUrl}" type="application/pdf"></iframe>
+                // `;
+                
+                document.getElementById('pdfViewerModal').classList.add('active');
+            }
+        }
+
+        // Close PDF viewer
+        function closePdfViewer() {
+            document.getElementById('pdfViewerModal').classList.remove('active');
+            currentPdfUrl = null;
+            currentPdfName = null;
+        }
+
+        // Download PDF
+        function downloadPdf(reportId) {
+            const report = reports.find(r => r.id === reportId);
+            if (report) {
+                // In production, trigger actual download
+                // For demo, showing alert
+                
+                // Create download link
+                const link = document.createElement('a');
+                link.href = report.fileUrl;
+                link.download = report.fileName;
+                link.target = '_blank';
+                
+                // For demo purposes
+                alert(`Downloading: ${report.fileName}`);
+                
+                // In production:
+                // document.body.appendChild(link);
+                // link.click();
+                // document.body.removeChild(link);
+            }
+        }
+
+        // Download current PDF from viewer
+        function downloadCurrentPdf() {
+            if (currentPdfUrl && currentPdfName) {
+                const link = document.createElement('a');
+                link.href = currentPdfUrl;
+                link.download = currentPdfName;
+                link.target = '_blank';
+                
+                alert(`Downloading: ${currentPdfName}`);
+                
+                // In production:
+                // document.body.appendChild(link);
+                // link.click();
+                // document.body.removeChild(link);
+            }
+        }
+
+        // Set default date range for reports filter
+        function setDefaultDateRange() {
+            const today = new Date();
+            const sixMonthsAgo = new Date();
+            sixMonthsAgo.setMonth(today.getMonth() - 6);
+            
+            document.getElementById('reportFromDate').value = sixMonthsAgo.toISOString().split('T')[0];
+            document.getElementById('reportToDate').value = today.toISOString().split('T')[0];
+        }
+
+        // Utility functions
+        function formatDate(dateString) {
+            const options = { year: 'numeric', month: 'short', day: 'numeric' };
+            return new Date(dateString).toLocaleDateString('en-US', options);
+        }
+
+        function formatTime(timeString) {
+            const [hours, minutes] = timeString.split(':');
+            const hour = parseInt(hours);
+            const ampm = hour >= 12 ? 'PM' : 'AM';
+            const formattedHour = hour % 12 || 12;
+            return `${formattedHour}:${minutes} ${ampm}`;
+        }
+
+        // Close modals when clicking outside
+        window.onclick = function(event) {
+            if (event.target.classList.contains('modal')) {
+                event.target.classList.remove('active');
+            }
+        }
+
+        // Keyboard escape to close modals
+        document.addEventListener('keydown', function(e) {
+            if (e.key === 'Escape') {
+                document.querySelectorAll('.modal.active').forEach(modal => {
+                    modal.classList.remove('active');
+                });
+            }
+        });
+    </script>
+</body>
+</html>

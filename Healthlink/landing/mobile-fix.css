@@ -1,0 +1,86 @@
+/* ===============================
+   MOBILE OVERRIDE LAYER (SAFE)
+   =============================== */
+
+@media (max-width: 768px) {
+
+  /* NAVBAR SIMPLIFICATION */
+  .nav-text,
+  .user-name {
+    display: none !important;
+  }
+
+  .top-nav {
+    padding: 10px !important;
+  }
+
+  .user-profile {
+    padding: 5px !important;
+    margin: 0 !important;
+  }
+
+  /* BLACK LINE STACK */
+  .black-line {
+    top: 70px !important;
+    padding: 6px 8px !important;
+  }
+
+  .black-line-links {
+    flex-wrap: wrap !important;
+    gap: 6px !important;
+  }
+
+  /* CAROUSEL SAFE MODE */
+  .carousel-wrapper {
+    height: 45vh !important;
+  }
+
+  .carousel-content {
+    left: 15px !important;
+    right: 15px !important;
+    max-width: unset !important;
+  }
+
+  .carousel-content h2 {
+    font-size: 1.8rem !important;
+    line-height: 1.1 !important;
+  }
+
+  .carousel-content p {
+    font-size: 1rem !important;
+  }
+
+  /* BUTTONS STACK */
+  .service-actions {
+    flex-direction: column !important;
+  }
+
+  .service-btn {
+    width: 100% !important;
+  }
+
+  /* FEATURED SECTION FIX */
+  .featured-grid {
+    grid-template-columns: 1fr !important;
+    margin-top: 0 !important;
+  }
+
+  .featured-card {
+    min-height: auto !important;
+  }
+
+  .card-title {
+    font-size: 1.2rem !important;
+  }
+
+  .card-description {
+    font-size: 0.9rem !important;
+  }
+
+  /* MODAL SAFETY */
+  .modal {
+    width: 95% !important;
+    margin: 10px !important;
+  }
+
+}
