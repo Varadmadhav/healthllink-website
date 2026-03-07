@@ -7,7 +7,7 @@
 /* Body background */
 body {
     font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-    background: linear-gradient(90deg, rgba(15, 78, 15, 0.8), rgba(255, 255, 255, 0.8));
+    background: rgb(196, 196, 196);
     min-height: 100vh;
 }
 
@@ -465,59 +465,59 @@ body {
   left: 0;
   width: 100%;
   height: 100%;
-  background: rgba(0, 0, 0, 0.228); /* adjust darkness here */
+  background: rgba(149, 148, 148, 0.228); /* adjust darkness here */
   filter: brightness(0.8) blur(2px);
   z-index: 1;
 }
 /* Smart Selection Package - Orange Theme */
 /* Smart Selection Package */
 .featured-card.smart  {
- background-color: aqua;
+ background-color: rgb(89, 168, 168);
 }
 
 /* Advance Health Package */
 .featured-card.advance {
-  background-color: #76b2f1;
+  background-color: #4e99e9;
 }
 
 /* All In One Package */
 .featured-card.allinone {
-  background-color: #b6f176;
+  background-color: #85b157;
 }
 
 /* More Specific Packages */
 .featured-card.basics {
-  background-color: #76f17e;
+  background-color: #75a779;
 }
 .featured-card.fever {
   background-color: #969696;
 }
 .featured-card.pef {
-  background-color: #f88fe7;
+  background-color: #a55e99;
 }
 .featured-card.anc {
-  background-color: #f1e776;
+  background-color: #a59d41;
 }
 .featured-card.pcod {
-   background-color: #f1bc76;
+   background-color: #cf9c59;
 }
 .featured-card.arthritis {
-   background-color: #a3f5e9;
+   background-color: #5fb3a6;
 }
 .featured-card.diabetes {
-   background-color: #f5adaa;
+   background-color: #a66764;
 }
 .featured-card.hyper {
-   background-color: #f56060;
+   background-color: #b44848;
 }
 .featured-card.dialysis {
-   background-color: #f09c4e;
+   background-color: #ad7846;
 }
 .featured-card.maleinf {
-   background-color: #f05c9c;
+   background-color: #a04c71;
 }
 .featured-card.feinf {
- background-color: #e27af1;
+ background-color: #a156ad;
 }
 
 
@@ -788,15 +788,9 @@ body {
       box-sizing: border-box;
     }
 
-    body {
-      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-      line-height: 1.6;
-      color: #333;
-      background: #c8f3c8;
-    }
 
     header {
-      background: #0b7530;
+      background: #55d682;
       color: #fff;
       padding: 60px 20px;
       text-align: center;
