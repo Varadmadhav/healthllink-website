@@ -1,17 +1,20 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>HealthLink - HR Dashboard</title>
     <link rel="stylesheet" href="hr_page.css">
 </head>
+
 <body>
 
     <!-- Top Header -->
     <div class="top-header">
-        <img src="/Healthlink/Diagnostics/Patient/pictures/logo.png" alt="Logo" class="logo" onerror="this.src='https://via.placeholder.com/150x50?text=HEALTHLINK'">
-        
+        <img src="/Healthlink/Diagnostics/Patient/pictures/logo.png" alt="Logo" class="logo"
+            onerror="this.src='https://via.placeholder.com/150x50?text=HEALTHLINK'">
+
         <div class="user-info">
             <span><strong>HR Admin</strong> | Acme Corporation</span>
             <button class="logout-btn" onclick="logout()">Logout</button>
@@ -38,10 +41,20 @@
                 <div class="upload-zone" onclick="document.getElementById('dashFileInput').click()" id="dashUploadZone">
                     <div class="upload-icon">📄</div>
                     <h3>Click to Upload or Drag & Drop</h3>
-                    <p style="color: #999; margin-top: 10px;">Max file size: 10MB</p>
+                    <p style="color:#999;margin-top:10px;">Max file size: 10MB</p>
                 </div>
 
                 <input type="file" id="dashFileInput" accept=".xlsx,.xls" onchange="handleDashboardUpload(event)">
+
+                <!-- Appointment Section -->
+                <div id="appointmentSection" style="display:none;margin-top:20px;">
+                    <label><strong>Select Appointment Date:</strong></label>
+                    <input type="date" id="appointmentDate">
+
+                    <button class="confirm-btn" onclick="confirmAppointment()">
+                        Confirm Appointment
+                    </button>
+                </div>
             </div>
 
             <!-- TAB 2: Upload History -->
@@ -82,8 +95,9 @@
 
                 <!-- Search & Filter Controls -->
                 <div class="controls-bar">
-                    <input type="text" class="search-box" id="searchInput" placeholder="🔍 Search by name, email, mobile..." onkeyup="filterTable()">
-                    
+                    <input type="text" class="search-box" id="searchInput"
+                        placeholder="🔍 Search by name, email, mobile..." onkeyup="filterTable()">
+
                     <div class="filter-group">
                         <label><strong>Date:</strong></label>
                         <input type="date" class="filter-date" id="dateFilter" onchange="filterTable()">
@@ -131,7 +145,7 @@
     <script>
         // Sample Patient Data with dates
         let patientRecords = [
-            { name: "Rajesh Kumar", gender: "Male", age: 34, date: "2024-01-15", address: "123 MG Road, Mumbai", pincode: "400001", mobile: "9876543210", email: "rajesh@email.com", status: "Scheduled", date: "2024-01-15" },
+            { name: "Rajesh Kumar", gender: "Male", age: 34, date: "2024-01-15", address: "123 MG Road, Mumbai", pincode: "400001", mobile: "9876543210", email: "rajesh@email.com", status: "Scheduled" },
             { name: "Priya Sharma", gender: "Female", age: 28, date: "2024-01-10", address: "45 Park Street, Delhi", pincode: "110001", mobile: "9876543211", email: "priya@email.com", status: "Completed" },
             { name: "Amit Patel", gender: "Male", age: 42, date: "2024-01-20", address: "78 Lake Road, Bangalore", pincode: "560001", mobile: "9876543212", email: "amit@email.com", status: "Pending" },
             { name: "Sneha Reddy", gender: "Female", age: 31, date: "2024-01-15", address: "90 Beach Road, Chennai", pincode: "600001", mobile: "9876543213", email: "sneha@email.com", status: "Scheduled" },
@@ -140,7 +154,7 @@
         ];
 
         // Initialize Table
-        window.onload = function() {
+        window.onload = function () {
             renderPatientTable();
             // Set default date in filter to today
             document.getElementById('dateFilter').valueAsDate = new Date();
@@ -148,30 +162,33 @@
 
         // Tab Switching
         function switchTab(tabId) {
-            document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
-            document.querySelectorAll('.tab-content').forEach(content => content.classList.remove('active'));
-            
-            event.target.classList.add('active');
+
+            const buttons = document.querySelectorAll('.tab-btn');
+            const tabs = document.querySelectorAll('.tab-content');
+
+            buttons.forEach(btn => btn.classList.remove('active'));
+            tabs.forEach(tab => tab.classList.remove('active'));
+
+            document.querySelector(`[onclick="switchTab('${tabId}')"]`).classList.add('active');
             document.getElementById(tabId).classList.add('active');
+
         }
 
         // Dashboard File Upload
+        let uploadedFile = null;
+
         function handleDashboardUpload(event) {
+
             const file = event.target.files[0];
-            if (file) {
-                alert(`File "${file.name}" uploaded successfully!`);
-                
-                // Add to history
-                const tbody = document.getElementById('historyTableBody');
-                const newRow = tbody.insertRow(0);
-                newRow.innerHTML = `
-                    <td>${file.name}</td>
-                    <td>${new Date().toLocaleString()}</td>
-                    <td>${Math.floor(Math.random() * 50) + 10} patients</td>
-                    <td><span class="badge badge-info">Processed</span></td>
-                `;
-            }
+
+            if (!file) return;
+
+            uploadedFile = file;
+
+            document.getElementById("appointmentModal").style.display = "flex";
+
         }
+
 
         // Render Patient Table
         function renderPatientTable(data = patientRecords) {
@@ -210,11 +227,11 @@
             const statusFilter = document.getElementById('statusFilter').value;
 
             const filtered = patientRecords.filter(patient => {
-                const matchesSearch = 
+                const matchesSearch =
                     patient.name.toLowerCase().includes(searchTerm) ||
                     patient.email.toLowerCase().includes(searchTerm) ||
                     patient.mobile.includes(searchTerm);
-                
+
                 const matchesDate = !dateFilter || patient.date === dateFilter;
                 const matchesStatus = !statusFilter || patient.status === statusFilter;
 
@@ -241,7 +258,60 @@
                 window.location.href = 'index.html';
             }
         }
-    </script>
 
+        function closeModal() {
+
+            document.getElementById("appointmentModal").style.display = "none";
+
+        }
+
+        function confirmAppointment() {
+
+            if (!uploadedFile) {
+                alert("Please upload a file first");
+                return;
+            }
+
+            const date = document.getElementById("appointmentDate").value;
+
+            if (!date) {
+                alert("Please select appointment date");
+                return;
+            }
+
+            alert("Appointment Confirmed!");
+
+            const tbody = document.getElementById("historyTableBody");
+
+            const row = tbody.insertRow(0);
+
+            row.innerHTML = `
+<td>${uploadedFile.name}</td>
+<td>${new Date().toLocaleString()}</td>
+<td>${Math.floor(Math.random() * 50) + 10} patients</td>
+<td><span class="badge badge-info">Appointment Scheduled</span></td>
+`;
+
+            closeModal();
+
+        }
+    </script>
+    <div id="appointmentModal" class="modal">
+
+        <div class="modal-content">
+
+            <h3>Select Appointment Date</h3>
+
+            <input type="date" id="appointmentDate">
+
+            <div class="modal-actions">
+                <button onclick="closeModal()" class="btn-cancel">Cancel</button>
+                <button onclick="confirmAppointment()" class="btn-confirm">Confirm Appointment</button>
+            </div>
+
+        </div>
+
+    </div>
 </body>
+
 </html>
