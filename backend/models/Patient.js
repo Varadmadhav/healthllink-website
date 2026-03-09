@@ -4,30 +4,63 @@ const patientSchema = new mongoose.Schema({
 
   uploadId: {
     type: mongoose.Schema.Types.ObjectId,
-    ref: "Upload"
+    ref: "Upload",
+    required: true
   },
 
   companyId: {
     type: mongoose.Schema.Types.ObjectId,
-    ref: "Company"
+    ref: "Company",
+    required: true
   },
 
-  name: String,
+  name: {
+    type: String,
+    required: true,
+    trim: true
+  },
 
-  gender: String,
+  gender: {
+    type: String,
+    enum: ["Male", "Female", "Other"],
+    required: true
+  },
 
-  age: Number,
+  age: {
+    type: Number,
+    required: true
+  },
 
-  phone: String,
+  date: {
+    type: Date
+  },
 
-  email: String,
+  // NEW FIELD → Same appointment date for all patients in Excel upload
+  appointmentDate: {
+    type: Date,
+    required: true
+  },
 
-  address: String,
+  phone: {
+    type: String
+  },
 
-  pincode: String,
+  email: {
+    type: String,
+    trim: true
+  },
+
+  address: {
+    type: String
+  },
+
+  pincode: {
+    type: String
+  },
 
   status: {
     type: String,
+    enum: ["pending", "confirmed", "completed"],
     default: "pending"
   },
 

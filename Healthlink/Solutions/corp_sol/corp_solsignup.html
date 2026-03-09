@@ -180,35 +180,32 @@ const EMPLOYEE_DASHBOARD_PAGE = "/Healthlink/Solutions/corp_sol/emp_page.html";
         // Login Form Handling
         // =============================
 
-        document.getElementById('authForm').addEventListener('submit', function (e) {
+       /*
 
-            e.preventDefault();
+document.getElementById('authForm').addEventListener('submit', function (e) {
 
-            const userId = document.getElementById('userId').value;
-            const pass = document.getElementById('password').value;
+    e.preventDefault();
 
-            const msgBox = document.getElementById('loginMessage');
+    const userId = document.getElementById('userId').value;
+    const pass = document.getElementById('password').value;
 
-            if (userId.length > 0 && pass.length >= 6) {
+    const msgBox = document.getElementById('loginMessage');
 
-                msgBox.className = "message-box success";
-                msgBox.innerHTML = `Success! Logging in to ${currentOrg} as ${currentRole}.`;
+    if (userId.length > 0 && pass.length >= 6) {
 
-                setTimeout(() => {
+        msgBox.className = "message-box success";
+        msgBox.innerHTML = `Success! Logging in to ${currentOrg} as ${currentRole}.`;
 
-                    redirectUser();
+        setTimeout(() => {
 
-                }, 1000);
+            redirectUser();
 
-            }
-            else {
+        }, 1000);
 
-                msgBox.className = "message-box error";
-                msgBox.innerText = "Invalid credentials or password too short.";
+    }
+});
 
-            }
-
-        });
+*/  /*commented by varad */
 
 
         // =============================
@@ -284,7 +281,7 @@ const EMPLOYEE_DASHBOARD_PAGE = "/Healthlink/Solutions/corp_sol/emp_page.html";
         }
 
     </script>
-
+<script src="sol_auth.js"></script>
 </body>
 
 </html>

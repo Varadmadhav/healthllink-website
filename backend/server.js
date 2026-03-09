@@ -4,6 +4,8 @@ const cors = require("cors")
 const connectDB = require("./config/db")
 const adminRoutes = require("./routes/adminRoutes")
 const hrRoutes = require("./routes/hrRoutes")
+const uploadRoutes = require("./routes/uploadRoutes")
+const patientRoutes = require("./routes/patientRoutes")
 
 const app = express()
 
@@ -14,6 +16,8 @@ app.use(express.json())
 
 app.use("/api/admin", adminRoutes)
 app.use("/api/hr", hrRoutes)
+app.use("/api/upload", uploadRoutes)
+app.use("/api/patients", patientRoutes)
 
 app.get("/", (req, res) => {
   res.send("HealthLink API running")

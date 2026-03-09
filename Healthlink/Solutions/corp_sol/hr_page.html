@@ -47,14 +47,7 @@
                 <input type="file" id="dashFileInput" accept=".xlsx,.xls" onchange="handleDashboardUpload(event)">
 
                 <!-- Appointment Section -->
-                <div id="appointmentSection" style="display:none;margin-top:20px;">
-                    <label><strong>Select Appointment Date:</strong></label>
-                    <input type="date" id="appointmentDate">
-
-                    <button class="confirm-btn" onclick="confirmAppointment()">
-                        Confirm Appointment
-                    </button>
-                </div>
+                
             </div>
 
             <!-- TAB 2: Upload History -->
@@ -143,6 +136,9 @@
     </div>
 
     <script>
+
+        
+        
         // Sample Patient Data with dates
         let patientRecords = [
             { name: "Rajesh Kumar", gender: "Male", age: 34, date: "2024-01-15", address: "123 MG Road, Mumbai", pincode: "400001", mobile: "9876543210", email: "rajesh@email.com", status: "Scheduled" },
@@ -265,53 +261,84 @@
 
         }
 
-        function confirmAppointment() {
+        async function confirmAppointment() {
 
-            if (!uploadedFile) {
-                alert("Please upload a file first");
-                return;
-            }
+    if (!uploadedFile) {
+        alert("Please upload a file first");
+        return;
+    }
 
-            const date = document.getElementById("appointmentDate").value;
+    const date = document.getElementById("appointmentDate").value;
 
-            if (!date) {
-                alert("Please select appointment date");
-                return;
-            }
+    if (!date) {
+        alert("Please select appointment date");
+        return;
+    }
 
-            alert("Appointment Confirmed!");
+    const formData = new FormData();
 
-            const tbody = document.getElementById("historyTableBody");
+    formData.append("file", uploadedFile);
+    formData.append("companyId", companyId);
+    formData.append("userId", userId);
+    formData.append("appointmentDate", date);
 
-            const row = tbody.insertRow(0);
+    try {
 
-            row.innerHTML = `
-<td>${uploadedFile.name}</td>
-<td>${new Date().toLocaleString()}</td>
-<td>${Math.floor(Math.random() * 50) + 10} patients</td>
-<td><span class="badge badge-info">Appointment Scheduled</span></td>
-`;
+        const res = await fetch(`${API_BASE}/upload/excel`, {
+            method: "POST",
+            body: formData
+        });
 
-            closeModal();
+        const data = await res.json();
+
+        if (res.ok) {
+alert("Excel uploaded successfully!");
+
+closeModal();
+
+setTimeout(() => {
+    loadUploadHistory();
+}, 300); // refresh history
+
+        } else {
+
+            alert(data.message || "Upload failed");
 
         }
+
+    } catch (error) {
+
+        console.error(error);
+        alert("Server error");
+
+    }
+}
     </script>
-    <div id="appointmentModal" class="modal">
+    <div id="appointmentModal" class="modal" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.5); justify-content:center; align-items:center;">
 
-        <div class="modal-content">
+    <div style="background:white; padding:25px; border-radius:10px; width:300px; text-align:center;">
 
-            <h3>Select Appointment Date</h3>
+        <h3>Select Appointment Date</h3>
 
-            <input type="date" id="appointmentDate">
+        <input type="date" id="appointmentDate" style="margin:15px 0; width:100%; padding:8px;">
 
-            <div class="modal-actions">
-                <button onclick="closeModal()" class="btn-cancel">Cancel</button>
-                <button onclick="confirmAppointment()" class="btn-confirm">Confirm Appointment</button>
-            </div>
+        <div style="display:flex; justify-content:space-between; gap:10px;">
+
+            <button onclick="closeModal()" style="flex:1; padding:8px; background:#ccc; border:none; border-radius:5px;">
+                Cancel
+            </button>
+
+            <button onclick="confirmAppointment()" style="flex:1; padding:8px; background:#2ecc71; color:white; border:none; border-radius:5px;">
+                Confirm
+            </button>
 
         </div>
 
     </div>
+
+</div>
+   
+    <script src="hr_dashboard.js"></script>
 </body>
 
 </html>
