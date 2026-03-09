@@ -16,7 +16,7 @@
             onerror="this.src='https://via.placeholder.com/150x50?text=HEALTHLINK'">
 
         <div class="user-info">
-            <span><strong>HR Admin</strong> | Acme Corporation</span>
+            <span id="hrInfo"></span>
             <button class="logout-btn" onclick="logout()">Logout</button>
         </div>
     </div>
@@ -58,35 +58,29 @@
             </div>
 
             <!-- TAB 2: Upload History -->
-            <div id="tab-history" class="tab-content">
-                <h3>Upload History</h3>
-                <p class="subtitle">View all previously uploaded files</p>
+           <div id="tab-history" class="tab-content">
+    <h3>Upload History</h3>
+    <p class="subtitle">View all previously uploaded files</p>
 
-                <table class="history-table">
-                    <thead>
-                        <tr>
-                            <th>File Name</th>
-                            <th>Upload Date</th>
-                            <th>Records Count</th>
-                            <th>Status</th>
-                        </tr>
-                    </thead>
-                    <tbody id="historyTableBody">
-                        <tr>
-                            <td>patient_list_jan2024.xlsx</td>
-                            <td>2024-01-15 10:30 AM</td>
-                            <td>45 patients</td>
-                            <td><span class="badge badge-info">Processed</span></td>
-                        </tr>
-                        <tr>
-                            <td>employee_health_check.xlsx</td>
-                            <td>2024-01-10 02:15 PM</td>
-                            <td>32 patients</td>
-                            <td><span class="badge badge-info">Processed</span></td>
-                        </tr>
-                    </tbody>
-                </table>
-            </div>
+    <table class="history-table">
+        <thead>
+            <tr>
+                <th>File Name</th>
+                <th>Upload Date</th>
+                <th>Records Count</th>
+                <th>Status</th>
+            </tr>
+        </thead>
+
+        <tbody id="historyTableBody">
+            <!-- Upload history will be loaded dynamically from backend -->
+        </tbody>
+    </table>
+
+    <div id="historyEmptyMessage" style="display:none; text-align:center; margin-top:20px; color:#888;">
+        No uploads found.
+    </div>
+</div>
 
             <!-- TAB 3: Patient Records -->
             <div id="tab-records" class="tab-content">
@@ -143,22 +137,66 @@
     </div>
 
     <script>
+        const API_BASE = "http://localhost:5000/api"
+    document.addEventListener("DOMContentLoaded", () => {
+
+    const user = JSON.parse(localStorage.getItem("user"))
+
+    if (user) {
+        document.getElementById("hrInfo").innerHTML =
+            `<strong>${user.name}</strong> | ${user.email}`
+    }
+
+})
+
         // Sample Patient Data with dates
-        let patientRecords = [
-            { name: "Rajesh Kumar", gender: "Male", age: 34, date: "2024-01-15", address: "123 MG Road, Mumbai", pincode: "400001", mobile: "9876543210", email: "rajesh@email.com", status: "Scheduled" },
-            { name: "Priya Sharma", gender: "Female", age: 28, date: "2024-01-10", address: "45 Park Street, Delhi", pincode: "110001", mobile: "9876543211", email: "priya@email.com", status: "Completed" },
-            { name: "Amit Patel", gender: "Male", age: 42, date: "2024-01-20", address: "78 Lake Road, Bangalore", pincode: "560001", mobile: "9876543212", email: "amit@email.com", status: "Pending" },
-            { name: "Sneha Reddy", gender: "Female", age: 31, date: "2024-01-15", address: "90 Beach Road, Chennai", pincode: "600001", mobile: "9876543213", email: "sneha@email.com", status: "Scheduled" },
-            { name: "Vikram Singh", gender: "Male", age: 45, date: "2024-01-05", address: "12 Fort Road, Jaipur", pincode: "302001", mobile: "9876543214", email: "vikram@email.com", status: "Completed" },
-            { name: "Anjali Desai", gender: "Female", age: 29, date: "2024-01-25", address: "34 River Street, Pune", pincode: "411001", mobile: "9876543215", email: "anjali@email.com", status: "Pending" }
-        ];
+        let patientRecords = []
+       async function loadPatients() {
+
+    const res = await fetch(`${API_BASE}/patients`)
+    const patients = await res.json()
+
+    patientRecords = patients
+
+    const tbody = document.getElementById("recordsTableBody")
+    tbody.innerHTML = ""
+
+    patients.forEach((p, index) => {
+
+        const row = document.createElement("tr")
+
+        row.innerHTML = `
+            <td>${p.name}</td>
+            <td>${p.gender}</td>
+            <td>${p.age}</td>
+            <td>${p.appointmentDate || "-"}</td>
+            <td>${p.address}</td>
+            <td>${p.pincode}</td>
+            <td>${p.mobile}</td>
+            <td>${p.email}</td>
+            <td>
+                <span class="status-badge status-${p.status}">
+                    ${p.status}
+                </span>
+            </td>
+            <td>
+                <button class="btn-view" onclick="viewReport(${index})">👁 View</button>
+                <button class="btn-download" onclick="downloadReport(${index})">⬇ Download</button>
+            </td>
+        `
+
+        tbody.appendChild(row)
+
+    })
+}
 
         // Initialize Table
-        window.onload = function () {
-            renderPatientTable();
-            // Set default date in filter to today
-            document.getElementById('dateFilter').valueAsDate = new Date();
-        };
+       window.onload = function () {
+
+    loadUploadHistory()
+    loadPatients()
+
+}
 
         // Tab Switching
         function switchTab(tabId) {
@@ -177,17 +215,38 @@
         // Dashboard File Upload
         let uploadedFile = null;
 
-        function handleDashboardUpload(event) {
+        async function handleDashboardUpload(event) {
 
-            const file = event.target.files[0];
+    const file = event.target.files[0]
+    if (!file) return
 
-            if (!file) return;
+    const formData = new FormData()
+    formData.append("file", file)
 
-            uploadedFile = file;
+    const token = localStorage.getItem("token")
 
-            document.getElementById("appointmentModal").style.display = "flex";
+    try {
 
-        }
+        const res = await fetch(`${API_BASE}/hr/upload`, {
+            method: "POST",
+            headers: {
+                Authorization: `Bearer ${token}`
+            },
+            body: formData
+        })
+
+        const data = await res.json()
+
+        alert("Upload successful")
+
+        loadUploadHistory()
+        loadPatients()
+
+    } catch (err) {
+        console.error(err)
+        alert("Upload failed")
+    }
+}
 
 
         // Render Patient Table
@@ -232,7 +291,7 @@
                     patient.email.toLowerCase().includes(searchTerm) ||
                     patient.mobile.includes(searchTerm);
 
-                const matchesDate = !dateFilter || patient.date === dateFilter;
+                const matchesDate = !dateFilter || patient.appointmentDate === dateFilter;
                 const matchesStatus = !statusFilter || patient.status === statusFilter;
 
                 return matchesSearch && matchesDate && matchesStatus;
@@ -243,8 +302,12 @@
 
         // View Report
         function viewReport(index) {
-            alert(`Viewing report for: ${patientRecords[index].name}\n\nAppointment Date: ${patientRecords[index].date}\nStatus: ${patientRecords[index].status}`);
-        }
+    alert(`Viewing report for: ${patientRecords[index].name}
+    
+Appointment Date: ${patientRecords[index].appointmentDate || "-"}
+
+Status: ${patientRecords[index].status}`);
+}
 
         // Download Report
         function downloadReport(index) {
@@ -254,10 +317,13 @@
 
         // Logout
         function logout() {
-            if (confirm('Are you sure you want to logout?')) {
-                window.location.href = 'index.html';
-            }
-        }
+
+    localStorage.removeItem("token")
+    localStorage.removeItem("user")
+
+    window.location.href = "corp_solsignup.html"
+
+}
 
         function closeModal() {
 
@@ -295,6 +361,29 @@
             closeModal();
 
         }
+        async function loadUploadHistory() {
+
+    const res = await fetch(`${API_BASE}/hr/uploads`)
+    const uploads = await res.json()
+
+    const tbody = document.getElementById("historyTableBody")
+    tbody.innerHTML = ""
+
+    uploads.forEach(u => {
+
+        const row = document.createElement("tr")
+
+        row.innerHTML = `
+            <td>${u.fileName}</td>
+            <td>${new Date(u.uploadedAt).toLocaleString()}</td>
+            <td>${u.recordsCount}</td>
+            <td><span class="badge badge-info">${u.status || "processed"}</span></td>
+        `
+
+        tbody.appendChild(row)
+
+    })
+}
     </script>
     <div id="appointmentModal" class="modal">
 

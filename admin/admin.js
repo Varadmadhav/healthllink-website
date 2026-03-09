@@ -1,4 +1,5 @@
 // ===== Global Data Storage =====
+const API_BASE = "http://localhost:5000/api";
 let uploadedFiles = []; // Array of uploaded Excel files with their data
 let centersData = [];
 let companiesData = [];
@@ -6,13 +7,15 @@ let selectedFileId = null; // Currently selected file for viewing
 
 // ===== Initialize Application =====
 document.addEventListener('DOMContentLoaded', function() {
-    initializeTabs();
-    initializeFileUpload();
-    initializeDragAndDrop();
-    loadDummyData();
-    renderAllTables();
-});
+    initializeTabs()
+    initializeFileUpload()
+    initializeDragAndDrop()
 
+    fetchCompanies()
+    fetchCenters()
+
+    renderAllTables()
+})
 // ===== Tab Navigation =====
 function initializeTabs() {
     const tabs = document.querySelectorAll('.nav-tab');
@@ -767,6 +770,48 @@ function renderCentersTable() {
 }
 
 // ===== Companies Table =====
+async function fetchCompanies() {
+    try {
+
+        const res = await fetch(API_BASE + "/admin/companies")
+        const data = await res.json()
+
+        companiesData = data.map(c => ({
+            id: c._id,
+            name: c.name,
+            address: c.address,
+            email: c.email,
+            phone: c.phone,
+            pincode: c.pincode
+        }))
+
+        renderCompaniesTable()
+
+    } catch (err) {
+        console.error(err)
+    }
+}
+async function fetchCenters() {
+    try {
+
+        const res = await fetch(API_BASE + "/admin/centers")
+        const data = await res.json()
+
+        centersData = data.map(c => ({
+            id: c._id,
+            name: c.name,
+            email: c.email,
+            phone: c.phone,
+            address: c.address,
+            pincode: c.pincode
+        }))
+
+        renderCentersTable()
+
+    } catch (err) {
+        console.error(err)
+    }
+}
 function renderCompaniesTable() {
     const tbody = document.getElementById('companies-table-body');
     
@@ -802,6 +847,9 @@ function renderCompaniesTable() {
 function openModal(modalId) {
     document.getElementById(modalId).classList.add('active');
     document.body.style.overflow = 'hidden';
+    if(modalId === "hr-modal"){
+    populateCompanyDropdown()
+}
 }
 
 function closeModal(modalId) {
@@ -833,42 +881,93 @@ document.addEventListener('keydown', (e) => {
 });
 
 // ===== Save Functions =====
-function saveCenter(event) {
-    event.preventDefault();
-    
+async function saveCenter(event) {
+
+    event.preventDefault()
+
     const center = {
-        id: Date.now(),
         name: document.getElementById('center-name').value,
         email: document.getElementById('center-email').value,
         phone: document.getElementById('center-phone').value,
         address: document.getElementById('center-address').value,
         pincode: document.getElementById('center-pincode').value
-    };
-    
-    centersData.push(center);
-    renderCentersTable();
-    closeModal('center-modal');
-    showToast('Center added successfully!', 'success');
+    }
+
+    try {
+
+        const res = await fetch(API_BASE + "/admin/centers", {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json"
+            },
+            body: JSON.stringify(center)
+        })
+
+        const data = await res.json()
+
+        centersData.push({
+            id: data._id,
+            name: data.name,
+            email: data.email,
+            phone: data.phone,
+            address: data.address,
+            pincode: data.pincode
+        })
+
+        renderCentersTable()
+        closeModal('center-modal')
+
+        showToast("Center added successfully!", "success")
+
+    } catch (err) {
+        console.error(err)
+        showToast("Error adding center", "error")
+    }
 }
 
-function saveCompany(event) {
-    event.preventDefault();
-    
+async function saveCompany(event) {
+
+    event.preventDefault()
+
     const company = {
-        id: Date.now(),
         name: document.getElementById('company-name').value,
         address: document.getElementById('company-address').value,
         email: document.getElementById('company-email').value,
         phone: document.getElementById('company-phone').value,
         pincode: document.getElementById('company-pincode').value
-    };
-    
-    companiesData.push(company);
-    renderCompaniesTable();
-    closeModal('company-modal');
-    showToast('Company added successfully!', 'success');
-}
+    }
 
+    try {
+
+        const res = await fetch(API_BASE + "/admin/companies", {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json"
+            },
+            body: JSON.stringify(company)
+        })
+
+        const data = await res.json()
+
+        companiesData.push({
+            id: data._id,
+            name: data.name,
+            address: data.address,
+            email: data.email,
+            phone: data.phone,
+            pincode: data.pincode
+        })
+
+        renderCompaniesTable()
+        closeModal('company-modal')
+
+        showToast("Company added successfully!", "success")
+
+    } catch (err) {
+        console.error(err)
+        showToast("Error adding company", "error")
+    }
+}
 // ===== Delete Functions =====
 function deleteCenter(id) {
     if (confirm('Are you sure you want to delete this center?')) {
@@ -1005,4 +1104,47 @@ function formatFileSize(bytes) {
     if (bytes < 1024) return bytes + ' B';
     if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(1) + ' KB';
     return (bytes / (1024 * 1024)).toFixed(1) + ' MB';
+}
+function populateCompanyDropdown() {
+
+    const select = document.getElementById("hr-company")
+
+    select.innerHTML = companiesData.map(c => `
+        <option value="${c.id}">
+            ${c.name}
+        </option>
+    `).join("")
+}
+async function createHR(event){
+
+event.preventDefault()
+
+const hr = {
+name: document.getElementById("hr-name").value,
+email: document.getElementById("hr-email").value,
+password: document.getElementById("hr-password").value,
+companyId: document.getElementById("hr-company").value
+}
+
+try{
+
+const res = await fetch(API_BASE + "/hr/create",{
+method:"POST",
+headers:{
+"Content-Type":"application/json"
+},
+body:JSON.stringify(hr)
+})
+
+const data = await res.json()
+
+closeModal("hr-modal")
+
+showToast("HR account created successfully","success")
+
+}catch(err){
+console.error(err)
+showToast("Error creating HR","error")
+}
+
 }

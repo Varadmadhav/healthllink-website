@@ -1,290 +1,321 @@
 <!DOCTYPE html>
+
 <html lang="en">
 
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>HealthLink - Organization Access</title>
-    <link rel="stylesheet" href="corp_solsignup.css">
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>HealthLink - Organization Access</title>
+<link rel="stylesheet" href="corp_solsignup.css">
 </head>
 
 <body>
 
-    <div class="container">
-        <!-- Header is always visible -->
-        <div class="header">
-            <!-- Using placeholder since local path might not work in your preview, keeping logic same -->
-            <img src="/Healthlink/Diagnostics/Patient/pictures/logo.png" alt="Logo"
-                onerror="this.src='https://via.placeholder.com/150x50?text=HEALTHLINK'">
-        </div>
-
-        <div class="content-area">
-
-            <!-- STEP 1: SELECT ORGANIZATION -->
-            <div id="step-org" class="step active">
-                <h2>Select Organization</h2>
-                <p class="subtitle">Please select your company to continue.</p>
-
-                <div class="form-group">
-                    <select id="organizationSelect" class="form-input-lg">
-                        <option value="" disabled selected>-- Choose Company --</option>
-                        <option value="Acme Corp">Acme Corporation</option>
-                        <option value="TechGlobal">TechGlobal Inc.</option>
-                        <option value="MediCare Plus">MediCare Plus</option>
-                        <option value="Logistics Ltd">Global Logistics Ltd</option>
-                    </select>
-                </div>
-
-                <button class="btn-primary" onclick="goToStep('step-role')">Continue</button>
-            </div>
-
-            <!-- STEP 2: CHOOSE LOGIN TYPE -->
-            <div id="step-role" class="step">
-                <h2>Welcome, <span id="selectedOrgDisplay"></span></h2>
-                <p class="subtitle">Choose how you want to access the system.</p>
-
-                <div class="role-grid">
-                    <div class="role-btn" onclick="setRole('hr')">
-                        <div class="role-icon">👨‍💼</div>
-                        <strong>HR / Admin Login</strong>
-                        <small>For Human Resources Staff</small>
-                    </div>
-
-                    <div class="role-btn" onclick="setRole('employee')">
-                        <div class="role-icon">👤</div>
-                        <strong>Employee Login</strong>
-                        <small>For General Staff</small>
-                    </div>
-                </div>
-
-                <a class="back-link" onclick="goToStep('step-org')">← Back to Organizations</a>
-            </div>
-
-            <!-- STEP 3: LOGIN FORM -->
-            <div id="step-login" class="step">
-                <h2><span id="loginRoleTitle"></span> Login</h2>
-                <p class="subtitle">Access <span id="loginOrgDisplay"></span> System</p>
-
-                <div id="loginMessage" class="message-box"></div>
-
-                <form id="authForm">
-                    <div class="form-group">
-                        <label for="userId">Employee ID / Email</label>
-                        <input type="text" id="userId" required placeholder="Ex: EMP123 or john@corp.com">
-                    </div>
-
-                    <div class="form-group">
-                        <label for="password">Password</label>
-                        <input type="password" id="password" required placeholder="Enter your password">
-                    </div>
+<div class="container">
 
-                    <div class="forgot-password">
-                        <a href="#" onclick="openResetModal()">Forgot Password?</a>
-                    </div>
+<div class="header">
+<img src="/Healthlink/Diagnostics/Patient/pictures/logo.png"
+onerror="this.src='https://via.placeholder.com/150x50?text=HEALTHLINK'">
+</div>
 
-                    <button type="submit" class="btn-primary">Secure Sign In</button>
-                </form>
+<div class="content-area">
 
-                <a class="back-link" onclick="goToStep('step-role')">← Back to Options</a>
-            </div>
+<div id="step-org" class="step active">
+<h2>Select Organization</h2>
+<p class="subtitle">Please select your company to continue.</p>
 
-        </div>
-    </div>
+<div class="form-group">
+<select id="organizationSelect" class="form-input-lg">
+<option value="" disabled selected>-- Choose Company --</option>
+</select>
+</div>
 
-    <!-- RESET PASSWORD MODAL -->
-    <div class="modal-overlay" id="resetModal">
-        <div class="modal">
-            <h3>Password Reset</h3>
-            <p style="margin: 15px 0; color: #666;">Enter your registered email address below. We will send you a link
-                to reset your password.</p>
+<button class="btn-primary" onclick="goToStep('step-role')">Continue</button>
 
-            <div class="form-group">
-                <input type="email" id="resetEmailInput" placeholder="name@example.com">
-            </div>
+</div>
 
-            <button class="btn-primary" onclick="sendResetLink()">Send Link</button>
-            <a href="#" class="back-link" onclick="closeResetModal()" style="margin-top:10px; display:block;">Cancel</a>
-        </div>
-    </div>
+<div id="step-role" class="step">
+<h2>Welcome, <span id="selectedOrgDisplay"></span></h2>
+<p class="subtitle">Choose how you want to access the system.</p>
 
-    <script>
+<div class="role-grid">
 
-        // =============================
-        // CONFIGURE DASHBOARD LINKS
-        // =============================
+<div class="role-btn" onclick="setRole('hr')">
+<div class="role-icon">👨‍💼</div>
+<strong>HR / Admin Login</strong>
+<small>For Human Resources Staff</small>
+</div>
 
-        const HR_DASHBOARD_PAGE = "/Healthlink/Solutions/corp_sol/hr_page.html";
-const EMPLOYEE_DASHBOARD_PAGE = "/Healthlink/Solutions/corp_sol/emp_page.html";
+<div class="role-btn" onclick="setRole('employee')">
+<div class="role-icon">👤</div>
+<strong>Employee Login</strong>
+<small>For General Staff</small>
+</div>
 
+</div>
 
-        // =============================
-        // State Management
-        // =============================
+<a class="back-link" onclick="goToStep('step-org')">← Back to Organizations</a>
 
-        let currentOrg = "";
-        let currentRole = "";
+</div>
 
+<div id="step-login" class="step">
 
-        // =============================
-        // Navigation Logic
-        // =============================
+<h2><span id="loginRoleTitle"></span> Login</h2>
+<p class="subtitle">Access <span id="loginOrgDisplay"></span> System</p>
 
-        function goToStep(stepId) {
+<div id="loginMessage" class="message-box"></div>
 
-            if (stepId === 'step-role') {
-                const select = document.getElementById('organizationSelect');
+<form id="authForm">
 
-                if (!select.value) {
-                    select.style.borderColor = 'red';
-                    return;
-                }
-                else {
-                    select.style.borderColor = '#ddd';
-                    currentOrg = select.value;
-                    document.getElementById('selectedOrgDisplay').textContent = currentOrg;
-                }
-            }
+<div class="form-group">
+<label for="userId">Employee ID / Email</label>
+<input type="text" id="userId" required placeholder="Ex: EMP123 or john@corp.com">
+</div>
 
-            document.querySelectorAll('.step').forEach(el => el.classList.remove('active'));
-            document.getElementById(stepId).classList.add('active');
+<div class="form-group">
+<label for="password">Password</label>
+<input type="password" id="password" required placeholder="Enter your password">
+</div>
 
-            clearMessages();
-        }
+<div class="forgot-password">
+<a href="#" onclick="openResetModal()">Forgot Password?</a>
+</div>
 
+<button type="submit" class="btn-primary">Secure Sign In</button>
 
-        // =============================
-        // Role Selection
-        // =============================
+</form>
 
-        function setRole(role) {
+<a class="back-link" onclick="goToStep('step-role')">← Back to Options</a>
 
-            currentRole = role;
+</div>
 
-            const titleSpan = document.getElementById('loginRoleTitle');
-            const orgSpan = document.getElementById('loginOrgDisplay');
+</div>
+</div>
 
-            if (role === 'hr') {
-                titleSpan.textContent = "Admin";
-            }
-            else {
-                titleSpan.textContent = "Employee";
-            }
+<div class="modal-overlay" id="resetModal">
+<div class="modal">
+<h3>Password Reset</h3>
 
-            orgSpan.textContent = currentOrg;
+<p style="margin: 15px 0; color: #666;">
+Enter your registered email address below. We will send you a link to reset your password.
+</p>
 
-            goToStep('step-login');
-        }
+<div class="form-group">
+<input type="email" id="resetEmailInput" placeholder="name@example.com">
+</div>
 
+<button class="btn-primary" onclick="sendResetLink()">Send Link</button>
 
-        // =============================
-        // Login Form Handling
-        // =============================
+<a href="#" class="back-link" onclick="closeResetModal()" style="margin-top:10px; display:block;">
+Cancel
+</a>
 
-        document.getElementById('authForm').addEventListener('submit', function (e) {
+</div>
+</div>
 
-            e.preventDefault();
+<script>
 
-            const userId = document.getElementById('userId').value;
-            const pass = document.getElementById('password').value;
+const API_BASE = "http://localhost:5000/api"
 
-            const msgBox = document.getElementById('loginMessage');
+const HR_DASHBOARD_PAGE = "/Healthlink/Solutions/corp_sol/hr_page.html"
+const EMPLOYEE_DASHBOARD_PAGE = "/Healthlink/Solutions/corp_sol/emp_page.html"
 
-            if (userId.length > 0 && pass.length >= 6) {
+let currentOrg=""
+let currentRole=""
 
-                msgBox.className = "message-box success";
-                msgBox.innerHTML = `Success! Logging in to ${currentOrg} as ${currentRole}.`;
+async function loadCompanies(){
 
-                setTimeout(() => {
+try{
 
-                    redirectUser();
+const res = await fetch(API_BASE + "/admin/companies")
+const companies = await res.json()
 
-                }, 1000);
+const select = document.getElementById("organizationSelect")
 
-            }
-            else {
+select.innerHTML = `<option value="" disabled selected>-- Choose Company --</option>`
 
-                msgBox.className = "message-box error";
-                msgBox.innerText = "Invalid credentials or password too short.";
+companies.forEach(company=>{
 
-            }
+const option=document.createElement("option")
 
-        });
+option.value=company._id
+option.textContent=company.name
 
+select.appendChild(option)
 
-        // =============================
-        // Role Based Redirect
-        // =============================
+})
 
-        function redirectUser() {
+}catch(err){
 
-            if (currentRole === "hr") {
+console.error("Error loading companies",err)
 
-                window.location.href = HR_DASHBOARD_PAGE;
+}
 
-            }
+}
 
-            else if (currentRole === "employee") {
+document.addEventListener("DOMContentLoaded",loadCompanies)
 
-                window.location.href = EMPLOYEE_DASHBOARD_PAGE;
+function goToStep(stepId){
 
-            }
+if(stepId==="step-role"){
 
-        }
+const select=document.getElementById("organizationSelect")
 
+if(!select.value){
 
-        // =============================
-        // Utility
-        // =============================
+select.style.borderColor="red"
+return
 
-        function clearMessages() {
+}else{
 
-            const msgBox = document.getElementById('loginMessage');
+select.style.borderColor="#ddd"
+currentOrg=select.options[select.selectedIndex].text
+document.getElementById("selectedOrgDisplay").textContent=currentOrg
 
-            msgBox.className = "message-box";
-            msgBox.innerText = "";
+}
 
-            document.getElementById('authForm').reset();
+}
 
-        }
+document.querySelectorAll(".step").forEach(el=>el.classList.remove("active"))
 
+document.getElementById(stepId).classList.add("active")
 
-        // =============================
-        // Password Reset Modal
-        // =============================
+clearMessages()
 
-        function openResetModal() {
+}
 
-            document.getElementById('resetModal').style.display = 'flex';
+function setRole(role){
 
-        }
+currentRole=role
 
-        function closeResetModal() {
+const titleSpan=document.getElementById("loginRoleTitle")
+const orgSpan=document.getElementById("loginOrgDisplay")
 
-            document.getElementById('resetModal').style.display = 'none';
-            document.getElementById('resetEmailInput').value = '';
+if(role==="hr"){
 
-        }
+titleSpan.textContent="Admin"
 
-        function sendResetLink() {
+}else{
 
-            const email = document.getElementById('resetEmailInput').value;
+titleSpan.textContent="Employee"
 
-            if (email && email.includes('@')) {
+}
 
-                alert(`Reset link sent to ${email}!`);
-                closeResetModal();
+orgSpan.textContent=currentOrg
 
-            }
-            else {
+goToStep("step-login")
 
-                alert('Please enter a valid email.');
+}
 
-            }
+document.getElementById("authForm").addEventListener("submit",async function(e){
 
-        }
+e.preventDefault()
 
-    </script>
+const email=document.getElementById("userId").value
+const password=document.getElementById("password").value
+
+const msgBox=document.getElementById("loginMessage")
+
+try{
+
+const res=await fetch(API_BASE+"/hr/login",{
+method:"POST",
+headers:{
+"Content-Type":"application/json"
+},
+body:JSON.stringify({email,password})
+})
+
+const data=await res.json()
+
+if(res.ok){
+
+msgBox.className="message-box success"
+msgBox.innerText="Login successful"
+
+localStorage.setItem("token",data.token)
+localStorage.setItem("user",JSON.stringify(data.user))
+
+setTimeout(()=>{
+
+redirectUser()
+
+},1000)
+
+}else{
+
+msgBox.className="message-box error"
+msgBox.innerText=data.message
+
+}
+
+}catch(err){
+
+msgBox.className="message-box error"
+msgBox.innerText="Server error"
+
+}
+
+})
+
+function redirectUser(){
+
+if(currentRole==="hr"){
+
+window.location.href=HR_DASHBOARD_PAGE
+
+}
+
+else if(currentRole==="employee"){
+
+window.location.href=EMPLOYEE_DASHBOARD_PAGE
+
+}
+
+}
+
+function clearMessages(){
+
+const msgBox=document.getElementById("loginMessage")
+
+msgBox.className="message-box"
+msgBox.innerText=""
+
+document.getElementById("authForm").reset()
+
+}
+
+function openResetModal(){
+
+document.getElementById("resetModal").style.display="flex"
+
+}
+
+function closeResetModal(){
+
+document.getElementById("resetModal").style.display="none"
+document.getElementById("resetEmailInput").value=""
+
+}
+
+function sendResetLink(){
+
+const email=document.getElementById("resetEmailInput").value
+
+if(email && email.includes("@")){
+
+alert(`Reset link sent to ${email}!`)
+closeResetModal()
+
+}else{
+
+alert("Please enter a valid email.")
+
+}
+
+}
+
+</script>
 
 </body>
-
 </html>

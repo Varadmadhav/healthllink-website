@@ -11,6 +11,11 @@ const uploadSchema = new mongoose.Schema({
 
   recordsCount: Number,
 
+  status: {
+    type: String,
+    default: "processed"
+  },
+
   uploadedBy: {
     type: mongoose.Schema.Types.ObjectId,
     ref: "User"
