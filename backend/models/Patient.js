@@ -26,6 +26,11 @@ const patientSchema = new mongoose.Schema({
 
   pincode: String,
 
+  appointmentDate: {
+  type: Date,
+  default: null
+},
+
   status: {
     type: String,
     default: "pending"
