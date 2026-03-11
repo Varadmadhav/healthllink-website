@@ -2,7 +2,6 @@ const Upload = require("../models/Upload");
 const Patient = require("../models/Patient");
 const XLSX = require("xlsx");
 
-// 1. Handle Excel Upload & Parsing
 exports.uploadExcel = async (req, res) => {
   try {
 
@@ -12,70 +11,37 @@ exports.uploadExcel = async (req, res) => {
 
     const { appointmentDate } = req.body;
 
-    const companyId = req.user?.companyId || null;
-    const userId = req.user?.id || null;
-
     const workbook = XLSX.read(req.file.buffer, { type: "buffer" });
     const sheetName = workbook.SheetNames[0];
     const sheet = workbook.Sheets[sheetName];
 
     const data = XLSX.utils.sheet_to_json(sheet);
 
+    const uploadHistory = new Upload({
+  fileName: req.file.originalname,
+  recordsCount: data.length,
+  uploadedAt: new Date(),
+  status: "processed",
+  companyId: req.user?.companyId
+});
+
+    await uploadHistory.save();
+
     const patients = data.map(row => ({
-
-  uploadId: null,
-
-  companyId: req.user?.companyId || null,
-
-  name: row.Name || row.name || row["Patient Name"],
-
-  gender: row.Gender || row.gender,
-
-  age: row.Age || row.age,
-
-  phone: row.Mobile || row.mobile || row.Phone || row.phone || row["Phone Number"],
-
-  email: row.Email || row.email,
-
-  address: row.Address || row.address,
-
-  pincode: row.Pincode || row.pincode,
-
-  appointmentDate: appointmentDate || null,
-
-  status: "pending"
-
-}));
+      uploadId: uploadHistory._id,
+      companyId: req.user?.companyId || null,
+      name: row.Name || row.name || row["Patient Name"],
+      gender: row.Gender || row.gender,
+      age: row.Age || row.age,
+      phone: row.Mobile || row.mobile || row.Phone || row.phone || row["Phone Number"],
+      email: row.Email || row.email,
+      address: row.Address || row.address,
+      pincode: row.Pincode || row.pincode,
+      appointmentDate: appointmentDate || null,
+      status: "pending"
+    }));
 
     await Patient.insertMany(patients);
-
-    const existingUpload = await Upload.findOne({
-      fileName: req.file.originalname,
-      companyId: companyId
-    });
-
-    if (existingUpload) {
-
-      existingUpload.recordsCount = patients.length;
-      existingUpload.uploadedAt = new Date();
-      existingUpload.status = "processed";
-
-      await existingUpload.save();
-
-    } else {
-
-      const uploadHistory = new Upload({
-        companyId: companyId,
-        uploadedBy: userId,
-        fileName: req.file.originalname,
-        recordsCount: patients.length,
-        status: "processed",
-        uploadedAt: new Date()
-      });
-
-      await uploadHistory.save();
-
-    }
 
     res.json({
       message: "Upload successful",
@@ -83,16 +49,10 @@ exports.uploadExcel = async (req, res) => {
     });
 
   } catch (error) {
-
     console.error("Upload Controller Error:", error);
-
-    res.status(500).json({
-      message: error.message
-    });
-
+    res.status(500).json({ message: error.message });
   }
 };
-
 
 // 2. Fetch Upload History
 exports.getUploads = async (req, res) => {
@@ -121,8 +81,11 @@ exports.getUploads = async (req, res) => {
 exports.getPatients = async (req, res) => {
   try {
 
-    const patients = await Patient.find()
-      .sort({ createdAt: -1 });
+    const companyId = req.user?.companyId || null;
+
+    const patients = await Patient.find({
+      companyId: companyId
+    }).sort({ createdAt: -1 });
 
     res.json(patients);
 
@@ -131,6 +94,25 @@ exports.getPatients = async (req, res) => {
     res.status(500).json({
       message: error.message
     });
+
+  }
+};
+exports.getPatientsByUpload = async (req, res) => {
+  try {
+
+    const { uploadId } = req.params;
+    const companyId = req.user?.companyId || null;
+
+    const patients = await Patient.find({
+      uploadId: uploadId,
+      companyId: companyId
+    });
+
+    res.json(patients);
+
+  } catch (error) {
+
+    res.status(500).json({ message: error.message });
 
   }
 };

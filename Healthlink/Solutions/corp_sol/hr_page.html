@@ -78,6 +78,11 @@
             <!-- TAB 3: Patient Records -->
             <div id="tab-records" class="tab-content">
                 <h3>Patient Records Management</h3>
+                <button id="backToAllPatientsBtn"
+onclick="loadPatients()"
+style="display:none; margin-bottom:10px; padding:6px 12px; background:#2c7be5; color:white; border:none; border-radius:4px; cursor:pointer;">
+← Back to All Patients
+</button>
                 <p class="subtitle">View and manage all patient records</p>
 
                 <!-- Search & Filter Controls -->
@@ -156,19 +161,31 @@ let patientRecords = []
     // 1. Initialize & Data Loading
    
 
-    async function loadPatients() {
-        const token = localStorage.getItem("token");
-        try {
-            const res = await fetch(`${API_BASE}/patients`, {
-                headers: { "Authorization": `Bearer ${token}` }
-            });
-            const patients = await res.json();
-            patientRecords = patients; 
-            renderPatientTable(patients); 
-        } catch (err) {
-            console.error("Failed to load patients:", err);
-        }
+   async function loadPatients() {
+
+    const token = localStorage.getItem("token");
+
+    try {
+
+        const res = await fetch(`${API_BASE}/patients`, {
+            headers: { "Authorization": `Bearer ${token}` }
+        });
+
+        const patients = await res.json();
+
+        patientRecords = patients;
+
+        renderPatientTable(patients);
+
+        document.getElementById("backToAllPatientsBtn").style.display = "none";
+
+    } catch (err) {
+
+        console.error("Failed to load patients:", err);
+
     }
+
+}
 
     async function loadUploadHistory() {
         const token = localStorage.getItem("token");
@@ -203,11 +220,14 @@ let patientRecords = []
                 });
 
                 row.innerHTML = `
-                    <td>${u.fileName}</td>
-                    <td>${uploadDate}</td>
-                    <td>${u.recordsCount} patients</td>
-                    <td><span class="badge badge-info">${u.status || "processed"}</span></td>
-                `;
+<td>${u.fileName}</td>
+<td>${uploadDate}</td>
+<td>${u.recordsCount} patients</td>
+<td>
+<span class="badge badge-info">${u.status || "processed"}</span>
+<button class="btn-view" onclick="viewUpload('${u._id}')">View</button>
+</td>
+`;
                 tbody.appendChild(row);
             });
         } catch (err) {
@@ -315,18 +335,37 @@ function renderPatientTable(data = patientRecords) {
 
 
     function filterTable() {
-        const searchTerm = document.getElementById('searchInput').value.toLowerCase();
-        const dateFilter = document.getElementById('dateFilter').value;
-        const statusFilter = document.getElementById('statusFilter').value;
 
-        const filtered = patientRecords.filter(p => {
-            const matchesSearch = (p.name || "").toLowerCase().includes(searchTerm) || p.email.toLowerCase().includes(searchTerm);
-            const matchesDate = !dateFilter || p.appointmentDate === dateFilter;
-            const matchesStatus = !statusFilter || p.status === statusFilter;
-            return matchesSearch && matchesDate && matchesStatus;
-        });
-        renderPatientTable(filtered);
-    }
+    const searchTerm = document.getElementById('searchInput').value.toLowerCase();
+    const dateFilter = document.getElementById('dateFilter').value;
+    const statusFilter = document.getElementById('statusFilter').value.toLowerCase();
+
+    const filtered = patientRecords.filter(p => {
+
+        const nameMatch =
+            (p.name || "").toLowerCase().includes(searchTerm) ||
+            (p.email || "").toLowerCase().includes(searchTerm) ||
+            (p.phone || "").includes(searchTerm);
+
+        let dateMatch = true;
+
+        if (dateFilter && p.appointmentDate) {
+            const patientDate = new Date(p.appointmentDate).toISOString().split("T")[0];
+            dateMatch = patientDate === dateFilter;
+        }
+
+        let statusMatch = true;
+
+        if (statusFilter) {
+            statusMatch = (p.status || "").toLowerCase() === statusFilter;
+        }
+
+        return nameMatch && dateMatch && statusMatch;
+
+    });
+
+    renderPatientTable(filtered);
+}
 
     function viewReport(index) {
         const p = patientRecords[index];
@@ -341,6 +380,33 @@ function renderPatientTable(data = patientRecords) {
         localStorage.clear();
         window.location.href = "corp_solsignup.html";
     }
+    async function viewUpload(uploadId) {
+
+    const token = localStorage.getItem("token");
+
+    try {
+
+        const res = await fetch(`${API_BASE}/patients/upload/${uploadId}`, {
+            headers: { "Authorization": `Bearer ${token}` }
+        });
+
+        const patients = await res.json();
+
+        patientRecords = patients;
+
+        switchTab('tab-records');
+
+        renderPatientTable(patients);
+
+        document.getElementById("backToAllPatientsBtn").style.display = "inline-block";
+
+    } catch(err) {
+
+        console.error("Error loading upload patients", err);
+
+    }
+
+}
 </script>
     <div id="appointmentModal" class="modal" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.6); justify-content:center; align-items:center; z-index:1000;">
     <div class="modal-content" style="background:white; padding:30px; border-radius:12px; width:350px; text-align:center; box-shadow: 0 10px 25px rgba(0,0,0,0.2);">
