@@ -1,5 +1,6 @@
 const Company = require("../models/Company")
 const Center = require("../models/Center")
+const Upload = require("../models/Upload")
 
 // Add Company
 exports.addCompany = async (req, res) => {
@@ -51,6 +52,56 @@ exports.getCenters = async (req, res) => {
     const centers = await Center.find()
 
     res.json(centers)
+
+  } catch (error) {
+    res.status(500).json({ message: error.message })
+  }
+}
+
+// Get all HR Upload Requests
+exports.getUploads = async (req, res) => {
+  try {
+
+    const uploads = await Upload
+      .find()
+      .populate("companyId", "name")
+      .populate("uploadedBy", "name")
+
+    res.json(uploads)
+
+  } catch (error) {
+    res.status(500).json({ message: error.message })
+  }
+}
+
+// Approve Upload
+exports.approveUpload = async (req, res) => {
+  try {
+
+    const upload = await Upload.findByIdAndUpdate(
+      req.params.id,
+      { status: "approved" },
+      { new: true }
+    )
+
+    res.json(upload)
+
+  } catch (error) {
+    res.status(500).json({ message: error.message })
+  }
+}
+
+// Reject Upload
+exports.rejectUpload = async (req, res) => {
+  try {
+
+    const upload = await Upload.findByIdAndUpdate(
+      req.params.id,
+      { status: "rejected" },
+      { new: true }
+    )
+
+    res.json(upload)
 
   } catch (error) {
     res.status(500).json({ message: error.message })

@@ -13,7 +13,8 @@ const uploadSchema = new mongoose.Schema({
 
   status: {
     type: String,
-    default: "processed"
+    enum: ["pending","approved","rejected"],
+    default: "pending"
   },
 
   uploadedBy: {
