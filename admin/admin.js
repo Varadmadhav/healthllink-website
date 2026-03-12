@@ -1,9 +1,35 @@
 // ===== Global Data Storage =====
 const API_BASE = "http://localhost:5000/api";
+
 let uploadedFiles = []; // Array of uploaded Excel files with their data
 let centersData = [];
 let companiesData = [];
 let selectedFileId = null; // Currently selected file for viewing
+async function fetchUploads(){
+
+try{
+
+const res = await fetch(API_BASE + "/admin/uploads")
+
+const data = await res.json()
+
+uploadedFiles = data.map(u => ({
+id: u._id,
+fileName: u.fileName,
+uploadDate: new Date(u.uploadedAt).toLocaleString(),
+uploadTimestamp: new Date(u.uploadedAt).getTime(),
+records: u.recordsCount,
+status: u.status,
+company: u.companyId ? u.companyId.name : "",
+employees: []
+}))
+
+renderExcelFilesGrid()
+
+}catch(err){
+console.error(err)
+}
+}
 
 // ===== Initialize Application =====
 document.addEventListener('DOMContentLoaded', function() {
@@ -14,7 +40,7 @@ document.addEventListener('DOMContentLoaded', function() {
     fetchCompanies()
     fetchCenters()
 
-    renderAllTables()
+    fetchUploads()
 })
 // ===== Tab Navigation =====
 function initializeTabs() {
@@ -271,29 +297,35 @@ function renderExcelFilesGrid() {
     const sortedFiles = [...uploadedFiles].sort((a, b) => b.uploadTimestamp - a.uploadTimestamp);
     
     grid.innerHTML = sortedFiles.map(file => {
-        const pendingCount = file.employees.filter(e => e.status === 'pending').length;
-        const confirmedCount = file.employees.filter(e => e.status === 'confirmed').length;
+        const pendingCount = file.pendingCount || 0;
+const confirmedCount = file.confirmedCount || 0;
         
         return `
-            <div class="excel-file-card ${selectedFileId === file.id ? 'selected' : ''}" onclick="openFileView(${file.id})">
-                <span class="excel-file-badge ${file.status}">${file.status === 'new' ? '🆕 New' : '✓ Processed'}</span>
-                <div class="excel-file-icon">📊</div>
-                <h3>${file.fileName}</h3>
-                <div class="excel-file-meta">
-                    <span>👥 ${file.records} employees</span>
-                    <span>📅 ${file.uploadDate}</span>
-                    <span>⏳ ${pendingCount} pending • ✅ ${confirmedCount} confirmed</span>
-                </div>
-                <div class="file-actions">
-                    <button class="btn btn-primary btn-sm" onclick="event.stopPropagation(); openFileView(${file.id})">
-                        View Data →
-                    </button>
-                    <button class="btn btn-danger btn-sm" onclick="event.stopPropagation(); deleteFile(${file.id})">
-                        🗑️
-                    </button>
-                </div>
-            </div>
-        `;
+    <div class="excel-file-card ${selectedFileId === file.id ? 'selected' : ''}" onclick="openFileView('${file.id}')">
+        <span class="excel-file-badge ${file.status}">${file.status === 'new' ? '🆕 New' : '✓ Processed'}</span>
+        <div class="excel-file-icon">📊</div>
+        <h3>${file.fileName}</h3>
+        <div class="excel-file-meta">
+            <span>👥 ${file.records} employees</span>
+            <span>📅 ${file.uploadDate}</span>
+            <span>⏳ ${pendingCount} pending • ✅ ${confirmedCount} confirmed</span>
+        </div>
+        <div class="file-actions">
+            <button class="btn btn-success btn-sm"
+                onclick="event.stopPropagation(); approveUpload('${file.id}')">
+                Approve
+            </button>
+            <button class="btn btn-danger btn-sm"
+                onclick="event.stopPropagation(); rejectUpload('${file.id}')">
+                Reject
+            </button>
+            <button class="btn btn-primary btn-sm"
+                onclick="event.stopPropagation(); openFileView('${file.id}')">
+                View Data →
+            </button>
+        </div>
+    </div>
+`;
     }).join('');
 }
 
@@ -725,7 +757,7 @@ function renderUploadHistory() {
             <td><span class="badge badge-success">✓ Success</span></td>
             <td>
                 <div class="action-btns">
-                    <button class="btn btn-sm btn-secondary" onclick="document.querySelector('[data-tab=review-requests]').click(); setTimeout(() => openFileView(${file.id}), 100);">
+                    <button class="btn btn-sm btn-secondary" onclick="document.querySelector('[data-tab=review-requests]').click(); setTimeout(() => openFileView('${file.id}'), 100);">
                         View
                     </button>
                     <button class="btn btn-sm btn-danger" onclick="deleteFile(${file.id})">
@@ -1136,6 +1168,7 @@ headers:{
 body:JSON.stringify(hr)
 })
 
+
 const data = await res.json()
 
 closeModal("hr-modal")
@@ -1145,6 +1178,40 @@ showToast("HR account created successfully","success")
 }catch(err){
 console.error(err)
 showToast("Error creating HR","error")
+}
+
+}
+async function approveUpload(id){
+
+try{
+
+await fetch(API_BASE + "/admin/uploads/" + id + "/approve",{
+method:"PUT"
+})
+
+showToast("Upload approved","success")
+
+fetchUploads()
+
+}catch(err){
+console.error(err)
+}
+
+}
+async function rejectUpload(id){
+
+try{
+
+await fetch(API_BASE + "/admin/uploads/" + id + "/reject",{
+method:"PUT"
+})
+
+showToast("Upload rejected","success")
+
+fetchUploads()
+
+}catch(err){
+console.error(err)
 }
 
 }

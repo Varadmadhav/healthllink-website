@@ -21,7 +21,7 @@ exports.uploadExcel = async (req, res) => {
   fileName: req.file.originalname,
   recordsCount: data.length,
   uploadedAt: new Date(),
-  status: "processed",
+  status: "pending",
   companyId: req.user?.companyId
 });
 

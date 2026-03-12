@@ -1,6 +1,7 @@
 const Company = require("../models/Company")
 const Center = require("../models/Center")
 const Upload = require("../models/Upload")
+const Patient = require("../models/Patient")
 
 // Add Company
 exports.addCompany = async (req, res) => {
@@ -78,10 +79,17 @@ exports.getUploads = async (req, res) => {
 exports.approveUpload = async (req, res) => {
   try {
 
+    const uploadId = req.params.id
+
     const upload = await Upload.findByIdAndUpdate(
-      req.params.id,
+      uploadId,
       { status: "approved" },
       { new: true }
+    )
+
+    await Patient.updateMany(
+      { uploadId: uploadId },
+      { status: "approved" }
     )
 
     res.json(upload)
@@ -95,10 +103,17 @@ exports.approveUpload = async (req, res) => {
 exports.rejectUpload = async (req, res) => {
   try {
 
+    const uploadId = req.params.id
+
     const upload = await Upload.findByIdAndUpdate(
-      req.params.id,
+      uploadId,
       { status: "rejected" },
       { new: true }
+    )
+
+    await Patient.updateMany(
+      { uploadId: uploadId },
+      { status: "rejected" }
     )
 
     res.json(upload)
