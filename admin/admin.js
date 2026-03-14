@@ -8,6 +8,7 @@ let companiesData = []
 let selectedFileId = null
 let allPatients = []
 let confirmedPatientsForReports = []
+let preselectedCenterMap = {}
 
 // ===== Init =====
 document.addEventListener('DOMContentLoaded', function () {
@@ -38,11 +39,11 @@ function initializeTabs() {
 
 function refreshTabData(tabId) {
   switch (tabId) {
-    case 'review-requests':      fetchUploads(); break
-    case 'make-confirmation':    fetchAllPatientsForConfirmation(); break
-    case 'reports':              fetchConfirmedPatientsForReports(); break
-    case 'add-centers':          renderCentersTable(); break
-    case 'add-companies':        renderCompaniesTable(); break
+    case 'review-requests':   fetchUploads(); break
+    case 'make-confirmation': fetchAllPatientsForConfirmation(); break
+    case 'reports':           fetchConfirmedPatientsForReports(); break
+    case 'add-centers':       renderCentersTable(); break
+    case 'add-companies':     renderCompaniesTable(); break
   }
 }
 
@@ -54,7 +55,6 @@ async function fetchUploads() {
   try {
     const res = await fetch(API_BASE + "/admin/uploads")
     const data = await res.json()
-
     uploadedFiles = data.map(u => ({
       id: u._id,
       fileName: u.fileName,
@@ -67,7 +67,6 @@ async function fetchUploads() {
       confirmedCount: u.confirmedCount || 0,
       employees: []
     }))
-
     renderExcelFilesGrid()
   } catch (err) {
     console.error("fetchUploads:", err)
@@ -140,7 +139,6 @@ async function openFileView(fileId) {
     const res = await fetch(`${API_BASE}/admin/uploads/${fileId}/patients`)
     const patients = await res.json()
     file.employees = patients.map(normalisePatient)
-
     renderEmployeesTable(file)
     renderCenterMatchingForFile(file)
   } catch (err) {
@@ -176,7 +174,6 @@ function normalisePatient(p) {
       phone: p.assignedCenterId.phone || "",
       pincode: p.assignedCenterId.pincode || ""
     } : null,
-    // Support both old single reportUrl and new reportUrls array
     reportUrls: p.reportUrls && p.reportUrls.length > 0
       ? p.reportUrls
       : (p.reportUrl ? [{ url: p.reportUrl, originalName: 'Report', uploadedAt: null }] : [])
@@ -209,7 +206,6 @@ function renderEmployeesTable(file) {
   `).join('')
 }
 
-// Async — fetches real nearby centres from backend for each employee
 async function renderCenterMatchingForFile(file) {
   const card = document.getElementById('center-matching-card')
   const tbody = document.getElementById('center-matching-body')
@@ -222,8 +218,6 @@ async function renderCenterMatchingForFile(file) {
   }
 
   card.style.display = 'block'
-
-  // Show loading row while we fetch
   tbody.innerHTML = `
     <tr>
       <td colspan="6" style="text-align:center;padding:20px;color:var(--text-tertiary);">
@@ -232,7 +226,6 @@ async function renderCenterMatchingForFile(file) {
     </tr>
   `
 
-  // Fetch nearby centres for all pending employees in parallel
   const rows = await Promise.all(
     pendingEmployees.map(async (emp) => {
       const nearby = await fetchNearbyCenters(emp.pincode, 3)
@@ -240,6 +233,7 @@ async function renderCenterMatchingForFile(file) {
     })
   )
 
+  // FIX 1: No distance label — just name and phone
   tbody.innerHTML = rows.map(({ emp, nearby }) => `
     <tr>
       <td><strong>${emp.employeeName}</strong></td>
@@ -257,24 +251,25 @@ async function renderCenterMatchingForFile(file) {
   `).join('')
 }
 
+// FIX 1: No distance shown
 function renderCenterCell(center) {
   if (!center) return '<span style="color:var(--text-tertiary);">-</span>'
-  const distLabel = center.distance != null ? ` • ${center.distance} km` : ''
   return `
     <div class="center-info">
       <div class="center-name">${center.name}</div>
-      <div class="center-phone">📞 ${center.phone}${distLabel}</div>
+      <div class="center-phone">📞 ${center.phone}</div>
     </div>
   `
 }
 
-// Call backend nearby endpoint
 async function fetchNearbyCenters(pincode, limit = 3) {
+  if (!pincode || String(pincode).trim() === "") return []
   try {
     const res = await fetch(
       `${API_BASE}/admin/centers/nearby?pincode=${encodeURIComponent(pincode)}&limit=${limit}`
     )
-    return await res.json()
+    const data = await res.json()
+    return Array.isArray(data) ? data : []
   } catch (err) {
     console.error("fetchNearbyCenters:", err)
     return []
@@ -286,15 +281,36 @@ function toggleSelectAll(checkbox) {
     .forEach(cb => cb.checked = checkbox.checked)
 }
 
-function processAllEmployees() {
+// FIX 2: Process All — pre-fetches nearest centre per employee,
+// navigates to Make Confirmation with centres auto-selected
+async function processAllEmployees() {
   const file = uploadedFiles.find(f => f.id === selectedFileId)
   if (!file) return
+
   const pending = file.employees.filter(e => e.status !== 'confirmed')
   if (pending.length === 0) {
     showToast('No pending employees to process!', 'warning')
     return
   }
-  showToast(`${pending.length} employees ready for confirmation!`, 'success')
+
+  showToast('Finding nearest centres for all employees...', 'success')
+
+  // Fetch nearest centre for each pending employee in parallel
+  await Promise.all(pending.map(async (emp) => {
+    const nearby = await fetchNearbyCenters(emp.pincode, 1)
+    if (nearby.length > 0) emp._preselectedCenterId = String(nearby[0]._id)
+  }))
+
+  // Build the preselected map
+  preselectedCenterMap = {}
+  pending.forEach(emp => {
+    if (emp._preselectedCenterId) {
+      preselectedCenterMap[emp.id] = emp._preselectedCenterId
+    }
+  })
+
+  await fetchAllPatientsForConfirmation()
+  showToast(`${pending.length} employees ready — nearest centre pre-selected!`, 'success')
   document.querySelector('[data-tab="make-confirmation"]').click()
 }
 
@@ -316,7 +332,8 @@ async function fetchAllPatientsForConfirmation() {
   }
 }
 
-// Async — uses real nearby centres per employee
+// FIX 3: Auto-selects nearest centre in dropdown
+// FIX 5: Pincode shown as plain text not badge — same size as other cells
 async function renderConfirmationTable() {
   const tbody = document.getElementById('confirmation-table-body')
   const emptyState = document.getElementById('confirmation-empty')
@@ -330,8 +347,6 @@ async function renderConfirmationTable() {
   }
 
   emptyState.style.display = 'none'
-
-  // Loading state
   tbody.innerHTML = `
     <tr>
       <td colspan="6" style="text-align:center;padding:20px;color:var(--text-tertiary);">
@@ -340,7 +355,6 @@ async function renderConfirmationTable() {
     </tr>
   `
 
-  // Fetch nearby centres for all pending patients in parallel
   const rows = await Promise.all(
     pending.map(async (emp) => {
       const nearby = await fetchNearbyCenters(emp.pincode, 3)
@@ -349,27 +363,32 @@ async function renderConfirmationTable() {
   )
 
   tbody.innerHTML = rows.map(({ emp, nearby }) => {
-    // Build dropdown: nearby centres first (with distance), then a divider, then rest
     const nearbyIds = new Set(nearby.map(c => String(c._id)))
     const otherCenters = centersData.filter(c => !nearbyIds.has(String(c.id)))
+
+    // Auto-select: from processAll preselection OR first nearby centre
+    const autoSelectId = preselectedCenterMap[emp.id]
+      || (nearby.length > 0 ? String(nearby[0]._id) : '')
 
     return `
       <tr>
         <td><strong>${emp.employeeName}</strong></td>
         <td>${emp.phone}</td>
         <td>${emp.company}</td>
-        <td><span class="badge badge-warning">${emp.pincode}</span></td>
+        <td>${emp.pincode}</td>
         <td>
           <select class="center-select" id="select-${emp.id}">
             <option value="">Select a center...</option>
             ${nearby.map(c => `
-              <option value="${c._id}">
-                ${c.name} (${c.pincode})${c.distance != null ? ' — ' + c.distance + ' km' : ''}
+              <option value="${c._id}" ${String(c._id) === autoSelectId ? 'selected' : ''}>
+                ${c.name} (${c.pincode})
               </option>
             `).join('')}
             ${otherCenters.length > 0 ? `<option disabled>──── Other centres ────</option>` : ''}
             ${otherCenters.map(c => `
-              <option value="${c.id}">${c.name} (${c.pincode})</option>
+              <option value="${c.id}" ${String(c.id) === autoSelectId ? 'selected' : ''}>
+                ${c.name} (${c.pincode})
+              </option>
             `).join('')}
           </select>
         </td>
@@ -406,11 +425,9 @@ async function confirmAssignment(patientId) {
     const updated = await res.json()
     const normUpdated = normalisePatient(updated)
 
-    // Update in-memory
     const idx = allPatients.findIndex(p => p.id === patientId)
     if (idx !== -1) allPatients[idx] = normUpdated
 
-    // Also update open file view if relevant
     if (selectedFileId) {
       const file = uploadedFiles.find(f => f.id === selectedFileId)
       if (file) {
@@ -420,6 +437,9 @@ async function confirmAssignment(patientId) {
         renderCenterMatchingForFile(file)
       }
     }
+
+    // Remove from preselected map once confirmed
+    delete preselectedCenterMap[patientId]
 
     renderConfirmationTable()
     renderConfirmedTable()
@@ -470,7 +490,7 @@ function updateStats() {
 }
 
 // =====================================================================
-// REPORTS — multiple reports per employee + dropdown viewer
+// REPORTS
 // =====================================================================
 
 async function fetchConfirmedPatientsForReports() {
@@ -517,9 +537,9 @@ function renderReportsTable() {
       <td>
         ${emp.reportUrls && emp.reportUrls.length > 0
           ? `
-            <div style="display:flex;align-items:center;gap:8px;">
+            <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
               <select class="center-select" id="report-select-${emp.id}"
-                style="min-width:160px;font-size:12px;">
+                style="min-width:150px;font-size:12px;padding:6px 8px;">
                 ${emp.reportUrls.map((r, i) => `
                   <option value="${r.url}">
                     ${r.originalName || 'Report ' + (i + 1)}
@@ -529,6 +549,10 @@ function renderReportsTable() {
               <button class="btn btn-sm btn-secondary"
                 onclick="viewSelectedReport('${emp.id}')">
                 👁 View
+              </button>
+              <button class="btn btn-sm btn-danger"
+                onclick="removeSelectedReport('${emp.id}')">
+                🗑 Remove
               </button>
               <span class="badge badge-info">${emp.reportUrls.length} file${emp.reportUrls.length > 1 ? 's' : ''}</span>
             </div>
@@ -552,16 +576,11 @@ async function handleReportUpload(patientId, inputEl) {
       method: "POST",
       body: formData
     })
-
     if (!res.ok) throw new Error("Upload failed")
-
     const data = await res.json()
 
-    // Push new report entry into in-memory list
     const idx = confirmedPatientsForReports.findIndex(p => p.id === patientId)
-    if (idx !== -1) {
-      confirmedPatientsForReports[idx].reportUrls.push(data.reportEntry)
-    }
+    if (idx !== -1) confirmedPatientsForReports[idx].reportUrls.push(data.reportEntry)
 
     renderReportsTable()
     showToast(`Report "${file.name}" uploaded successfully!`, 'success')
@@ -574,8 +593,37 @@ async function handleReportUpload(patientId, inputEl) {
 function viewSelectedReport(patientId) {
   const select = document.getElementById(`report-select-${patientId}`)
   if (!select || !select.value) return
-  const url = `http://localhost:5000${select.value}`
-  window.open(url, '_blank')
+  window.open(`http://localhost:5000${select.value}`, '_blank')
+}
+
+// FIX 4: Remove selected report
+async function removeSelectedReport(patientId) {
+  const select = document.getElementById(`report-select-${patientId}`)
+  if (!select || !select.value) return
+  if (!confirm('Remove this report?')) return
+
+  const reportUrl = select.value
+
+  try {
+    const res = await fetch(`${API_BASE}/admin/patients/${patientId}/report`, {
+      method: "DELETE",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ reportUrl })
+    })
+    if (!res.ok) throw new Error("Delete failed")
+
+    const idx = confirmedPatientsForReports.findIndex(p => p.id === patientId)
+    if (idx !== -1) {
+      confirmedPatientsForReports[idx].reportUrls =
+        confirmedPatientsForReports[idx].reportUrls.filter(r => r.url !== reportUrl)
+    }
+
+    renderReportsTable()
+    showToast('Report removed successfully!', 'success')
+  } catch (err) {
+    console.error("removeSelectedReport:", err)
+    showToast("Error removing report", "error")
+  }
 }
 
 // =====================================================================
@@ -587,33 +635,19 @@ async function fetchCenters() {
     const res = await fetch(API_BASE + "/admin/centers")
     const data = await res.json()
     centersData = data.map(c => ({
-      id: c._id,
-      name: c.name,
-      email: c.email || "",
-      phone: c.phone || "",
-      address: c.address || "",
-      pincode: c.pincode || ""
+      id: c._id, name: c.name, email: c.email || "",
+      phone: c.phone || "", address: c.address || "", pincode: c.pincode || ""
     }))
     renderCentersTable()
-  } catch (err) {
-    console.error(err)
-  }
+  } catch (err) { console.error(err) }
 }
 
 function renderCentersTable() {
   const tbody = document.getElementById('centers-table-body')
-
   if (centersData.length === 0) {
-    tbody.innerHTML = `
-      <tr>
-        <td colspan="6" style="text-align:center;padding:40px;color:var(--text-tertiary);">
-          No centers added yet. Click "+ Add Center" to get started.
-        </td>
-      </tr>
-    `
+    tbody.innerHTML = `<tr><td colspan="6" style="text-align:center;padding:40px;color:var(--text-tertiary);">No centers added yet. Click "+ Add Center" to get started.</td></tr>`
     return
   }
-
   tbody.innerHTML = centersData.map(center => `
     <tr>
       <td><strong>${center.name}</strong></td>
@@ -642,22 +676,15 @@ async function saveCenter(event) {
   }
   try {
     const res = await fetch(API_BASE + "/admin/centers", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
+      method: "POST", headers: { "Content-Type": "application/json" },
       body: JSON.stringify(center)
     })
     const data = await res.json()
-    centersData.push({
-      id: data._id, name: data.name, email: data.email || "",
-      phone: data.phone || "", address: data.address || "", pincode: data.pincode || ""
-    })
+    centersData.push({ id: data._id, name: data.name, email: data.email || "", phone: data.phone || "", address: data.address || "", pincode: data.pincode || "" })
     renderCentersTable()
     closeModal('center-modal')
     showToast("Center added successfully!", "success")
-  } catch (err) {
-    console.error(err)
-    showToast("Error adding center", "error")
-  }
+  } catch (err) { showToast("Error adding center", "error") }
 }
 
 function editCenter(id) {
@@ -694,25 +721,15 @@ async function fetchCompanies() {
       email: c.email || "", phone: c.phone || "", pincode: c.pincode || ""
     }))
     renderCompaniesTable()
-  } catch (err) {
-    console.error(err)
-  }
+  } catch (err) { console.error(err) }
 }
 
 function renderCompaniesTable() {
   const tbody = document.getElementById('companies-table-body')
-
   if (companiesData.length === 0) {
-    tbody.innerHTML = `
-      <tr>
-        <td colspan="6" style="text-align:center;padding:40px;color:var(--text-tertiary);">
-          No companies added yet. Click "+ Add Company" to get started.
-        </td>
-      </tr>
-    `
+    tbody.innerHTML = `<tr><td colspan="6" style="text-align:center;padding:40px;color:var(--text-tertiary);">No companies added yet. Click "+ Add Company" to get started.</td></tr>`
     return
   }
-
   tbody.innerHTML = companiesData.map(company => `
     <tr>
       <td><strong>${company.name}</strong></td>
@@ -741,22 +758,15 @@ async function saveCompany(event) {
   }
   try {
     const res = await fetch(API_BASE + "/admin/companies", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
+      method: "POST", headers: { "Content-Type": "application/json" },
       body: JSON.stringify(company)
     })
     const data = await res.json()
-    companiesData.push({
-      id: data._id, name: data.name, address: data.address || "",
-      email: data.email || "", phone: data.phone || "", pincode: data.pincode || ""
-    })
+    companiesData.push({ id: data._id, name: data.name, address: data.address || "", email: data.email || "", phone: data.phone || "", pincode: data.pincode || "" })
     renderCompaniesTable()
     closeModal('company-modal')
     showToast("Company added successfully!", "success")
-  } catch (err) {
-    console.error(err)
-    showToast("Error adding company", "error")
-  }
+  } catch (err) { showToast("Error adding company", "error") }
 }
 
 function editCompany(id) {
@@ -786,9 +796,7 @@ function deleteCompany(id) {
 
 function populateCompanyDropdown() {
   const select = document.getElementById("hr-company")
-  select.innerHTML = companiesData.map(c =>
-    `<option value="${c.id}">${c.name}</option>`
-  ).join("")
+  select.innerHTML = companiesData.map(c => `<option value="${c.id}">${c.name}</option>`).join("")
 }
 
 async function createHR(event) {
@@ -801,16 +809,12 @@ async function createHR(event) {
   }
   try {
     await fetch(API_BASE + "/hr/create", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
+      method: "POST", headers: { "Content-Type": "application/json" },
       body: JSON.stringify(hr)
     })
     closeModal("hr-modal")
     showToast("HR account created successfully", "success")
-  } catch (err) {
-    console.error(err)
-    showToast("Error creating HR", "error")
-  }
+  } catch (err) { showToast("Error creating HR", "error") }
 }
 
 // =====================================================================
@@ -831,15 +835,11 @@ function closeModal(modalId) {
 }
 
 document.querySelectorAll('.modal').forEach(modal => {
-  modal.addEventListener('click', (e) => {
-    if (e.target === modal) closeModal(modal.id)
-  })
+  modal.addEventListener('click', (e) => { if (e.target === modal) closeModal(modal.id) })
 })
 
 document.addEventListener('keydown', (e) => {
-  if (e.key === 'Escape') {
-    document.querySelectorAll('.modal.active').forEach(m => closeModal(m.id))
-  }
+  if (e.key === 'Escape') document.querySelectorAll('.modal.active').forEach(m => closeModal(m.id))
 })
 
 // =====================================================================
@@ -851,10 +851,7 @@ function sortTable(tableId, columnIndex) {
   const tbody = table.querySelector('tbody')
   const rows = Array.from(tbody.querySelectorAll('tr'))
   if (rows.length === 0 || rows[0].cells.length <= columnIndex) return
-
-  const isAsc = table.dataset.sortColumn !== String(columnIndex) ||
-    table.dataset.sortDirection !== 'asc'
-
+  const isAsc = table.dataset.sortColumn !== String(columnIndex) || table.dataset.sortDirection !== 'asc'
   rows.sort((a, b) => {
     const av = a.cells[columnIndex]?.textContent.trim().toLowerCase() || ''
     const bv = b.cells[columnIndex]?.textContent.trim().toLowerCase() || ''
@@ -862,7 +859,6 @@ function sortTable(tableId, columnIndex) {
     if (!isNaN(an) && !isNaN(bn)) return isAsc ? an - bn : bn - an
     return isAsc ? av.localeCompare(bv) : bv.localeCompare(av)
   })
-
   table.dataset.sortColumn = columnIndex
   table.dataset.sortDirection = isAsc ? 'asc' : 'desc'
   rows.forEach(row => tbody.appendChild(row))
@@ -872,9 +868,7 @@ function searchTable(tableId, searchTerm) {
   const table = document.getElementById(tableId)
   const rows = table.querySelector('tbody').querySelectorAll('tr')
   const term = searchTerm.toLowerCase()
-  rows.forEach(row => {
-    row.style.display = row.textContent.toLowerCase().includes(term) ? '' : 'none'
-  })
+  rows.forEach(row => { row.style.display = row.textContent.toLowerCase().includes(term) ? '' : 'none' })
 }
 
 // =====================================================================
@@ -884,8 +878,7 @@ function searchTable(tableId, searchTerm) {
 function showToast(message, type = 'success') {
   const toast = document.getElementById('toast')
   toast.className = 'toast ' + type
-  toast.querySelector('.toast-icon').textContent =
-    type === 'success' ? '✓' : type === 'error' ? '✕' : '⚠'
+  toast.querySelector('.toast-icon').textContent = type === 'success' ? '✓' : type === 'error' ? '✕' : '⚠'
   toast.querySelector('.toast-message').textContent = message
   toast.classList.add('show')
   setTimeout(() => toast.classList.remove('show'), 3000)

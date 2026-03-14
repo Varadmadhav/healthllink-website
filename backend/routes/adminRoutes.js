@@ -4,11 +4,9 @@ const multer = require("multer")
 const path = require("path")
 const fs = require("fs")
 
-// ─── Multer config for PDF reports ──────────────────────────────────────────
+// ─── Multer for PDF reports ───────────────────────────────────────────────────
 const reportsDir = path.join(__dirname, "../uploads/reports")
-if (!fs.existsSync(reportsDir)) {
-  fs.mkdirSync(reportsDir, { recursive: true })
-}
+if (!fs.existsSync(reportsDir)) fs.mkdirSync(reportsDir, { recursive: true })
 
 const reportStorage = multer.diskStorage({
   destination: (req, file, cb) => cb(null, reportsDir),
@@ -26,20 +24,14 @@ const uploadReport = multer({
   }
 })
 
-// ─── Controller imports ──────────────────────────────────────────────────────
+// ─── Controllers ─────────────────────────────────────────────────────────────
 const {
-  addCompany,
-  getCompanies,
-  addCenter,
-  getCenters,
-  getNearbyCenters,
-  getUploads,
-  getPatientsByUpload,
-  approveUpload,
-  rejectUpload,
-  assignCenter,
-  getAllPatients,
-  uploadReport: uploadReportHandler
+  addCompany, getCompanies,
+  addCenter, getCenters, getNearbyCenters,
+  getUploads, getPatientsByUpload, approveUpload, rejectUpload,
+  assignCenter, getAllPatients,
+  uploadReport: uploadReportHandler,
+  deleteReport
 } = require("../controllers/adminController")
 
 // ─── Companies ───────────────────────────────────────────────────────────────
@@ -49,7 +41,6 @@ router.get("/companies", getCompanies)
 // ─── Centers ─────────────────────────────────────────────────────────────────
 router.post("/centers", addCenter)
 router.get("/centers", getCenters)
-// IMPORTANT: /centers/nearby must be defined BEFORE /centers/:id if you add that later
 router.get("/centers/nearby", getNearbyCenters)
 
 // ─── Uploads ─────────────────────────────────────────────────────────────────
@@ -62,5 +53,6 @@ router.put("/uploads/:id/reject", rejectUpload)
 router.get("/patients", getAllPatients)
 router.put("/patients/:patientId/assign", assignCenter)
 router.post("/patients/:patientId/report", uploadReport.single("report"), uploadReportHandler)
+router.delete("/patients/:patientId/report", deleteReport)
 
 module.exports = router

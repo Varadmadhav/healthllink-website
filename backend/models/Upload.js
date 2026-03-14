@@ -13,7 +13,8 @@ const uploadSchema = new mongoose.Schema({
 
   status: {
     type: String,
-    enum: ["pending","approved","rejected"],
+    // "confirmed" = all patients have been assigned a centre by admin
+    enum: ["pending", "approved", "rejected", "confirmed"],
     default: "pending"
   },
 
