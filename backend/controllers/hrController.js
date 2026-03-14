@@ -33,12 +33,12 @@ exports.hrLogin = async (req, res) => {
 
   try {
 
-    const { email, password } = req.body
+    const { email, password, companyId } = req.body
 
-    const user = await User.findOne({ email })
+    const user = await User.findOne({ email, companyId })
 
     if (!user) {
-      return res.status(404).json({ message: "User not found" })
+      return res.status(404).json({ message: "User not found for selected company" })
     }
 
     const isMatch = await bcrypt.compare(password, user.password)
@@ -48,7 +48,7 @@ exports.hrLogin = async (req, res) => {
     }
 
     const token = jwt.sign(
-  { id: user._id, role: user.role, companyId: user.companyId },
+      { id: user._id, role: user.role, companyId: user.companyId },
       process.env.JWT_SECRET,
       { expiresIn: "1d" }
     )

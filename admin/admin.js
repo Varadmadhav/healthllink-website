@@ -157,9 +157,13 @@ function closeFileView() {
 }
 
 function normalisePatient(p) {
+  const rawStatus = (p.status || "pending").toLowerCase()
+  const finalStatus = p.assignedCenterId ? "confirmed" : rawStatus
+
   return {
     id: p._id,
     employeeName: p.name || "",
+    employeeId: p._id,           // Varad's addition
     age: p.age || "",
     gender: p.gender || "",
     phone: p.phone || "",
@@ -167,12 +171,15 @@ function normalisePatient(p) {
     company: p.companyId ? p.companyId.name : "",
     address: p.address || "",
     pincode: p.pincode || "",
-    status: p.assignedCenterId ? 'confirmed' : (p.status || 'pending'),
+    appointmentDate: p.appointmentDate || null,
+    appointmentTime: p.appointmentTime || "10:00",
+    status: finalStatus,
     assignedCenter: p.assignedCenterId ? {
       id: p.assignedCenterId._id || p.assignedCenterId,
       name: p.assignedCenterId.name || "",
       phone: p.assignedCenterId.phone || "",
-      pincode: p.assignedCenterId.pincode || ""
+      pincode: p.assignedCenterId.pincode || "",
+      address: p.assignedCenterId.address || ""
     } : null,
     reportUrls: p.reportUrls && p.reportUrls.length > 0
       ? p.reportUrls
@@ -189,28 +196,48 @@ function renderEmployeesTable(file) {
           ${emp.status === 'confirmed' ? 'disabled' : ''}>
       </td>
       <td><strong>${emp.employeeName}</strong></td>
-      <td><span class="badge badge-info">${emp.id.toString().slice(-6)}</span></td>
-      <td>${emp.age}</td>
-      <td>${emp.gender}</td>
-      <td>${emp.phone}</td>
-      <td>${emp.email}</td>
-      <td>${emp.company}</td>
-      <td>${emp.address}</td>
-      <td><span class="badge badge-warning">${emp.pincode}</span></td>
+      <td><span class="badge badge-info">${emp.employeeId.toString().slice(-6)}</span></td>
+      <td>${emp.age || '-'}</td>
+      <td>${emp.gender || '-'}</td>
+      <td>${emp.phone || '-'}</td>
+      <td>${emp.email || '-'}</td>
+      <td>${emp.company || '-'}</td>
+      <td>${emp.address || '-'}</td>
+      <td><span class="badge badge-warning">${emp.pincode || '-'}</span></td>
+      <td>${emp.appointmentDate ? new Date(emp.appointmentDate).toLocaleDateString() : '-'}</td>
       <td>
-        <span class="badge badge-${emp.status === 'confirmed' ? 'success' : 'pending'}">
-          ${emp.status === 'confirmed' ? '✅ Confirmed' : '⏳ Pending'}
+        <span class="badge ${
+          emp.status === 'confirmed'
+            ? 'badge-success'
+            : emp.status === 'requested'
+            ? 'badge-info'
+            : emp.status === 'approved'
+            ? 'badge-warning'
+            : 'badge-pending'
+        }">
+          ${
+            emp.status === 'confirmed'
+              ? '✅ Confirmed'
+              : emp.status === 'requested'
+              ? '📝 Requested'
+              : emp.status === 'approved'
+              ? '👍 Approved'
+              : '⏳ Pending'
+          }
         </span>
       </td>
     </tr>
   `).join('')
 }
 
+// YOUR async version with fetchNearbyCenters API call (more accurate than local filter)
 async function renderCenterMatchingForFile(file) {
   const card = document.getElementById('center-matching-card')
   const tbody = document.getElementById('center-matching-body')
 
-  const pendingEmployees = file.employees.filter(emp => emp.status !== 'confirmed')
+  const pendingEmployees = file.employees.filter(
+    emp => emp.status === 'requested' || emp.status === 'approved' || emp.status === 'pending'
+  )
 
   if (pendingEmployees.length === 0) {
     card.style.display = 'none'
@@ -233,11 +260,11 @@ async function renderCenterMatchingForFile(file) {
     })
   )
 
-  // FIX 1: No distance label — just name and phone
   tbody.innerHTML = rows.map(({ emp, nearby }) => `
     <tr>
       <td><strong>${emp.employeeName}</strong></td>
-      <td><span class="badge badge-warning">${emp.pincode}</span></td>
+      <td>${emp.appointmentDate ? new Date(emp.appointmentDate).toLocaleDateString() : '-'}</td>
+      <td><span class="badge badge-warning">${emp.pincode || '-'}</span></td>
       <td>${renderCenterCell(nearby[0])}</td>
       <td>${renderCenterCell(nearby[1])}</td>
       <td>${renderCenterCell(nearby[2])}</td>
@@ -251,7 +278,6 @@ async function renderCenterMatchingForFile(file) {
   `).join('')
 }
 
-// FIX 1: No distance shown
 function renderCenterCell(center) {
   if (!center) return '<span style="color:var(--text-tertiary);">-</span>'
   return `
@@ -295,13 +321,11 @@ async function processAllEmployees() {
 
   showToast('Finding nearest centres for all employees...', 'success')
 
-  // Fetch nearest centre for each pending employee in parallel
   await Promise.all(pending.map(async (emp) => {
     const nearby = await fetchNearbyCenters(emp.pincode, 1)
     if (nearby.length > 0) emp._preselectedCenterId = String(nearby[0]._id)
   }))
 
-  // Build the preselected map
   preselectedCenterMap = {}
   pending.forEach(emp => {
     if (emp._preselectedCenterId) {
@@ -332,12 +356,11 @@ async function fetchAllPatientsForConfirmation() {
   }
 }
 
-// FIX 3: Auto-selects nearest centre in dropdown
-// FIX 5: Pincode shown as plain text not badge — same size as other cells
 async function renderConfirmationTable() {
   const tbody = document.getElementById('confirmation-table-body')
   const emptyState = document.getElementById('confirmation-empty')
 
+  // YOUR logic: show all non-confirmed (includes pending, requested, approved)
   const pending = allPatients.filter(emp => emp.status !== 'confirmed')
 
   if (pending.length === 0) {
@@ -366,16 +389,16 @@ async function renderConfirmationTable() {
     const nearbyIds = new Set(nearby.map(c => String(c._id)))
     const otherCenters = centersData.filter(c => !nearbyIds.has(String(c.id)))
 
-    // Auto-select: from processAll preselection OR first nearby centre
     const autoSelectId = preselectedCenterMap[emp.id]
       || (nearby.length > 0 ? String(nearby[0]._id) : '')
 
     return `
       <tr>
         <td><strong>${emp.employeeName}</strong></td>
-        <td>${emp.phone}</td>
-        <td>${emp.company}</td>
-        <td>${emp.pincode}</td>
+        <td>${emp.phone || '-'}</td>
+        <td>${emp.company || '-'}</td>
+        <td>${emp.appointmentDate ? new Date(emp.appointmentDate).toLocaleDateString() : '-'}</td>
+        <td>${emp.pincode || '-'}</td>
         <td>
           <select class="center-select" id="select-${emp.id}">
             <option value="">Select a center...</option>
@@ -438,7 +461,6 @@ async function confirmAssignment(patientId) {
       }
     }
 
-    // Remove from preselected map once confirmed
     delete preselectedCenterMap[patientId]
 
     renderConfirmationTable()
@@ -482,6 +504,7 @@ function renderConfirmedTable() {
 }
 
 function updateStats() {
+  // YOUR logic: pending = everything not confirmed
   const pending = allPatients.filter(e => e.status !== 'confirmed').length
   const confirmed = allPatients.filter(e => e.status === 'confirmed').length
   document.getElementById('pending-count').textContent = pending
@@ -596,7 +619,6 @@ function viewSelectedReport(patientId) {
   window.open(`http://localhost:5000${select.value}`, '_blank')
 }
 
-// FIX 4: Remove selected report
 async function removeSelectedReport(patientId) {
   const select = document.getElementById(`report-select-${patientId}`)
   if (!select || !select.value) return

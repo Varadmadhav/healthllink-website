@@ -122,6 +122,7 @@ const EMPLOYEE_DASHBOARD_PAGE = "/Healthlink/Solutions/corp_sol/emp_page.html"
 
 let currentOrg=""
 let currentRole=""
+let currentCompanyId=""
 
 async function loadCompanies(){
 
@@ -169,13 +170,13 @@ return
 }else{
 
 select.style.borderColor="#ddd"
-currentOrg=select.options[select.selectedIndex].text
-document.getElementById("selectedOrgDisplay").textContent=currentOrg
+currentCompanyId = select.value
+currentOrg = select.options[select.selectedIndex].text
+document.getElementById("selectedOrgDisplay").textContent = currentOrg
 
 }
 
 }
-
 document.querySelectorAll(".step").forEach(el=>el.classList.remove("active"))
 
 document.getElementById(stepId).classList.add("active")
@@ -207,56 +208,66 @@ goToStep("step-login")
 
 }
 
-document.getElementById("authForm").addEventListener("submit",async function(e){
+document.getElementById("authForm").addEventListener("submit", async function(e) {
+    e.preventDefault();
 
-e.preventDefault()
+    const userId = document.getElementById("userId").value.trim();
+    const password = document.getElementById("password").value.trim();
+    const msgBox = document.getElementById("loginMessage");
 
-const email=document.getElementById("userId").value
-const password=document.getElementById("password").value
+    if (!currentCompanyId) {
+        msgBox.className = "message-box error";
+        msgBox.innerText = "Please select company first";
+        return;
+    }
 
-const msgBox=document.getElementById("loginMessage")
+    if (!userId || !password) {
+        msgBox.className = "message-box error";
+        msgBox.innerText = "Email/Employee ID and password are required";
+        return;
+    }
 
-try{
+    try {
+        const loginUrl =
+            currentRole === "hr"
+                ? API_BASE + "/hr/login"
+                : "http://localhost:5000/api/employee/login";
 
-const res=await fetch(API_BASE+"/hr/login",{
-method:"POST",
-headers:{
-"Content-Type":"application/json"
-},
-body:JSON.stringify({email,password})
-})
+        const res = await fetch(loginUrl, {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json"
+            },
+            body: JSON.stringify({
+                email: userId,
+                password: password,
+                companyId: currentCompanyId
+            })
+        });
 
-const data=await res.json()
+        const data = await res.json();
 
-if(res.ok){
+        if (res.ok) {
+            msgBox.className = "message-box success";
+            msgBox.innerText = "Login successful";
 
-msgBox.className="message-box success"
-msgBox.innerText="Login successful"
+            localStorage.setItem("token", data.token);
+            localStorage.setItem("user", JSON.stringify(data.user));
 
-localStorage.setItem("token",data.token)
-localStorage.setItem("user",JSON.stringify(data.user))
+            setTimeout(() => {
+                redirectUser();
+            }, 1000);
+        } else {
+            msgBox.className = "message-box error";
+            msgBox.innerText = data.message || "Login failed";
+        }
 
-setTimeout(()=>{
-
-redirectUser()
-
-},1000)
-
-}else{
-
-msgBox.className="message-box error"
-msgBox.innerText=data.message
-
-}
-
-}catch(err){
-
-msgBox.className="message-box error"
-msgBox.innerText="Server error"
-
-}
-
-})
+    } catch (err) {
+        console.error("Login error:", err);
+        msgBox.className = "message-box error";
+        msgBox.innerText = "Server error";
+    }
+});
 
 function redirectUser(){
 

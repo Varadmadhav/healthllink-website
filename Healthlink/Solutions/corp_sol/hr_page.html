@@ -24,11 +24,12 @@
   <div class="main-container">
     <div class="dashboard">
 
-      <!-- Tab Navigation -->
+      <!-- Tab Navigation (YOUR structure + Varad's "Add Employee" tab) -->
       <div class="tab-navigation">
         <button class="tab-btn active" onclick="switchTab('tab-upload')">📤 Upload Files</button>
         <button class="tab-btn" onclick="switchTab('tab-history')">📋 Upload History</button>
         <button class="tab-btn" onclick="switchTab('tab-records')">👥 Patient Records</button>
+        <button class="tab-btn" onclick="switchTab('tab-employee')">👤 Add Employee</button>
       </div>
 
       <!-- TAB 1: Upload Files -->
@@ -44,7 +45,6 @@
       </div>
 
       <!-- TAB 2: Upload History -->
-      <!-- FIX 6: Status column now shows real status from DB including "confirmed" -->
       <div id="tab-history" class="tab-content">
         <h3>Upload History</h3>
         <p class="subtitle">View all previously uploaded files</p>
@@ -114,6 +114,45 @@
         </div>
       </div>
 
+      <!-- TAB 4: Add Employee (Varad's addition) -->
+      <div id="tab-employee" class="tab-content">
+        <h3>Add Employee</h3>
+        <p class="subtitle">Create employee login credentials for your company staff</p>
+
+        <div style="max-width:500px; margin-top:20px;">
+          <div style="margin-bottom:15px;">
+            <label><strong>Name</strong></label>
+            <input type="text" id="employeeName" placeholder="Enter employee name"
+              style="width:100%; padding:10px; border:1px solid #ddd; border-radius:6px; margin-top:5px;">
+          </div>
+
+          <div style="margin-bottom:15px;">
+            <label><strong>Employee ID</strong></label>
+            <input type="text" id="employeeId" placeholder="Enter employee ID"
+              style="width:100%; padding:10px; border:1px solid #ddd; border-radius:6px; margin-top:5px;">
+          </div>
+
+          <div style="margin-bottom:15px;">
+            <label><strong>Email</strong></label>
+            <input type="email" id="employeeEmail" placeholder="Enter employee email"
+              style="width:100%; padding:10px; border:1px solid #ddd; border-radius:6px; margin-top:5px;">
+          </div>
+
+          <div style="margin-bottom:15px;">
+            <label><strong>Password</strong></label>
+            <input type="password" id="employeePassword" placeholder="Enter employee password"
+              style="width:100%; padding:10px; border:1px solid #ddd; border-radius:6px; margin-top:5px;">
+          </div>
+
+          <button onclick="createEmployee()"
+            style="padding:12px 20px; background:#2c7be5; color:white; border:none; border-radius:6px; cursor:pointer;">
+            Create Employee
+          </button>
+
+          <div id="employeeCreateMessage" style="margin-top:15px;"></div>
+        </div>
+      </div>
+
     </div>
   </div>
 
@@ -172,7 +211,6 @@
     }
 
     // ── Load Upload History ────────────────────────────────────────────────────
-    // FIX 6: Status badge colours match actual status — including "confirmed"
     async function loadUploadHistory() {
       const token = localStorage.getItem("token")
       const tbody = document.getElementById("historyTableBody")
@@ -200,11 +238,8 @@
             hour: '2-digit', minute: '2-digit', hour12: true
           })
 
-          // FIX 6: Status badge — HR-friendly labels
-          // pending = waiting for admin, approved = admin reviewing,
-          // confirmed = all patients assigned (completed), rejected = rejected
           const statusMap = {
-            pending:   { label: 'Pending',   cls: 'badge-info' },
+            pending:   { label: 'Pending',    cls: 'badge-info' },
             approved:  { label: 'Processing', cls: 'badge-warning' },
             confirmed: { label: 'Completed',  cls: 'badge-success' },
             rejected:  { label: 'Rejected',   cls: 'badge-danger' }
@@ -285,7 +320,6 @@
     }
 
     // ── Render Patient Table ───────────────────────────────────────────────────
-    // FIX 8: Shows assigned centre + real report view/download buttons
     function renderPatientTable(data) {
       const tbody = document.getElementById('recordsTableBody')
       tbody.innerHTML = ''
@@ -294,17 +328,14 @@
         const displayDate = p.appointmentDate
           ? new Date(p.appointmentDate).toLocaleDateString('en-IN') : "-"
 
-        // Determine status for badge — use "confirmed" if centre assigned
         const rawStatus = p.assignedCenterId ? 'confirmed' : (p.status || 'pending')
         const statusClass = `status-${rawStatus.toLowerCase()}`
         const statusLabel = rawStatus.charAt(0).toUpperCase() + rawStatus.slice(1)
 
-        // Assigned centre name
         const centreName = p.assignedCenterId && p.assignedCenterId.name
           ? p.assignedCenterId.name
           : (p.assignedCenterId ? 'Assigned' : '-')
 
-        // FIX 8: Real report buttons using reportUrls array
         let reportCell = '<span style="color:#999;font-size:0.85rem;">No report</span>'
         const reports = p.reportUrls && p.reportUrls.length > 0
           ? p.reportUrls
@@ -345,7 +376,6 @@
     }
 
     // ── Filter Table ───────────────────────────────────────────────────────────
-    // FIX 7: Filter matches against real DB status values
     function filterTable() {
       const searchTerm = document.getElementById('searchInput').value.toLowerCase()
       const dateFilter = document.getElementById('dateFilter').value
@@ -365,7 +395,6 @@
 
         let statusMatch = true
         if (statusFilter) {
-          // Effective status: confirmed if centre assigned, else DB status
           const effectiveStatus = p.assignedCenterId
             ? 'confirmed'
             : (p.status || 'pending').toLowerCase()
@@ -379,7 +408,6 @@
     }
 
     // ── Report View / Download ─────────────────────────────────────────────────
-    // FIX 8: Opens real PDF from server
     function viewReport(patientId) {
       const select = document.getElementById(`hr-report-select-${patientId}`)
       if (!select || !select.value) return
@@ -393,7 +421,6 @@
       const url = `http://localhost:5000${select.value}`
       const fileName = select.options[select.selectedIndex].text
 
-      // Fetch as blob to force download — prevents browser from opening PDF in new tab
       fetch(url)
         .then(res => res.blob())
         .then(blob => {
@@ -426,6 +453,45 @@
         document.getElementById("backToAllPatientsBtn").style.display = "inline-block"
       } catch (err) {
         console.error("Error loading upload patients", err)
+      }
+    }
+
+    // ── Create Employee (Varad's addition) ────────────────────────────────────
+    async function createEmployee() {
+      const name = document.getElementById("employeeName").value.trim()
+      const employeeId = document.getElementById("employeeId").value.trim()
+      const email = document.getElementById("employeeEmail").value.trim()
+      const password = document.getElementById("employeePassword").value.trim()
+      const messageBox = document.getElementById("employeeCreateMessage")
+
+      if (!name || !employeeId || !email || !password) {
+        messageBox.innerHTML = `<span style="color:red;">Please fill all fields</span>`
+        return
+      }
+
+      const companyId = user && user.companyId ? user.companyId : null
+
+      try {
+        const res = await fetch("http://localhost:5000/api/employee/create", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ name, employeeId, email, password, companyId })
+        })
+
+        const data = await res.json()
+
+        if (res.ok) {
+          messageBox.innerHTML = `<span style="color:green;">Employee created successfully</span>`
+          document.getElementById("employeeName").value = ""
+          document.getElementById("employeeId").value = ""
+          document.getElementById("employeeEmail").value = ""
+          document.getElementById("employeePassword").value = ""
+        } else {
+          messageBox.innerHTML = `<span style="color:red;">${data.message || "Failed to create employee"}</span>`
+        }
+      } catch (err) {
+        console.error("Create employee error:", err)
+        messageBox.innerHTML = `<span style="color:red;">Server error</span>`
       }
     }
 
