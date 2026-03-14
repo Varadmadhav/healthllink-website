@@ -1,6 +1,7 @@
 require("dotenv").config()
 const express = require("express")
 const cors = require("cors")
+const path = require("path")
 const connectDB = require("./config/db")
 const adminRoutes = require("./routes/adminRoutes")
 const hrRoutes = require("./routes/hrRoutes")
@@ -12,6 +13,9 @@ connectDB()
 
 app.use(cors())
 app.use(express.json())
+
+// Serve uploaded report PDFs so the frontend can download them
+app.use("/uploads", express.static(path.join(__dirname, "uploads")))
 
 app.use("/api/admin", adminRoutes)
 app.use("/api/hr", hrRoutes)
