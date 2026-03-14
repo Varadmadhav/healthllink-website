@@ -182,10 +182,13 @@ async function openFileView(fileId) {
 
 // Map a DB Patient document → internal employee object
 function normalisePatient(p) {
+  const rawStatus = (p.status || "pending").toLowerCase()
+  const finalStatus = p.assignedCenterId ? "confirmed" : rawStatus
+
   return {
     id: p._id,
     employeeName: p.name || "",
-    employeeId: p._id,        // no separate empId in schema — use _id
+    employeeId: p._id,
     age: p.age || "",
     gender: p.gender || "",
     phone: p.phone || "",
@@ -193,12 +196,15 @@ function normalisePatient(p) {
     company: p.companyId ? p.companyId.name : "",
     address: p.address || "",
     pincode: p.pincode || "",
-    status: p.assignedCenterId ? 'confirmed' : (p.status || 'pending'),
+    appointmentDate: p.appointmentDate || null,
+    appointmentTime: p.appointmentTime || "10:00",
+    status: finalStatus,
     assignedCenter: p.assignedCenterId ? {
       id: p.assignedCenterId._id || p.assignedCenterId,
       name: p.assignedCenterId.name || "",
       phone: p.assignedCenterId.phone || "",
-      pincode: p.assignedCenterId.pincode || ""
+      pincode: p.assignedCenterId.pincode || "",
+      address: p.assignedCenterId.address || ""
     } : null,
     reportUrl: p.reportUrl || null
   }
@@ -223,27 +229,47 @@ function renderEmployeesTable(file) {
       </td>
       <td><strong>${emp.employeeName}</strong></td>
       <td><span class="badge badge-info">${emp.employeeId.toString().slice(-6)}</span></td>
-      <td>${emp.age}</td>
-      <td>${emp.gender}</td>
-      <td>${emp.phone}</td>
-      <td>${emp.email}</td>
-      <td>${emp.company}</td>
-      <td>${emp.address}</td>
-      <td><span class="badge badge-warning">${emp.pincode}</span></td>
+      <td>${emp.age || '-'}</td>
+      <td>${emp.gender || '-'}</td>
+      <td>${emp.phone || '-'}</td>
+      <td>${emp.email || '-'}</td>
+      <td>${emp.company || '-'}</td>
+      <td>${emp.address || '-'}</td>
+      <td><span class="badge badge-warning">${emp.pincode || '-'}</span></td>
+      <td>${emp.appointmentDate ? new Date(emp.appointmentDate).toLocaleDateString() : '-'}</td>
       <td>
-        <span class="badge badge-${emp.status === 'confirmed' ? 'success' : 'pending'}">
-          ${emp.status === 'confirmed' ? '✅ Confirmed' : '⏳ Pending'}
+        <span class="badge ${
+          emp.status === 'confirmed'
+            ? 'badge-success'
+            : emp.status === 'requested'
+            ? 'badge-info'
+            : emp.status === 'approved'
+            ? 'badge-warning'
+            : 'badge-pending'
+        }">
+          ${
+            emp.status === 'confirmed'
+              ? '✅ Confirmed'
+              : emp.status === 'requested'
+              ? '📝 Requested'
+              : emp.status === 'approved'
+              ? '👍 Approved'
+              : '⏳ Pending'
+          }
         </span>
       </td>
     </tr>
   `).join('')
 }
 
+
 function renderCenterMatchingForFile(file) {
   const card = document.getElementById('center-matching-card')
   const tbody = document.getElementById('center-matching-body')
 
-  const pendingEmployees = file.employees.filter(emp => emp.status !== 'confirmed')
+  const pendingEmployees = file.employees.filter(
+    emp => emp.status === 'requested' || emp.status === 'approved' || emp.status === 'pending'
+  )
 
   if (pendingEmployees.length === 0) {
     card.style.display = 'none'
@@ -257,7 +283,8 @@ function renderCenterMatchingForFile(file) {
     return `
       <tr>
         <td><strong>${emp.employeeName}</strong></td>
-        <td><span class="badge badge-warning">${emp.pincode}</span></td>
+        <td>${emp.appointmentDate ? new Date(emp.appointmentDate).toLocaleDateString() : '-'}</td>
+        <td><span class="badge badge-warning">${emp.pincode || '-'}</span></td>
         <td>
           ${nearbyCenters[0] ? `
             <div class="center-info">
@@ -362,7 +389,9 @@ function renderConfirmationTable() {
   const tbody = document.getElementById('confirmation-table-body')
   const emptyState = document.getElementById('confirmation-empty')
 
-  const pendingEmployees = allPatients.filter(emp => emp.status !== 'confirmed')
+  const pendingEmployees = allPatients.filter(
+    emp => emp.status === 'requested' || emp.status === 'approved' || emp.status === 'pending'
+  )
 
   if (pendingEmployees.length === 0) {
     tbody.innerHTML = ''
@@ -377,9 +406,10 @@ function renderConfirmationTable() {
     return `
       <tr>
         <td><strong>${emp.employeeName}</strong></td>
-        <td>${emp.phone}</td>
-        <td>${emp.company}</td>
-        <td><span class="badge badge-warning">${emp.pincode}</span></td>
+        <td>${emp.phone || '-'}</td>
+        <td>${emp.company || '-'}</td>
+        <td>${emp.appointmentDate ? new Date(emp.appointmentDate).toLocaleDateString() : '-'}</td>
+        <td><span class="badge badge-warning">${emp.pincode || '-'}</span></td>
         <td>
           <select class="center-select" id="select-${emp.id}">
             <option value="">Select a center...</option>
@@ -387,9 +417,11 @@ function renderConfirmationTable() {
               <option value="${c.id}">${c.name} (${c.pincode})</option>
             `).join('')}
             <option disabled>──────────</option>
-            ${centersData.filter(c => !nearbyCenters.find(n => n.id === c.id)).map(c => `
-              <option value="${c.id}">${c.name} (${c.pincode})</option>
-            `).join('')}
+            ${centersData
+              .filter(c => !nearbyCenters.find(n => n.id === c.id))
+              .map(c => `
+                <option value="${c.id}">${c.name} (${c.pincode})</option>
+              `).join('')}
           </select>
         </td>
         <td>
@@ -489,7 +521,10 @@ function renderConfirmedTable() {
 }
 
 function updateStats() {
-  const pendingCount = allPatients.filter(emp => emp.status !== 'confirmed').length
+  const pendingCount = allPatients.filter(
+    emp => emp.status === 'requested' || emp.status === 'approved' || emp.status === 'pending'
+  ).length
+
   const confirmedCount = allPatients.filter(emp => emp.status === 'confirmed').length
   const totalCount = allPatients.length
 
@@ -497,6 +532,7 @@ function updateStats() {
   document.getElementById('confirmed-count-stat').textContent = confirmedCount
   document.getElementById('total-count').textContent = totalCount
 }
+
 
 // ===== REPORTS =====
 
