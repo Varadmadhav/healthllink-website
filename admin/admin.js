@@ -397,8 +397,9 @@ async function renderConfirmationTable() {
         <td><strong>${emp.employeeName}</strong></td>
         <td>${emp.phone || '-'}</td>
         <td>${emp.company || '-'}</td>
-        <td>${emp.appointmentDate ? new Date(emp.appointmentDate).toLocaleDateString() : '-'}</td>
-        <td>${emp.pincode || '-'}</td>
+<td>${emp.pincode || '-'}</td>
+<td>${emp.appointmentDate ? new Date(emp.appointmentDate).toLocaleDateString() : '-'}</td>
+
         <td>
           <select class="center-select" id="select-${emp.id}">
             <option value="">Select a center...</option>

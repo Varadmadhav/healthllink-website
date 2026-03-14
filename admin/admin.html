@@ -15,7 +15,7 @@
     <nav class="top-nav">
         <div class="nav-brand">
             <span class="brand-icon">🏥</span>
-            <span class="brand-text">HealthCheck Admin</span>
+            <span class="brand-text">HealthLINK Admin</span>
         </div>
         <div class="nav-tabs">
             <button class="nav-tab active" data-tab="review-requests">
@@ -136,12 +136,14 @@
                     <table id="center-matching-table" class="data-table">
                         <thead>
                             <tr>
-                                <th>Employee Name</th>
-                                <th>Pincode</th>
-                                <th>Center 1 (Name / Phone)</th>
-                                <th>Center 2 (Name / Phone)</th>
-                                <th>Center 3 (Name / Phone)</th>
-                                <th>Action</th>
+                                <th>EMPLOYEE NAME</th>
+<th>PHONE</th>
+<th>COMPANY</th>
+<th>PINCODE</th>
+<th>APPOINTMENT DATE</th>
+<th>AVAILABLE CENTERS</th>
+<th>ACTION</th>
+
                             </tr>
                         </thead>
                         <tbody id="center-matching-body">
@@ -197,18 +199,16 @@
                 <div class="table-container">
                     <table id="confirmation-table" class="data-table">
                         <thead>
-                            <tr>
-                                <th onclick="sortTable('confirmation-table', 0)">Employee Name <span
-                                        class="sort-icon">↕</span></th>
-                                <th onclick="sortTable('confirmation-table', 1)">Phone <span class="sort-icon">↕</span>
-                                </th>
-                                <th onclick="sortTable('confirmation-table', 2)">Company <span
-                                        class="sort-icon">↕</span></th>
-                                <th onclick="sortTable('confirmation-table', 3)">Pincode <span
-                                        class="sort-icon">↕</span></th>
-                                <th>Available Centers</th>
-                                <th>Action</th>
-                            </tr>
+                           <tr>
+    <th onclick="sortTable('confirmation-table', 0)">Employee Name <span class="sort-icon">↕</span></th>
+    <th onclick="sortTable('confirmation-table', 1)">Phone <span class="sort-icon">↕</span></th>
+    <th onclick="sortTable('confirmation-table', 2)">Company <span class="sort-icon">↕</span></th>
+    <th onclick="sortTable('confirmation-table', 3)">Pincode <span class="sort-icon">↕</span></th>
+    <th onclick="sortTable('confirmation-table', 4)">Appointment Date <span class="sort-icon">↕</span></th>
+    <th>Available Centers</th>
+    <th>Action</th>
+</tr>
+
                         </thead>
                         <tbody id="confirmation-table-body">
                             <!-- Data will be populated dynamically -->

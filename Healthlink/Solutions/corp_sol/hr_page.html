@@ -132,17 +132,36 @@
               style="width:100%; padding:10px; border:1px solid #ddd; border-radius:6px; margin-top:5px;">
           </div>
 
-          <div style="margin-bottom:15px;">
-            <label><strong>Email</strong></label>
-            <input type="email" id="employeeEmail" placeholder="Enter employee email"
-              style="width:100%; padding:10px; border:1px solid #ddd; border-radius:6px; margin-top:5px;">
-          </div>
+         <div style="margin-bottom:15px;">
+  <label><strong>Email</strong></label>
+  <input type="email" id="employeeEmail" placeholder="Enter employee email"
+    style="width:100%; padding:10px; border:1px solid #ddd; border-radius:6px; margin-top:5px;">
+</div>
 
-          <div style="margin-bottom:15px;">
-            <label><strong>Password</strong></label>
-            <input type="password" id="employeePassword" placeholder="Enter employee password"
-              style="width:100%; padding:10px; border:1px solid #ddd; border-radius:6px; margin-top:5px;">
-          </div>
+<div style="margin-bottom:15px;">
+  <label><strong>Phone</strong></label>
+  <input type="text" id="employeePhone" placeholder="Enter phone number"
+    style="width:100%; padding:10px; border:1px solid #ddd; border-radius:6px; margin-top:5px;">
+</div>
+
+<div style="margin-bottom:15px;">
+  <label><strong>Address</strong></label>
+  <input type="text" id="employeeAddress" placeholder="Enter address"
+    style="width:100%; padding:10px; border:1px solid #ddd; border-radius:6px; margin-top:5px;">
+</div>
+
+<div style="margin-bottom:15px;">
+  <label><strong>Pincode</strong></label>
+  <input type="text" id="employeePincode" placeholder="Enter pincode"
+    style="width:100%; padding:10px; border:1px solid #ddd; border-radius:6px; margin-top:5px;">
+</div>
+
+<div style="margin-bottom:15px;">
+  <label><strong>Password</strong></label>
+  <input type="password" id="employeePassword" placeholder="Enter employee password"
+    style="width:100%; padding:10px; border:1px solid #ddd; border-radius:6px; margin-top:5px;">
+</div>
+
 
           <button onclick="createEmployee()"
             style="padding:12px 20px; background:#2c7be5; color:white; border:none; border-radius:6px; cursor:pointer;">
@@ -180,8 +199,9 @@
     const API_BASE = "http://localhost:5000/api/hr"
     const ADMIN_API = "http://localhost:5000/api/admin"
 
-    const user = JSON.parse(localStorage.getItem("user"))
-    if (!user) window.location.href = "corp_solsignup.html"
+    const user = JSON.parse(localStorage.getItem("hrUser"))
+if (!user) window.location.href = "corp_solsignup.html"
+
 
     let uploadedFile = null
     let patientRecords = []
@@ -196,7 +216,8 @@
 
     // ── Load Patients ──────────────────────────────────────────────────────────
     async function loadPatients() {
-      const token = localStorage.getItem("token")
+      const token = localStorage.getItem("hrToken")
+
       try {
         const res = await fetch(`${API_BASE}/patients`, {
           headers: { "Authorization": `Bearer ${token}` }
@@ -212,7 +233,8 @@
 
     // ── Load Upload History ────────────────────────────────────────────────────
     async function loadUploadHistory() {
-      const token = localStorage.getItem("token")
+      const token = localStorage.getItem("hrToken")
+
       const tbody = document.getElementById("historyTableBody")
       const emptyMessage = document.getElementById("historyEmptyMessage")
 
@@ -295,7 +317,8 @@
       formData.append("file", uploadedFile)
       formData.append("appointmentDate", dateValue)
 
-      const token = localStorage.getItem("token")
+      const token = localStorage.getItem("hrToken")
+
       try {
         const res = await fetch(`${API_BASE}/upload`, {
           method: "POST",
@@ -441,7 +464,8 @@
 
     // ── View specific upload's patients ────────────────────────────────────────
     async function viewUpload(uploadId) {
-      const token = localStorage.getItem("token")
+      const token = localStorage.getItem("hrToken")
+
       try {
         const res = await fetch(`${API_BASE}/patients/upload/${uploadId}`, {
           headers: { "Authorization": `Bearer ${token}` }
@@ -458,47 +482,64 @@
 
     // ── Create Employee (Varad's addition) ────────────────────────────────────
     async function createEmployee() {
-      const name = document.getElementById("employeeName").value.trim()
-      const employeeId = document.getElementById("employeeId").value.trim()
-      const email = document.getElementById("employeeEmail").value.trim()
-      const password = document.getElementById("employeePassword").value.trim()
-      const messageBox = document.getElementById("employeeCreateMessage")
+  const name = document.getElementById("employeeName").value.trim()
+  const employeeId = document.getElementById("employeeId").value.trim()
+  const email = document.getElementById("employeeEmail").value.trim()
+  const phone = document.getElementById("employeePhone").value.trim()
+  const address = document.getElementById("employeeAddress").value.trim()
+  const pincode = document.getElementById("employeePincode").value.trim()
+  const password = document.getElementById("employeePassword").value.trim()
+  const messageBox = document.getElementById("employeeCreateMessage")
 
-      if (!name || !employeeId || !email || !password) {
-        messageBox.innerHTML = `<span style="color:red;">Please fill all fields</span>`
-        return
-      }
+  if (!name || !employeeId || !email || !password || !phone || !address || !pincode) {
+    messageBox.innerHTML = `<span style="color:red;">Please fill all fields</span>`
+    return
+  }
 
-      const companyId = user && user.companyId ? user.companyId : null
+  const companyId = user && user.companyId ? user.companyId : null
 
-      try {
-        const res = await fetch("http://localhost:5000/api/employee/create", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ name, employeeId, email, password, companyId })
-        })
+  try {
+    const res = await fetch("http://localhost:5000/api/employee/create", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        name,
+        employeeId,
+        email,
+        password,
+        companyId,
+        phone,
+        address,
+        pincode
+      })
+    })
 
-        const data = await res.json()
+    const data = await res.json()
 
-        if (res.ok) {
-          messageBox.innerHTML = `<span style="color:green;">Employee created successfully</span>`
-          document.getElementById("employeeName").value = ""
-          document.getElementById("employeeId").value = ""
-          document.getElementById("employeeEmail").value = ""
-          document.getElementById("employeePassword").value = ""
-        } else {
-          messageBox.innerHTML = `<span style="color:red;">${data.message || "Failed to create employee"}</span>`
-        }
-      } catch (err) {
-        console.error("Create employee error:", err)
-        messageBox.innerHTML = `<span style="color:red;">Server error</span>`
-      }
+    if (res.ok) {
+      messageBox.innerHTML = `<span style="color:green;">Employee created successfully</span>`
+      document.getElementById("employeeName").value = ""
+      document.getElementById("employeeId").value = ""
+      document.getElementById("employeeEmail").value = ""
+      document.getElementById("employeePhone").value = ""
+      document.getElementById("employeeAddress").value = ""
+      document.getElementById("employeePincode").value = ""
+      document.getElementById("employeePassword").value = ""
+    } else {
+      messageBox.innerHTML = `<span style="color:red;">${data.message || "Failed to create employee"}</span>`
     }
+  } catch (err) {
+    console.error("Create employee error:", err)
+    messageBox.innerHTML = `<span style="color:red;">Server error</span>`
+  }
+}
 
-    function logout() {
-      localStorage.clear()
-      window.location.href = "corp_solsignup.html"
-    }
+function logout() {
+  localStorage.removeItem("hrUser")
+  localStorage.removeItem("hrToken")
+  window.location.href = "corp_solsignup.html"
+}
+
   </script>
 
 </body>

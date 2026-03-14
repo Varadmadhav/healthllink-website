@@ -5,7 +5,8 @@ const Patient = require("../models/Patient")
 
 exports.createEmployee = async (req, res) => {
   try {
-    const { name, email, password, employeeId, companyId } = req.body
+    const { name, email, password, employeeId, companyId, phone, address, pincode } = req.body
+
 
     if (!name || !email || !password || !employeeId || !companyId) {
       return res.status(400).json({ message: "All fields are required" })
@@ -25,13 +26,16 @@ exports.createEmployee = async (req, res) => {
     const hashedPassword = await bcrypt.hash(password, 10)
 
     const user = new User({
-      name,
-      email,
-      password: hashedPassword,
-      employeeId,
-      role: "employee",
-      companyId
-    })
+  name,
+  email,
+  password: hashedPassword,
+  employeeId,
+  companyId,
+  role: "employee",
+  phone: phone || "",
+  address: address || "",
+  pincode: pincode || ""
+})
 
     await user.save()
 
@@ -127,21 +131,39 @@ exports.getMyDashboard = async (req, res) => {
         status: p.status || "requested"
       }))
 
-    const reports = patients
-      .filter(p => p.reportUrl)
-      .map((p, index) => ({
-        id: p._id,
-        fileName: `Report_${p.name || "Employee"}_${index + 1}.pdf`,
-        date: p.updatedAt || p.createdAt,
-        fileUrl: `http://localhost:5000${p.reportUrl}`
+    const reports = patients.flatMap((p) => {
+      const multiReports = (p.reportUrls || []).map((report, index) => ({
+        id: `${p._id}_${index}`,
+        fileName: report.originalName || `Report_${p.name || "Employee"}_${index + 1}`,
+        date: report.uploadedAt || p.updatedAt || p.createdAt,
+        fileUrl: report.url.startsWith("http")
+          ? report.url
+          : `http://localhost:5000${report.url}`
       }))
 
+      const singleReport = p.reportUrl
+        ? [{
+            id: `${p._id}_single`,
+            fileName: `Report_${p.name || "Employee"}.pdf`,
+            date: p.updatedAt || p.createdAt,
+            fileUrl: p.reportUrl.startsWith("http")
+              ? p.reportUrl
+              : `http://localhost:5000${p.reportUrl}`
+          }]
+        : []
+
+      return [...multiReports, ...singleReport]
+    })
+
     res.json({
-      employee: {
-        name: user.name,
-        email: user.email,
-        employeeId: user.employeeId || ""
-      },
+     employee: {
+  name: user.name,
+  email: user.email,
+  employeeId: user.employeeId || "",
+  phone: user.phone || "",
+  address: user.address || "",
+  pincode: user.pincode || ""
+},
       appointments,
       reports
     })
@@ -149,6 +171,8 @@ exports.getMyDashboard = async (req, res) => {
     res.status(500).json({ message: error.message })
   }
 }
+
+
     
 
 exports.bookAppointment = async (req, res) => {
@@ -177,12 +201,17 @@ exports.bookAppointment = async (req, res) => {
     }
 
     const patient = new Patient({
-      companyId: user.companyId,
-      name: user.name,
-      email: user.email,
-      appointmentDate,
-      status: "requested"
-    })
+  companyId: user.companyId,
+  name: user.name,
+  email: user.email,
+  employeeId: user.employeeId || "",
+  phone: user.phone || "",
+  address: user.address || "",
+  pincode: user.pincode || "",
+  appointmentDate,
+  status: "requested"
+})
+
 
     await patient.save()
 

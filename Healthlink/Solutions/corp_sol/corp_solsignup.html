@@ -247,17 +247,27 @@ document.getElementById("authForm").addEventListener("submit", async function(e)
 
         const data = await res.json();
 
-        if (res.ok) {
-            msgBox.className = "message-box success";
-            msgBox.innerText = "Login successful";
+       if (res.ok) {
+    msgBox.className = "message-box success";
+    msgBox.innerText = "Login successful";
 
-            localStorage.setItem("token", data.token);
-            localStorage.setItem("user", JSON.stringify(data.user));
+    if (currentRole === "hr") {
+        localStorage.setItem("hrToken", data.token);
+        localStorage.setItem("hrUser", JSON.stringify(data.user));
+        localStorage.removeItem("employeeToken");
+        localStorage.removeItem("employeeUser");
+    } else if (currentRole === "employee") {
+        localStorage.setItem("employeeToken", data.token);
+        localStorage.setItem("employeeUser", JSON.stringify(data.user));
+        localStorage.removeItem("hrToken");
+        localStorage.removeItem("hrUser");
+    }
 
-            setTimeout(() => {
-                redirectUser();
-            }, 1000);
-        } else {
+    setTimeout(() => {
+        redirectUser();
+    }, 1000);
+}
+ else {
             msgBox.className = "message-box error";
             msgBox.innerText = data.message || "Login failed";
         }
