@@ -17,6 +17,7 @@ const reportStorage = multer.diskStorage({
     cb(null, unique + path.extname(file.originalname))
   }
 })
+
 const uploadReport = multer({
   storage: reportStorage,
   fileFilter: (req, file, cb) => {
@@ -31,6 +32,7 @@ const {
   getCompanies,
   addCenter,
   getCenters,
+  getNearbyCenters,
   getUploads,
   getPatientsByUpload,
   approveUpload,
@@ -47,6 +49,8 @@ router.get("/companies", getCompanies)
 // ─── Centers ─────────────────────────────────────────────────────────────────
 router.post("/centers", addCenter)
 router.get("/centers", getCenters)
+// IMPORTANT: /centers/nearby must be defined BEFORE /centers/:id if you add that later
+router.get("/centers/nearby", getNearbyCenters)
 
 // ─── Uploads ─────────────────────────────────────────────────────────────────
 router.get("/uploads", getUploads)
@@ -57,10 +61,6 @@ router.put("/uploads/:id/reject", rejectUpload)
 // ─── Patients ────────────────────────────────────────────────────────────────
 router.get("/patients", getAllPatients)
 router.put("/patients/:patientId/assign", assignCenter)
-router.post(
-  "/patients/:patientId/report",
-  uploadReport.single("report"),
-  uploadReportHandler
-)
+router.post("/patients/:patientId/report", uploadReport.single("report"), uploadReportHandler)
 
 module.exports = router

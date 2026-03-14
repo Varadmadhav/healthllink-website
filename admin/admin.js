@@ -1,14 +1,15 @@
 // ===== API Base =====
 const API_BASE = "http://localhost:5000/api"
 
-// ===== Global Data Storage =====
-let uploadedFiles = []   // upload batch objects from DB
+// ===== Global State =====
+let uploadedFiles = []
 let centersData = []
 let companiesData = []
-let selectedFileId = null          // currently viewed upload _id
-let selectedFilePatients = []      // patients loaded for that upload
+let selectedFileId = null
+let allPatients = []
+let confirmedPatientsForReports = []
 
-// ===== Initialize Application =====
+// ===== Init =====
 document.addEventListener('DOMContentLoaded', function () {
   initializeTabs()
   fetchCompanies()
@@ -16,7 +17,7 @@ document.addEventListener('DOMContentLoaded', function () {
   fetchUploads()
 })
 
-// ===== Tab Navigation =====
+// ===== Tabs =====
 function initializeTabs() {
   const tabs = document.querySelectorAll('.nav-tab')
   const contents = document.querySelectorAll('.tab-content')
@@ -24,15 +25,12 @@ function initializeTabs() {
   tabs.forEach(tab => {
     tab.addEventListener('click', () => {
       const targetId = tab.dataset.tab
-
       tabs.forEach(t => t.classList.remove('active'))
       tab.classList.add('active')
-
-      contents.forEach(content => {
-        content.classList.remove('active')
-        if (content.id === targetId) content.classList.add('active')
+      contents.forEach(c => {
+        c.classList.remove('active')
+        if (c.id === targetId) c.classList.add('active')
       })
-
       refreshTabData(targetId)
     })
   })
@@ -40,25 +38,18 @@ function initializeTabs() {
 
 function refreshTabData(tabId) {
   switch (tabId) {
-    case 'review-requests':
-      fetchUploads()
-      break
-    case 'make-confirmation':
-      fetchAllPatientsForConfirmation()
-      break
-    case 'reports':
-      fetchConfirmedPatientsForReports()
-      break
-    case 'add-centers':
-      renderCentersTable()
-      break
-    case 'add-companies':
-      renderCompaniesTable()
-      break
+    case 'review-requests':      fetchUploads(); break
+    case 'make-confirmation':    fetchAllPatientsForConfirmation(); break
+    case 'reports':              fetchConfirmedPatientsForReports(); break
+    case 'add-centers':          renderCentersTable(); break
+    case 'add-companies':        renderCompaniesTable(); break
   }
 }
 
-// ===== REVIEW REQUESTS — fetch upload batches from DB =====
+// =====================================================================
+// REVIEW REQUESTS
+// =====================================================================
+
 async function fetchUploads() {
   try {
     const res = await fetch(API_BASE + "/admin/uploads")
@@ -72,20 +63,18 @@ async function fetchUploads() {
       records: u.recordsCount,
       status: u.status,
       company: u.companyId ? u.companyId.name : "",
-      uploadedBy: u.uploadedBy ? u.uploadedBy.name : "",
       pendingCount: u.pendingCount || 0,
       confirmedCount: u.confirmedCount || 0,
-      employees: []   // loaded on demand when card is opened
+      employees: []
     }))
 
     renderExcelFilesGrid()
   } catch (err) {
-    console.error("fetchUploads error:", err)
+    console.error("fetchUploads:", err)
     showToast("Could not load upload files", "error")
   }
 }
 
-// ===== Excel Files Grid =====
 function renderExcelFilesGrid() {
   const grid = document.getElementById('excel-files-grid')
   const emptyState = document.getElementById('excel-empty')
@@ -102,16 +91,13 @@ function renderExcelFilesGrid() {
   grid.style.display = 'grid'
   emptyState.style.display = 'none'
 
-  const sortedFiles = [...uploadedFiles].sort((a, b) => b.uploadTimestamp - a.uploadTimestamp)
+  const sorted = [...uploadedFiles].sort((a, b) => b.uploadTimestamp - a.uploadTimestamp)
 
-  grid.innerHTML = sortedFiles.map(file => {
-    // badge colour: pending=warning, approved=success, rejected=danger
+  grid.innerHTML = sorted.map(file => {
     const statusClass = file.status === 'approved' ? 'processed'
-      : file.status === 'rejected' ? 'rejected'
-        : 'new'
+      : file.status === 'rejected' ? 'rejected' : 'new'
     const statusLabel = file.status === 'approved' ? '✓ Approved'
-      : file.status === 'rejected' ? '✗ Rejected'
-        : '🆕 Pending'
+      : file.status === 'rejected' ? '✗ Rejected' : '🆕 Pending'
 
     return `
       <div class="excel-file-card ${selectedFileId === file.id ? 'selected' : ''}"
@@ -130,23 +116,12 @@ function renderExcelFilesGrid() {
             onclick="event.stopPropagation(); openFileView('${file.id}')">
             View Data →
           </button>
-          ${file.status === 'pending' ? `
-            <button class="btn btn-success btn-sm"
-              onclick="event.stopPropagation(); approveUpload('${file.id}')">
-              Approve
-            </button>
-            <button class="btn btn-danger btn-sm"
-              onclick="event.stopPropagation(); rejectUpload('${file.id}')">
-              Reject
-            </button>
-          ` : ''}
         </div>
       </div>
     `
   }).join('')
 }
 
-// Open a file card → load its patients from DB
 async function openFileView(fileId) {
   selectedFileId = fileId
   const file = uploadedFiles.find(f => f.id === fileId)
@@ -157,7 +132,6 @@ async function openFileView(fileId) {
   document.getElementById('selected-file-meta').textContent =
     `${file.records} records • Uploaded on ${file.uploadDate}`
 
-  // show loading state
   document.getElementById('review-table-body').innerHTML =
     `<tr><td colspan="11" style="text-align:center;padding:30px;color:var(--text-tertiary);">Loading...</td></tr>`
   document.getElementById('center-matching-card').style.display = 'none'
@@ -165,27 +139,29 @@ async function openFileView(fileId) {
   try {
     const res = await fetch(`${API_BASE}/admin/uploads/${fileId}/patients`)
     const patients = await res.json()
-
-    // normalise into the shape the render functions expect
-    file.employees = patients.map(p => normalisePatient(p))
-    selectedFilePatients = file.employees
+    file.employees = patients.map(normalisePatient)
 
     renderEmployeesTable(file)
     renderCenterMatchingForFile(file)
   } catch (err) {
-    console.error("openFileView error:", err)
+    console.error("openFileView:", err)
     showToast("Could not load employee data", "error")
   }
 
   renderExcelFilesGrid()
 }
 
-// Map a DB Patient document → internal employee object
+function closeFileView() {
+  selectedFileId = null
+  document.getElementById('selected-file-card').style.display = 'none'
+  document.getElementById('center-matching-card').style.display = 'none'
+  renderExcelFilesGrid()
+}
+
 function normalisePatient(p) {
   return {
     id: p._id,
     employeeName: p.name || "",
-    employeeId: p._id,        // no separate empId in schema — use _id
     age: p.age || "",
     gender: p.gender || "",
     phone: p.phone || "",
@@ -200,21 +176,15 @@ function normalisePatient(p) {
       phone: p.assignedCenterId.phone || "",
       pincode: p.assignedCenterId.pincode || ""
     } : null,
-    reportUrl: p.reportUrl || null
+    // Support both old single reportUrl and new reportUrls array
+    reportUrls: p.reportUrls && p.reportUrls.length > 0
+      ? p.reportUrls
+      : (p.reportUrl ? [{ url: p.reportUrl, originalName: 'Report', uploadedAt: null }] : [])
   }
-}
-
-function closeFileView() {
-  selectedFileId = null
-  selectedFilePatients = []
-  document.getElementById('selected-file-card').style.display = 'none'
-  document.getElementById('center-matching-card').style.display = 'none'
-  renderExcelFilesGrid()
 }
 
 function renderEmployeesTable(file) {
   const tbody = document.getElementById('review-table-body')
-
   tbody.innerHTML = file.employees.map(emp => `
     <tr>
       <td>
@@ -222,7 +192,7 @@ function renderEmployeesTable(file) {
           ${emp.status === 'confirmed' ? 'disabled' : ''}>
       </td>
       <td><strong>${emp.employeeName}</strong></td>
-      <td><span class="badge badge-info">${emp.employeeId.toString().slice(-6)}</span></td>
+      <td><span class="badge badge-info">${emp.id.toString().slice(-6)}</span></td>
       <td>${emp.age}</td>
       <td>${emp.gender}</td>
       <td>${emp.phone}</td>
@@ -239,7 +209,8 @@ function renderEmployeesTable(file) {
   `).join('')
 }
 
-function renderCenterMatchingForFile(file) {
+// Async — fetches real nearby centres from backend for each employee
+async function renderCenterMatchingForFile(file) {
   const card = document.getElementById('center-matching-card')
   const tbody = document.getElementById('center-matching-body')
 
@@ -252,119 +223,107 @@ function renderCenterMatchingForFile(file) {
 
   card.style.display = 'block'
 
-  tbody.innerHTML = pendingEmployees.map(emp => {
-    const nearbyCenters = findNearbyCenters(emp.pincode)
-    return `
-      <tr>
-        <td><strong>${emp.employeeName}</strong></td>
-        <td><span class="badge badge-warning">${emp.pincode}</span></td>
-        <td>
-          ${nearbyCenters[0] ? `
-            <div class="center-info">
-              <div class="center-name">${nearbyCenters[0].name}</div>
-              <div class="center-phone">📞 ${nearbyCenters[0].phone}</div>
-            </div>` : '<span style="color:var(--text-tertiary);">No center found</span>'}
-        </td>
-        <td>
-          ${nearbyCenters[1] ? `
-            <div class="center-info">
-              <div class="center-name">${nearbyCenters[1].name}</div>
-              <div class="center-phone">📞 ${nearbyCenters[1].phone}</div>
-            </div>` : '<span style="color:var(--text-tertiary);">-</span>'}
-        </td>
-        <td>
-          ${nearbyCenters[2] ? `
-            <div class="center-info">
-              <div class="center-name">${nearbyCenters[2].name}</div>
-              <div class="center-phone">📞 ${nearbyCenters[2].phone}</div>
-            </div>` : '<span style="color:var(--text-tertiary);">-</span>'}
-        </td>
-        <td>
-          <button class="btn btn-primary btn-sm"
-            onclick="navigateToConfirmation('${emp.id}')">
-            Assign →
-          </button>
-        </td>
-      </tr>
-    `
-  }).join('')
+  // Show loading row while we fetch
+  tbody.innerHTML = `
+    <tr>
+      <td colspan="6" style="text-align:center;padding:20px;color:var(--text-tertiary);">
+        🔍 Finding nearby centres...
+      </td>
+    </tr>
+  `
+
+  // Fetch nearby centres for all pending employees in parallel
+  const rows = await Promise.all(
+    pendingEmployees.map(async (emp) => {
+      const nearby = await fetchNearbyCenters(emp.pincode, 3)
+      return { emp, nearby }
+    })
+  )
+
+  tbody.innerHTML = rows.map(({ emp, nearby }) => `
+    <tr>
+      <td><strong>${emp.employeeName}</strong></td>
+      <td><span class="badge badge-warning">${emp.pincode}</span></td>
+      <td>${renderCenterCell(nearby[0])}</td>
+      <td>${renderCenterCell(nearby[1])}</td>
+      <td>${renderCenterCell(nearby[2])}</td>
+      <td>
+        <button class="btn btn-primary btn-sm"
+          onclick="document.querySelector('[data-tab=make-confirmation]').click()">
+          Assign →
+        </button>
+      </td>
+    </tr>
+  `).join('')
+}
+
+function renderCenterCell(center) {
+  if (!center) return '<span style="color:var(--text-tertiary);">-</span>'
+  const distLabel = center.distance != null ? ` • ${center.distance} km` : ''
+  return `
+    <div class="center-info">
+      <div class="center-name">${center.name}</div>
+      <div class="center-phone">📞 ${center.phone}${distLabel}</div>
+    </div>
+  `
+}
+
+// Call backend nearby endpoint
+async function fetchNearbyCenters(pincode, limit = 3) {
+  try {
+    const res = await fetch(
+      `${API_BASE}/admin/centers/nearby?pincode=${encodeURIComponent(pincode)}&limit=${limit}`
+    )
+    return await res.json()
+  } catch (err) {
+    console.error("fetchNearbyCenters:", err)
+    return []
+  }
 }
 
 function toggleSelectAll(checkbox) {
-  const checkboxes = document.querySelectorAll('.employee-checkbox:not(:disabled)')
-  checkboxes.forEach(cb => cb.checked = checkbox.checked)
+  document.querySelectorAll('.employee-checkbox:not(:disabled)')
+    .forEach(cb => cb.checked = checkbox.checked)
 }
 
 function processAllEmployees() {
   const file = uploadedFiles.find(f => f.id === selectedFileId)
   if (!file) return
-
-  const pendingEmployees = file.employees.filter(emp => emp.status !== 'confirmed')
-
-  if (pendingEmployees.length === 0) {
+  const pending = file.employees.filter(e => e.status !== 'confirmed')
+  if (pending.length === 0) {
     showToast('No pending employees to process!', 'warning')
     return
   }
-
-  showToast(`${pendingEmployees.length} employees ready for confirmation!`, 'success')
+  showToast(`${pending.length} employees ready for confirmation!`, 'success')
   document.querySelector('[data-tab="make-confirmation"]').click()
 }
 
-function navigateToConfirmation(employeeId) {
-  showToast('Navigate to Make Confirmation to assign a center', 'success')
-  document.querySelector('[data-tab="make-confirmation"]').click()
-}
-
-// Approve / Reject upload
-async function approveUpload(id) {
-  try {
-    await fetch(`${API_BASE}/admin/uploads/${id}/approve`, { method: "PUT" })
-    showToast("Upload approved", "success")
-    fetchUploads()
-  } catch (err) {
-    console.error(err)
-    showToast("Error approving upload", "error")
-  }
-}
-
-async function rejectUpload(id) {
-  try {
-    await fetch(`${API_BASE}/admin/uploads/${id}/reject`, { method: "PUT" })
-    showToast("Upload rejected", "success")
-    fetchUploads()
-  } catch (err) {
-    console.error(err)
-    showToast("Error rejecting upload", "error")
-  }
-}
-
-// ===== MAKE CONFIRMATION =====
-
-// All patients (across all uploads) for the confirmation tables
-let allPatients = []
+// =====================================================================
+// MAKE CONFIRMATION
+// =====================================================================
 
 async function fetchAllPatientsForConfirmation() {
   try {
     const res = await fetch(`${API_BASE}/admin/patients`)
     const data = await res.json()
-    allPatients = data.map(p => normalisePatient(p))
-
+    allPatients = data.map(normalisePatient)
     renderConfirmationTable()
     renderConfirmedTable()
     updateStats()
   } catch (err) {
-    console.error("fetchAllPatientsForConfirmation error:", err)
+    console.error("fetchAllPatientsForConfirmation:", err)
     showToast("Could not load patient data", "error")
   }
 }
 
-function renderConfirmationTable() {
+// Async — uses real nearby centres per employee
+async function renderConfirmationTable() {
   const tbody = document.getElementById('confirmation-table-body')
   const emptyState = document.getElementById('confirmation-empty')
 
-  const pendingEmployees = allPatients.filter(emp => emp.status !== 'confirmed')
+  const pending = allPatients.filter(emp => emp.status !== 'confirmed')
 
-  if (pendingEmployees.length === 0) {
+  if (pending.length === 0) {
     tbody.innerHTML = ''
     emptyState.style.display = 'flex'
     return
@@ -372,8 +331,28 @@ function renderConfirmationTable() {
 
   emptyState.style.display = 'none'
 
-  tbody.innerHTML = pendingEmployees.map(emp => {
-    const nearbyCenters = findNearbyCenters(emp.pincode)
+  // Loading state
+  tbody.innerHTML = `
+    <tr>
+      <td colspan="6" style="text-align:center;padding:20px;color:var(--text-tertiary);">
+        🔍 Loading centres...
+      </td>
+    </tr>
+  `
+
+  // Fetch nearby centres for all pending patients in parallel
+  const rows = await Promise.all(
+    pending.map(async (emp) => {
+      const nearby = await fetchNearbyCenters(emp.pincode, 3)
+      return { emp, nearby }
+    })
+  )
+
+  tbody.innerHTML = rows.map(({ emp, nearby }) => {
+    // Build dropdown: nearby centres first (with distance), then a divider, then rest
+    const nearbyIds = new Set(nearby.map(c => String(c._id)))
+    const otherCenters = centersData.filter(c => !nearbyIds.has(String(c.id)))
+
     return `
       <tr>
         <td><strong>${emp.employeeName}</strong></td>
@@ -383,11 +362,13 @@ function renderConfirmationTable() {
         <td>
           <select class="center-select" id="select-${emp.id}">
             <option value="">Select a center...</option>
-            ${nearbyCenters.map(c => `
-              <option value="${c.id}">${c.name} (${c.pincode})</option>
+            ${nearby.map(c => `
+              <option value="${c._id}">
+                ${c.name} (${c.pincode})${c.distance != null ? ' — ' + c.distance + ' km' : ''}
+              </option>
             `).join('')}
-            <option disabled>──────────</option>
-            ${centersData.filter(c => !nearbyCenters.find(n => n.id === c.id)).map(c => `
+            ${otherCenters.length > 0 ? `<option disabled>──── Other centres ────</option>` : ''}
+            ${otherCenters.map(c => `
               <option value="${c.id}">${c.name} (${c.pincode})</option>
             `).join('')}
           </select>
@@ -405,8 +386,8 @@ function renderConfirmationTable() {
 }
 
 async function confirmAssignment(patientId) {
-  const selectElement = document.getElementById(`select-${patientId}`)
-  const centerId = selectElement.value
+  const selectEl = document.getElementById(`select-${patientId}`)
+  const centerId = selectEl ? selectEl.value : ''
 
   if (!centerId) {
     showToast('Please select a center first!', 'warning')
@@ -422,22 +403,19 @@ async function confirmAssignment(patientId) {
 
     if (!res.ok) throw new Error("Assignment failed")
 
-    const updatedPatient = await res.json()
+    const updated = await res.json()
+    const normUpdated = normalisePatient(updated)
 
-    // Update in-memory allPatients
+    // Update in-memory
     const idx = allPatients.findIndex(p => p.id === patientId)
-    if (idx !== -1) {
-      allPatients[idx] = normalisePatient(updatedPatient)
-    }
+    if (idx !== -1) allPatients[idx] = normUpdated
 
-    // Also update in the open file view if that file is open
+    // Also update open file view if relevant
     if (selectedFileId) {
       const file = uploadedFiles.find(f => f.id === selectedFileId)
       if (file) {
-        const empIdx = file.employees.findIndex(e => e.id === patientId)
-        if (empIdx !== -1) {
-          file.employees[empIdx] = normalisePatient(updatedPatient)
-        }
+        const ei = file.employees.findIndex(e => e.id === patientId)
+        if (ei !== -1) file.employees[ei] = normUpdated
         renderEmployeesTable(file)
         renderCenterMatchingForFile(file)
       }
@@ -447,13 +425,9 @@ async function confirmAssignment(patientId) {
     renderConfirmedTable()
     updateStats()
 
-    const center = centersData.find(c => c.id === centerId)
-    showToast(
-      `${updatedPatient.name || 'Employee'} assigned to ${center ? center.name : 'center'}!`,
-      'success'
-    )
+    showToast(`${normUpdated.employeeName} assigned to ${normUpdated.assignedCenter?.name || 'centre'}!`, 'success')
   } catch (err) {
-    console.error("confirmAssignment error:", err)
+    console.error("confirmAssignment:", err)
     showToast("Error assigning center", "error")
   }
 }
@@ -462,11 +436,10 @@ function renderConfirmedTable() {
   const tbody = document.getElementById('confirmed-table-body')
   const countBadge = document.getElementById('confirmed-count')
 
-  const confirmedEmployees = allPatients.filter(emp => emp.status === 'confirmed')
+  const confirmed = allPatients.filter(emp => emp.status === 'confirmed')
+  countBadge.textContent = `${confirmed.length} Confirmed`
 
-  countBadge.textContent = `${confirmedEmployees.length} Confirmed`
-
-  if (confirmedEmployees.length === 0) {
+  if (confirmed.length === 0) {
     tbody.innerHTML = `
       <tr>
         <td colspan="5" style="text-align:center;padding:40px;color:var(--text-tertiary);">
@@ -477,7 +450,7 @@ function renderConfirmedTable() {
     return
   }
 
-  tbody.innerHTML = confirmedEmployees.map(emp => `
+  tbody.innerHTML = confirmed.map(emp => `
     <tr>
       <td><strong>${emp.employeeName}</strong></td>
       <td><span class="badge badge-info">${emp.id.toString().slice(-6)}</span></td>
@@ -489,31 +462,27 @@ function renderConfirmedTable() {
 }
 
 function updateStats() {
-  const pendingCount = allPatients.filter(emp => emp.status !== 'confirmed').length
-  const confirmedCount = allPatients.filter(emp => emp.status === 'confirmed').length
-  const totalCount = allPatients.length
-
-  document.getElementById('pending-count').textContent = pendingCount
-  document.getElementById('confirmed-count-stat').textContent = confirmedCount
-  document.getElementById('total-count').textContent = totalCount
+  const pending = allPatients.filter(e => e.status !== 'confirmed').length
+  const confirmed = allPatients.filter(e => e.status === 'confirmed').length
+  document.getElementById('pending-count').textContent = pending
+  document.getElementById('confirmed-count-stat').textContent = confirmed
+  document.getElementById('total-count').textContent = allPatients.length
 }
 
-// ===== REPORTS =====
-
-let confirmedPatientsForReports = []
+// =====================================================================
+// REPORTS — multiple reports per employee + dropdown viewer
+// =====================================================================
 
 async function fetchConfirmedPatientsForReports() {
   try {
     const res = await fetch(`${API_BASE}/admin/patients`)
     const data = await res.json()
-
     confirmedPatientsForReports = data
       .filter(p => p.assignedCenterId)
-      .map(p => normalisePatient(p))
-
+      .map(normalisePatient)
     renderReportsTable()
   } catch (err) {
-    console.error("fetchConfirmedPatientsForReports error:", err)
+    console.error("fetchConfirmedPatientsForReports:", err)
     showToast("Could not load reports data", "error")
   }
 }
@@ -546,13 +515,26 @@ function renderReportsTable() {
         </div>
       </td>
       <td>
-        ${emp.reportUrl ? `
-          <a class="btn btn-sm btn-secondary"
-             href="http://localhost:5000${emp.reportUrl}"
-             target="_blank">
-            📁 View Report
-          </a>
-        ` : '<span style="color:var(--text-tertiary);">No report</span>'}
+        ${emp.reportUrls && emp.reportUrls.length > 0
+          ? `
+            <div style="display:flex;align-items:center;gap:8px;">
+              <select class="center-select" id="report-select-${emp.id}"
+                style="min-width:160px;font-size:12px;">
+                ${emp.reportUrls.map((r, i) => `
+                  <option value="${r.url}">
+                    ${r.originalName || 'Report ' + (i + 1)}
+                  </option>
+                `).join('')}
+              </select>
+              <button class="btn btn-sm btn-secondary"
+                onclick="viewSelectedReport('${emp.id}')">
+                👁 View
+              </button>
+              <span class="badge badge-info">${emp.reportUrls.length} file${emp.reportUrls.length > 1 ? 's' : ''}</span>
+            </div>
+          `
+          : '<span style="color:var(--text-tertiary);">No reports</span>'
+        }
       </td>
     </tr>
   `).join('')
@@ -575,21 +557,30 @@ async function handleReportUpload(patientId, inputEl) {
 
     const data = await res.json()
 
-    // Update in memory
+    // Push new report entry into in-memory list
     const idx = confirmedPatientsForReports.findIndex(p => p.id === patientId)
     if (idx !== -1) {
-      confirmedPatientsForReports[idx].reportUrl = data.reportUrl
+      confirmedPatientsForReports[idx].reportUrls.push(data.reportEntry)
     }
 
     renderReportsTable()
-    showToast(`Report uploaded successfully!`, 'success')
+    showToast(`Report "${file.name}" uploaded successfully!`, 'success')
   } catch (err) {
-    console.error("handleReportUpload error:", err)
+    console.error("handleReportUpload:", err)
     showToast("Error uploading report", "error")
   }
 }
 
-// ===== Centers =====
+function viewSelectedReport(patientId) {
+  const select = document.getElementById(`report-select-${patientId}`)
+  if (!select || !select.value) return
+  const url = `http://localhost:5000${select.value}`
+  window.open(url, '_blank')
+}
+
+// =====================================================================
+// CENTERS
+// =====================================================================
 
 async function fetchCenters() {
   try {
@@ -640,19 +631,67 @@ function renderCentersTable() {
   `).join('')
 }
 
-// ===== Companies =====
+async function saveCenter(event) {
+  event.preventDefault()
+  const center = {
+    name: document.getElementById('center-name').value,
+    email: document.getElementById('center-email').value,
+    phone: document.getElementById('center-phone').value,
+    address: document.getElementById('center-address').value,
+    pincode: document.getElementById('center-pincode').value
+  }
+  try {
+    const res = await fetch(API_BASE + "/admin/centers", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(center)
+    })
+    const data = await res.json()
+    centersData.push({
+      id: data._id, name: data.name, email: data.email || "",
+      phone: data.phone || "", address: data.address || "", pincode: data.pincode || ""
+    })
+    renderCentersTable()
+    closeModal('center-modal')
+    showToast("Center added successfully!", "success")
+  } catch (err) {
+    console.error(err)
+    showToast("Error adding center", "error")
+  }
+}
+
+function editCenter(id) {
+  const c = centersData.find(x => x.id === id)
+  if (c) {
+    document.getElementById('center-name').value = c.name
+    document.getElementById('center-email').value = c.email
+    document.getElementById('center-phone').value = c.phone
+    document.getElementById('center-address').value = c.address
+    document.getElementById('center-pincode').value = c.pincode
+    centersData = centersData.filter(x => x.id !== id)
+    openModal('center-modal')
+  }
+}
+
+function deleteCenter(id) {
+  if (confirm('Are you sure you want to delete this center?')) {
+    centersData = centersData.filter(c => c.id !== id)
+    renderCentersTable()
+    showToast('Center deleted successfully!', 'success')
+  }
+}
+
+// =====================================================================
+// COMPANIES
+// =====================================================================
 
 async function fetchCompanies() {
   try {
     const res = await fetch(API_BASE + "/admin/companies")
     const data = await res.json()
     companiesData = data.map(c => ({
-      id: c._id,
-      name: c.name,
-      address: c.address || "",
-      email: c.email || "",
-      phone: c.phone || "",
-      pincode: c.pincode || ""
+      id: c._id, name: c.name, address: c.address || "",
+      email: c.email || "", phone: c.phone || "", pincode: c.pincode || ""
     }))
     renderCompaniesTable()
   } catch (err) {
@@ -691,46 +730,8 @@ function renderCompaniesTable() {
   `).join('')
 }
 
-// ===== Save Center (API) =====
-async function saveCenter(event) {
-  event.preventDefault()
-
-  const center = {
-    name: document.getElementById('center-name').value,
-    email: document.getElementById('center-email').value,
-    phone: document.getElementById('center-phone').value,
-    address: document.getElementById('center-address').value,
-    pincode: document.getElementById('center-pincode').value
-  }
-
-  try {
-    const res = await fetch(API_BASE + "/admin/centers", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(center)
-    })
-    const data = await res.json()
-    centersData.push({
-      id: data._id,
-      name: data.name,
-      email: data.email || "",
-      phone: data.phone || "",
-      address: data.address || "",
-      pincode: data.pincode || ""
-    })
-    renderCentersTable()
-    closeModal('center-modal')
-    showToast("Center added successfully!", "success")
-  } catch (err) {
-    console.error(err)
-    showToast("Error adding center", "error")
-  }
-}
-
-// ===== Save Company (API) =====
 async function saveCompany(event) {
   event.preventDefault()
-
   const company = {
     name: document.getElementById('company-name').value,
     address: document.getElementById('company-address').value,
@@ -738,7 +739,6 @@ async function saveCompany(event) {
     phone: document.getElementById('company-phone').value,
     pincode: document.getElementById('company-pincode').value
   }
-
   try {
     const res = await fetch(API_BASE + "/admin/companies", {
       method: "POST",
@@ -747,12 +747,8 @@ async function saveCompany(event) {
     })
     const data = await res.json()
     companiesData.push({
-      id: data._id,
-      name: data.name,
-      address: data.address || "",
-      email: data.email || "",
-      phone: data.phone || "",
-      pincode: data.pincode || ""
+      id: data._id, name: data.name, address: data.address || "",
+      email: data.email || "", phone: data.phone || "", pincode: data.pincode || ""
     })
     renderCompaniesTable()
     closeModal('company-modal')
@@ -763,16 +759,19 @@ async function saveCompany(event) {
   }
 }
 
-// ===== Delete Center =====
-function deleteCenter(id) {
-  if (confirm('Are you sure you want to delete this center?')) {
-    centersData = centersData.filter(c => c.id !== id)
-    renderCentersTable()
-    showToast('Center deleted successfully!', 'success')
+function editCompany(id) {
+  const c = companiesData.find(x => x.id === id)
+  if (c) {
+    document.getElementById('company-name').value = c.name
+    document.getElementById('company-address').value = c.address
+    document.getElementById('company-email').value = c.email
+    document.getElementById('company-phone').value = c.phone
+    document.getElementById('company-pincode').value = c.pincode
+    companiesData = companiesData.filter(x => x.id !== id)
+    openModal('company-modal')
   }
 }
 
-// ===== Delete Company =====
 function deleteCompany(id) {
   if (confirm('Are you sure you want to delete this company?')) {
     companiesData = companiesData.filter(c => c.id !== id)
@@ -781,59 +780,31 @@ function deleteCompany(id) {
   }
 }
 
-// ===== Edit Center =====
-function editCenter(id) {
-  const center = centersData.find(c => c.id === id)
-  if (center) {
-    document.getElementById('center-name').value = center.name
-    document.getElementById('center-email').value = center.email
-    document.getElementById('center-phone').value = center.phone
-    document.getElementById('center-address').value = center.address
-    document.getElementById('center-pincode').value = center.pincode
-    centersData = centersData.filter(c => c.id !== id)
-    openModal('center-modal')
-  }
-}
+// =====================================================================
+// HR
+// =====================================================================
 
-// ===== Edit Company =====
-function editCompany(id) {
-  const company = companiesData.find(c => c.id === id)
-  if (company) {
-    document.getElementById('company-name').value = company.name
-    document.getElementById('company-address').value = company.address
-    document.getElementById('company-email').value = company.email
-    document.getElementById('company-phone').value = company.phone
-    document.getElementById('company-pincode').value = company.pincode
-    companiesData = companiesData.filter(c => c.id !== id)
-    openModal('company-modal')
-  }
-}
-
-// ===== HR Modal =====
 function populateCompanyDropdown() {
   const select = document.getElementById("hr-company")
-  select.innerHTML = companiesData.map(c => `
-    <option value="${c.id}">${c.name}</option>
-  `).join("")
+  select.innerHTML = companiesData.map(c =>
+    `<option value="${c.id}">${c.name}</option>`
+  ).join("")
 }
 
 async function createHR(event) {
   event.preventDefault()
-
   const hr = {
     name: document.getElementById("hr-name").value,
     email: document.getElementById("hr-email").value,
     password: document.getElementById("hr-password").value,
     companyId: document.getElementById("hr-company").value
   }
-
   try {
-    const res = await fetch(API_BASE + "/hr/create", {
+    await fetch(API_BASE + "/hr/create", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(hr)
     })
-    await res.json()
     closeModal("hr-modal")
     showToast("HR account created successfully", "success")
   } catch (err) {
@@ -842,7 +813,10 @@ async function createHR(event) {
   }
 }
 
-// ===== Modals =====
+// =====================================================================
+// MODALS
+// =====================================================================
+
 function openModal(modalId) {
   document.getElementById(modalId).classList.add('active')
   document.body.style.overflow = 'hidden'
@@ -864,71 +838,59 @@ document.querySelectorAll('.modal').forEach(modal => {
 
 document.addEventListener('keydown', (e) => {
   if (e.key === 'Escape') {
-    document.querySelectorAll('.modal.active').forEach(modal => closeModal(modal.id))
+    document.querySelectorAll('.modal.active').forEach(m => closeModal(m.id))
   }
 })
 
-// ===== Table Utilities =====
+// =====================================================================
+// TABLE UTILITIES
+// =====================================================================
+
 function sortTable(tableId, columnIndex) {
   const table = document.getElementById(tableId)
   const tbody = table.querySelector('tbody')
   const rows = Array.from(tbody.querySelectorAll('tr'))
-
   if (rows.length === 0 || rows[0].cells.length <= columnIndex) return
 
-  const isAscending = table.dataset.sortColumn !== String(columnIndex) ||
+  const isAsc = table.dataset.sortColumn !== String(columnIndex) ||
     table.dataset.sortDirection !== 'asc'
 
   rows.sort((a, b) => {
-    const aValue = a.cells[columnIndex]?.textContent.trim().toLowerCase() || ''
-    const bValue = b.cells[columnIndex]?.textContent.trim().toLowerCase() || ''
-    const aNum = parseFloat(aValue)
-    const bNum = parseFloat(bValue)
-    if (!isNaN(aNum) && !isNaN(bNum)) return isAscending ? aNum - bNum : bNum - aNum
-    return isAscending ? aValue.localeCompare(bValue) : bValue.localeCompare(aValue)
+    const av = a.cells[columnIndex]?.textContent.trim().toLowerCase() || ''
+    const bv = b.cells[columnIndex]?.textContent.trim().toLowerCase() || ''
+    const an = parseFloat(av); const bn = parseFloat(bv)
+    if (!isNaN(an) && !isNaN(bn)) return isAsc ? an - bn : bn - an
+    return isAsc ? av.localeCompare(bv) : bv.localeCompare(av)
   })
 
   table.dataset.sortColumn = columnIndex
-  table.dataset.sortDirection = isAscending ? 'asc' : 'desc'
+  table.dataset.sortDirection = isAsc ? 'asc' : 'desc'
   rows.forEach(row => tbody.appendChild(row))
 }
 
 function searchTable(tableId, searchTerm) {
   const table = document.getElementById(tableId)
-  const tbody = table.querySelector('tbody')
-  const rows = tbody.querySelectorAll('tr')
+  const rows = table.querySelector('tbody').querySelectorAll('tr')
   const term = searchTerm.toLowerCase()
   rows.forEach(row => {
     row.style.display = row.textContent.toLowerCase().includes(term) ? '' : 'none'
   })
 }
 
-// ===== Nearby Centers (pincode prefix match) =====
-function findNearbyCenters(pincode) {
-  if (!pincode) return centersData.slice(0, 3)
-  const prefix = pincode.toString().substring(0, 3)
-  let matches = centersData.filter(c => c.pincode && c.pincode.startsWith(prefix))
-  if (matches.length === 0) matches = centersData.slice(0, 3)
-  return matches.slice(0, 3)
-}
+// =====================================================================
+// TOAST
+// =====================================================================
 
-// ===== Toast =====
 function showToast(message, type = 'success') {
   const toast = document.getElementById('toast')
-  const toastMessage = toast.querySelector('.toast-message')
-  const toastIcon = toast.querySelector('.toast-icon')
-
-  toast.className = 'toast'
-  toast.classList.add(type)
-
-  toastIcon.textContent = type === 'success' ? '✓' : type === 'error' ? '✕' : '⚠'
-  toastMessage.textContent = message
+  toast.className = 'toast ' + type
+  toast.querySelector('.toast-icon').textContent =
+    type === 'success' ? '✓' : type === 'error' ? '✕' : '⚠'
+  toast.querySelector('.toast-message').textContent = message
   toast.classList.add('show')
-
   setTimeout(() => toast.classList.remove('show'), 3000)
 }
 
-// ===== Utilities =====
 function formatFileSize(bytes) {
   if (bytes < 1024) return bytes + ' B'
   if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(1) + ' KB'

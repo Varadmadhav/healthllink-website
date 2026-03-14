@@ -2,8 +2,7 @@ const Company = require("../models/Company")
 const Center = require("../models/Center")
 const Upload = require("../models/Upload")
 const Patient = require("../models/Patient")
-const path = require("path")
-const fs = require("fs")
+const { getCoordinatesForPincode, haversineDistance } = require("../utils/pincodeUtils")
 
 // ─── Company ────────────────────────────────────────────────────────────────
 
@@ -28,9 +27,24 @@ exports.getCompanies = async (req, res) => {
 
 // ─── Center ─────────────────────────────────────────────────────────────────
 
+// POST /api/admin/centers
+// Auto-populates lat/lng from local pincode data when saving a new centre
 exports.addCenter = async (req, res) => {
   try {
-    const center = new Center(req.body)
+    const { name, email, phone, address, pincode } = req.body
+
+    let latitude = null
+    let longitude = null
+
+    if (pincode) {
+      const coords = getCoordinatesForPincode(pincode)
+      if (coords) {
+        latitude = coords.lat
+        longitude = coords.lng
+      }
+    }
+
+    const center = new Center({ name, email, phone, address, pincode, latitude, longitude })
     await center.save()
     res.status(201).json(center)
   } catch (error) {
@@ -38,6 +52,7 @@ exports.addCenter = async (req, res) => {
   }
 }
 
+// GET /api/admin/centers
 exports.getCenters = async (req, res) => {
   try {
     const centers = await Center.find()
@@ -47,9 +62,76 @@ exports.getCenters = async (req, res) => {
   }
 }
 
+// GET /api/admin/centers/nearby?pincode=560001&limit=3
+// Returns centres sorted by real straight-line distance using local pincode data.
+// Completely synchronous — no external API calls.
+exports.getNearbyCenters = async (req, res) => {
+  try {
+    const { pincode, limit = 3 } = req.query
+
+    if (!pincode) {
+      return res.status(400).json({ message: "pincode query param is required" })
+    }
+
+    const allCenters = await Center.find()
+
+    if (allCenters.length === 0) return res.json([])
+
+    // Get coordinates for the employee pincode
+    const empCoords = getCoordinatesForPincode(pincode)
+
+    if (empCoords) {
+      const centersWithDistance = allCenters.map((c) => {
+        // Use stored coordinates if available, otherwise look up from local data
+        let centerCoords = null
+
+        if (c.latitude && c.longitude) {
+          centerCoords = { lat: c.latitude, lng: c.longitude }
+        } else if (c.pincode) {
+          centerCoords = getCoordinatesForPincode(c.pincode)
+        }
+
+        const distance = centerCoords
+          ? haversineDistance(empCoords.lat, empCoords.lng, centerCoords.lat, centerCoords.lng)
+          : 99999
+
+        return {
+          _id: c._id,
+          name: c.name,
+          phone: c.phone || "",
+          email: c.email || "",
+          address: c.address || "",
+          pincode: c.pincode || "",
+          distance: Math.round(distance * 10) / 10
+        }
+      })
+
+      const sorted = centersWithDistance
+        .sort((a, b) => a.distance - b.distance)
+        .slice(0, parseInt(limit))
+
+      return res.json(sorted)
+    }
+
+    // Fallback — pincode not in dataset at all, return first N centres
+    const fallback = allCenters.slice(0, parseInt(limit)).map(c => ({
+      _id: c._id,
+      name: c.name,
+      phone: c.phone || "",
+      email: c.email || "",
+      address: c.address || "",
+      pincode: c.pincode || "",
+      distance: null
+    }))
+
+    res.json(fallback)
+  } catch (error) {
+    res.status(500).json({ message: error.message })
+  }
+}
+
 // ─── Uploads ─────────────────────────────────────────────────────────────────
 
-// GET /api/admin/uploads  — all upload batches with pending/confirmed counts
 exports.getUploads = async (req, res) => {
   try {
     const uploads = await Upload
@@ -58,23 +140,17 @@ exports.getUploads = async (req, res) => {
       .populate("uploadedBy", "name")
       .sort({ uploadedAt: -1 })
 
-    // attach per-upload patient counts so the grid cards can show them
     const uploadsWithCounts = await Promise.all(
       uploads.map(async (u) => {
         const pendingCount = await Patient.countDocuments({
           uploadId: u._id,
-          status: { $in: ["pending", "approved"] },
           assignedCenterId: null
         })
         const confirmedCount = await Patient.countDocuments({
           uploadId: u._id,
           assignedCenterId: { $ne: null }
         })
-        return {
-          ...u.toObject(),
-          pendingCount,
-          confirmedCount
-        }
+        return { ...u.toObject(), pendingCount, confirmedCount }
       })
     )
 
@@ -84,7 +160,6 @@ exports.getUploads = async (req, res) => {
   }
 }
 
-// GET /api/admin/uploads/:uploadId/patients  — patients for one upload batch
 exports.getPatientsByUpload = async (req, res) => {
   try {
     const patients = await Patient
@@ -97,73 +172,50 @@ exports.getPatientsByUpload = async (req, res) => {
   }
 }
 
-// PUT /api/admin/uploads/:id/approve
 exports.approveUpload = async (req, res) => {
   try {
     const upload = await Upload.findByIdAndUpdate(
-      req.params.id,
-      { status: "approved" },
-      { new: true }
+      req.params.id, { status: "approved" }, { new: true }
     )
-    await Patient.updateMany(
-      { uploadId: req.params.id },
-      { status: "approved" }
-    )
+    await Patient.updateMany({ uploadId: req.params.id }, { status: "approved" })
     res.json(upload)
   } catch (error) {
     res.status(500).json({ message: error.message })
   }
 }
 
-// PUT /api/admin/uploads/:id/reject
 exports.rejectUpload = async (req, res) => {
   try {
     const upload = await Upload.findByIdAndUpdate(
-      req.params.id,
-      { status: "rejected" },
-      { new: true }
+      req.params.id, { status: "rejected" }, { new: true }
     )
-    await Patient.updateMany(
-      { uploadId: req.params.id },
-      { status: "rejected" }
-    )
+    await Patient.updateMany({ uploadId: req.params.id }, { status: "rejected" })
     res.json(upload)
   } catch (error) {
     res.status(500).json({ message: error.message })
   }
 }
 
-// ─── Confirmation ────────────────────────────────────────────────────────────
+// ─── Patients ────────────────────────────────────────────────────────────────
 
-// PUT /api/admin/patients/:patientId/assign
-// Body: { centerId }
 exports.assignCenter = async (req, res) => {
   try {
     const { centerId } = req.body
-    if (!centerId) {
-      return res.status(400).json({ message: "centerId is required" })
-    }
+    if (!centerId) return res.status(400).json({ message: "centerId is required" })
 
     const patient = await Patient.findByIdAndUpdate(
       req.params.patientId,
-      {
-        assignedCenterId: centerId,
-        status: "confirmed"
-      },
+      { assignedCenterId: centerId, status: "confirmed" },
       { new: true }
     ).populate("assignedCenterId", "name phone address pincode")
 
-    if (!patient) {
-      return res.status(404).json({ message: "Patient not found" })
-    }
-
+    if (!patient) return res.status(404).json({ message: "Patient not found" })
     res.json(patient)
   } catch (error) {
     res.status(500).json({ message: error.message })
   }
 }
 
-// GET /api/admin/patients  — all confirmed patients (for Make Confirmation tab)
 exports.getAllPatients = async (req, res) => {
   try {
     const patients = await Patient
@@ -179,28 +231,27 @@ exports.getAllPatients = async (req, res) => {
 
 // ─── Reports ─────────────────────────────────────────────────────────────────
 
-// POST /api/admin/patients/:patientId/report  — upload a PDF report
-// Uses multer (configured in the route) — file saved to /uploads/reports/
+// POST /api/admin/patients/:patientId/report
+// Pushes a new entry into the reportUrls array — supports multiple reports per patient
 exports.uploadReport = async (req, res) => {
   try {
-    if (!req.file) {
-      return res.status(400).json({ message: "No file uploaded" })
-    }
+    if (!req.file) return res.status(400).json({ message: "No file uploaded" })
 
-    // Store a relative URL path the frontend can use to download
-    const reportUrl = `/uploads/reports/${req.file.filename}`
+    const reportEntry = {
+      url: `/uploads/reports/${req.file.filename}`,
+      originalName: req.file.originalname,
+      uploadedAt: new Date()
+    }
 
     const patient = await Patient.findByIdAndUpdate(
       req.params.patientId,
-      { reportUrl },
+      { $push: { reportUrls: reportEntry } },
       { new: true }
     )
 
-    if (!patient) {
-      return res.status(404).json({ message: "Patient not found" })
-    }
+    if (!patient) return res.status(404).json({ message: "Patient not found" })
 
-    res.json({ reportUrl, patient })
+    res.json({ reportEntry, patient })
   } catch (error) {
     res.status(500).json({ message: error.message })
   }

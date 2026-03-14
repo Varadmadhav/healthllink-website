@@ -13,7 +13,7 @@ connectDB()
 app.use(cors())
 app.use(express.json())
 
-// Serve uploaded report PDFs so the frontend can download them
+// Serve uploaded report PDFs so the frontend can open/download them
 app.use("/uploads", express.static(path.join(__dirname, "uploads")))
 
 app.use("/api/admin", adminRoutes)

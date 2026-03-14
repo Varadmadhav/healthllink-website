@@ -13,23 +13,17 @@ const patientSchema = new mongoose.Schema({
   },
 
   name: String,
-
   gender: String,
-
   age: Number,
-
   phone: String,
-
   email: String,
-
   address: String,
-
   pincode: String,
 
   appointmentDate: {
-  type: Date,
-  default: null
-},
+    type: Date,
+    default: null
+  },
 
   status: {
     type: String,
@@ -42,6 +36,22 @@ const patientSchema = new mongoose.Schema({
     default: null
   },
 
+  // Multiple reports — each entry has url, originalName, uploadedAt
+  reportUrls: {
+    type: [
+      {
+        url: String,
+        originalName: String,
+        uploadedAt: {
+          type: Date,
+          default: Date.now
+        }
+      }
+    ],
+    default: []
+  },
+
+  // Keep old field for backward compatibility with existing data
   reportUrl: {
     type: String,
     default: null
