@@ -297,3 +297,85 @@ exports.changePassword = async (req, res) => {
     res.status(500).json({ message: error.message })
   }
 }
+
+const crypto = require("crypto")
+
+exports.forgotPassword = async (req, res) => {
+  try {
+    const { email, companyId } = req.body
+
+    if (!email) return res.status(400).json({ message: "Email is required" })
+
+    // Find user by email — works for both HR and employee
+    const query = { email: email.toLowerCase().trim() }
+    if (companyId) query.companyId = companyId
+
+    const user = await User.findOne(query)
+
+    // Always return success even if user not found — security best practice
+    if (!user) {
+      return res.json({ message: "If this email exists, a reset link has been sent" })
+    }
+
+    // Generate reset token
+    const resetToken = crypto.randomBytes(32).toString("hex")
+    const resetTokenExpiry = new Date(Date.now() + 60 * 60 * 1000) // 1 hour
+
+    user.resetToken = resetToken
+    user.resetTokenExpiry = resetTokenExpiry
+    await user.save()
+
+    // Send email with reset link
+    const { sendPasswordResetEmail } = require("../utils/emailService")
+    try {
+      await sendPasswordResetEmail({
+        toEmail: user.email,
+        userName: user.name,
+        resetToken,
+        role: user.role
+      })
+    } catch (emailErr) {
+      console.error("Reset email failed:", emailErr.message)
+    }
+
+    res.json({ message: "If this email exists, a reset link has been sent" })
+
+  } catch (error) {
+    res.status(500).json({ message: error.message })
+  }
+}
+
+exports.resetPassword = async (req, res) => {
+  try {
+    const { token, newPassword } = req.body
+
+    if (!token || !newPassword) {
+      return res.status(400).json({ message: "Token and new password are required" })
+    }
+
+    if (newPassword.length < 6) {
+      return res.status(400).json({ message: "Password must be at least 6 characters" })
+    }
+
+    const user = await User.findOne({
+      resetToken: token,
+      resetTokenExpiry: { $gt: new Date() } // token not expired
+    })
+
+    if (!user) {
+      return res.status(400).json({ message: "Invalid or expired reset link. Please request a new one." })
+    }
+
+    // Update password
+    user.password = await bcrypt.hash(newPassword, 10)
+    user.isTemporaryPassword = false
+    user.resetToken = undefined
+    user.resetTokenExpiry = undefined
+    await user.save()
+
+    res.json({ message: "Password reset successfully. You can now log in." })
+
+  } catch (error) {
+    res.status(500).json({ message: error.message })
+  }
+}

@@ -104,6 +104,7 @@ Enter your registered email address below. We will send you a link to reset your
 <input type="email" id="resetEmailInput" placeholder="name@example.com">
 </div>
 
+<div id="resetMessage" style="font-size:13px;margin-bottom:10px;min-height:18px;"></div>
 <button class="btn-primary" onclick="sendResetLink()">Send Link</button>
 
 <a href="#" class="back-link" onclick="closeResetModal()" style="margin-top:10px; display:block;">
@@ -307,33 +308,55 @@ document.getElementById("authForm").reset()
 }
 
 function openResetModal(){
-
-document.getElementById("resetModal").style.display="flex"
-
+  document.getElementById("resetModal").style.display="flex"
+  document.getElementById("resetMessage").textContent = ""
+  document.getElementById("resetEmailInput").value = ""
 }
 
-function closeResetModal(){
-
-document.getElementById("resetModal").style.display="none"
-document.getElementById("resetEmailInput").value=""
-
+function closeResetModal() {
+  document.getElementById("resetModal").style.display = "none"
+  document.getElementById("resetEmailInput").value = ""
+  document.getElementById("resetMessage").textContent = ""  // ← ADD
 }
+// REPLACE existing sendResetLink:
+async function sendResetLink() {
+  const email = document.getElementById("resetEmailInput").value.trim()
+  const msgEl = document.getElementById("resetMessage")
 
-function sendResetLink(){
+  if (!email || !email.includes("@")) {
+    msgEl.style.color = "red"
+    msgEl.textContent = "Please enter a valid email address"
+    return
+  }
 
-const email=document.getElementById("resetEmailInput").value
+  const btn = document.querySelector("#resetModal .btn-primary")
+  btn.textContent = "Sending..."
+  btn.disabled = true
 
-if(email && email.includes("@")){
+  try {
+    const res = await fetch("http://localhost:5000/api/employee/forgot-password", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        email,
+        companyId: currentCompanyId || undefined
+      })
+    })
 
-alert(`Reset link sent to ${email}!`)
-closeResetModal()
+    const data = await res.json()
+    msgEl.style.color = "green"
+    msgEl.textContent = "✅ If this email exists, a reset link has been sent. Check your inbox."
+    document.getElementById("resetEmailInput").value = ""
 
-}else{
+    setTimeout(() => closeResetModal(), 3000)
 
-alert("Please enter a valid email.")
-
-}
-
+  } catch (err) {
+    msgEl.style.color = "red"
+    msgEl.textContent = "Server error. Please try again."
+  } finally {
+    btn.textContent = "Send Link"
+    btn.disabled = false
+  }
 }
 
 </script>

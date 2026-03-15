@@ -156,3 +156,44 @@ exports.sendConfirmationEmail = async ({
     html,
   })
 }
+
+exports.sendPasswordResetEmail = async ({ toEmail, userName, resetToken, role }) => {
+  const resetUrl = `http://127.0.0.1:5501/Healthlink/Solutions/corp_sol/reset_password.html?token=${resetToken}&role=${role}`
+
+  const html = `
+    <div style="font-family:Arial,sans-serif;max-width:600px;margin:auto;
+                border:1px solid #e2e8f0;border-radius:8px;overflow:hidden;">
+      <div style="background:linear-gradient(135deg,#667eea,#764ba2);
+                  padding:24px;color:white;">
+        <h2 style="margin:0;">🔐 Password Reset Request</h2>
+        <p style="margin:6px 0 0;opacity:0.9;">HealthLink System</p>
+      </div>
+      <div style="padding:24px;">
+        <p>Dear <strong>${userName}</strong>,</p>
+        <p>We received a request to reset your password. Click the button below to set a new password:</p>
+        <p style="margin:24px 0;">
+          <a href="${resetUrl}"
+             style="background:#667eea;color:white;padding:12px 24px;
+                    border-radius:6px;text-decoration:none;font-size:15px;font-weight:600;">
+            Reset My Password →
+          </a>
+        </p>
+        <p style="color:#718096;font-size:13px;">
+          This link expires in <strong>1 hour</strong>.<br>
+          If you did not request this, ignore this email — your password will not change.
+        </p>
+      </div>
+      <div style="background:#f7fafc;padding:12px 24px;
+                  font-size:12px;color:#a0aec0;text-align:center;">
+        This is an automated email — please do not reply.
+      </div>
+    </div>
+  `
+
+  await transporter.sendMail({
+    from: `"Health Checkup System" <${process.env.EMAIL_USER}>`,
+    to: toEmail,
+    subject: "🔐 Password Reset — HealthLink System",
+    html,
+  })
+}

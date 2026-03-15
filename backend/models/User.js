@@ -52,7 +52,15 @@ const userSchema = new mongoose.Schema(
     isTemporaryPassword: {
       type: Boolean,
       default: false
-    }
+    },
+    resetToken: {
+  type: String,
+  default: undefined
+},
+resetTokenExpiry: {
+  type: Date,
+  default: undefined
+}
   },
   { timestamps: true }
 )
