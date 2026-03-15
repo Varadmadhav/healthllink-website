@@ -2,6 +2,7 @@ const User = require("../models/User")
 const bcrypt = require("bcryptjs")
 const jwt = require("jsonwebtoken")
 const Patient = require("../models/Patient")
+const mongoose = require("mongoose")
 
 exports.createEmployee = async (req, res) => {
   try {
@@ -11,21 +12,9 @@ exports.createEmployee = async (req, res) => {
       return res.status(400).json({ message: "All fields are required" })
     }
 
-   // REPLACE WITH:
-const existingUser = await User.findOne({
-  $or: [
-    { email: patient.email },
-    { patientId: patient._id }
-  ]
-})
-
-// If user exists but was never properly linked to this patient,
-// treat as new so they get a fresh temp password
-if (existingUser && !existingUser.patientId) {
-  existingUser.patientId = patient._id
-  existingUser.companyId = patient.companyId?._id || existingUser.companyId
-  await existingUser.save()
-}
+    const existingUser = await User.findOne({
+      $or: [{ email }, { employeeId }]
+    })
 
     if (existingUser) {
       return res.status(400).json({ message: "Employee already exists with same email or employee ID" })
@@ -34,23 +23,13 @@ if (existingUser && !existingUser.patientId) {
     const hashedPassword = await bcrypt.hash(password, 10)
 
     const user = new User({
-      name,
-      email,
-      password: hashedPassword,
-      employeeId,
-      companyId,
-      role: "employee",
-      phone: phone || "",
-      address: address || "",
-      pincode: pincode || ""
+      name, email, password: hashedPassword, employeeId,
+      companyId, role: "employee",
+      phone: phone || "", address: address || "", pincode: pincode || ""
     })
 
     await user.save()
-
-    res.status(201).json({
-      message: "Employee created successfully",
-      user
-    })
+    res.status(201).json({ message: "Employee created successfully", user })
 
   } catch (error) {
     res.status(500).json({ message: error.message })
@@ -68,23 +47,14 @@ exports.employeeLogin = async (req, res) => {
     const user = await User.findOne({
       role: "employee",
       companyId,
-      $or: [
-        { email: email },
-        { employeeId: email }
-      ]
+      $or: [{ email }, { employeeId: email }]
     })
 
-    if (!user) {
-      return res.status(404).json({ message: "Employee not found for selected company" })
-    }
+    if (!user) return res.status(404).json({ message: "Employee not found for selected company" })
 
     const isMatch = await bcrypt.compare(password, user.password)
+    if (!isMatch) return res.status(401).json({ message: "Invalid password" })
 
-    if (!isMatch) {
-      return res.status(401).json({ message: "Invalid password" })
-    }
-
-    // ── CHANGED: added isTemporaryPassword to JWT payload and response
     const token = jwt.sign(
       {
         id: user._id,
@@ -99,11 +69,7 @@ exports.employeeLogin = async (req, res) => {
       { expiresIn: "1d" }
     )
 
-    res.json({
-      token,
-      user,
-      isTemporaryPassword: user.isTemporaryPassword || false
-    })
+    res.json({ token, user, isTemporaryPassword: user.isTemporaryPassword || false })
 
   } catch (error) {
     res.status(500).json({ message: error.message })
@@ -112,24 +78,42 @@ exports.employeeLogin = async (req, res) => {
 
 exports.getMyDashboard = async (req, res) => {
   try {
+    // ── FIX: always fetch fresh user from DB to get latest patientId
+    // req.user comes from authMiddleware which already does User.findById
+    // so req.user is already the fresh DB record — use it directly
     const user = req.user
 
-    if (!user) {
-      return res.status(401).json({ message: "Unauthorized" })
-    }
+    if (!user) return res.status(401).json({ message: "Unauthorized" })
 
-    // ── CHANGED: use patientId link if available (Excel-imported employees),
-    // fall back to email match for manually created employees
-    const patientQuery = user.patientId
-      ? { _id: user.patientId, companyId: user.companyId }
-      : { companyId: user.companyId, email: user.email }
+    // ── FIX: safe ObjectId conversion with fallback
+    let patientQuery
+    try {
+      if (user.patientId) {
+        patientQuery = {
+          _id: new mongoose.Types.ObjectId(user.patientId.toString()),
+          companyId: new mongoose.Types.ObjectId(user.companyId.toString())
+        }
+      } else {
+        patientQuery = {
+          companyId: new mongoose.Types.ObjectId(user.companyId.toString()),
+          email: user.email
+        }
+      }
+    } catch (idErr) {
+      // Fallback if ObjectId conversion fails
+      patientQuery = { email: user.email }
+    }
 
     const patients = await Patient.find(patientQuery)
       .populate("assignedCenterId", "name address pincode phone")
       .sort({ appointmentDate: 1, createdAt: -1 })
 
+    // Only show today or future appointments
+    const now = new Date()
+    now.setHours(0, 0, 0, 0)
+
     const appointments = patients
-      .filter(p => p.appointmentDate)
+      .filter(p => p.appointmentDate && new Date(p.appointmentDate) >= now)
       .map(p => ({
         id: p._id,
         employeeName: p.name || user.name,
@@ -140,8 +124,10 @@ exports.getMyDashboard = async (req, res) => {
           ? `${p.assignedCenterId.address || ""} - ${p.assignedCenterId.pincode || ""}`
           : "Center not assigned yet",
         appointmentDate: p.appointmentDate,
-        appointmentTime: "10:00 AM",
-        status: p.status || "requested"
+        appointmentTime: "10:00",   // ── FIX: no AM/PM here — formatTime in frontend handles it
+        status: p.status || "requested",
+        rescheduleStatus: p.rescheduleStatus || "none",
+        rescheduleRequestDate: p.rescheduleRequestDate || null
       }))
 
     const reports = patients.flatMap((p) => {
@@ -183,6 +169,7 @@ exports.getMyDashboard = async (req, res) => {
     })
 
   } catch (error) {
+    console.error("getMyDashboard error:", error.message)
     res.status(500).json({ message: error.message })
   }
 }
@@ -192,13 +179,8 @@ exports.bookAppointment = async (req, res) => {
     const user = req.user
     const { appointmentDate } = req.body
 
-    if (!user) {
-      return res.status(401).json({ message: "Unauthorized" })
-    }
-
-    if (!appointmentDate) {
-      return res.status(400).json({ message: "Appointment date is required" })
-    }
+    if (!user) return res.status(401).json({ message: "Unauthorized" })
+    if (!appointmentDate) return res.status(400).json({ message: "Appointment date is required" })
 
     const existingRequest = await Patient.findOne({
       companyId: user.companyId,
@@ -207,16 +189,13 @@ exports.bookAppointment = async (req, res) => {
     })
 
     if (existingRequest) {
-      return res.status(400).json({
-        message: "You already have a pending or confirmed appointment"
-      })
+      return res.status(400).json({ message: "You already have a pending or confirmed appointment" })
     }
 
     const patient = new Patient({
       companyId: user.companyId,
       name: user.name,
       email: user.email,
-      employeeId: user.employeeId || "",
       phone: user.phone || "",
       address: user.address || "",
       pincode: user.pincode || "",
@@ -226,7 +205,6 @@ exports.bookAppointment = async (req, res) => {
 
     await patient.save()
 
-    // ── CHANGED: added isTemporaryPassword to response
     res.status(201).json({
       message: "Appointment request submitted successfully",
       patient,
@@ -238,57 +216,50 @@ exports.bookAppointment = async (req, res) => {
   }
 }
 
-// ── NEW: Request reschedule (only allowed if >48hrs before appointment)
 exports.requestReschedule = async (req, res) => {
   try {
     const user = req.user
     const { newDate } = req.body
 
-    if (!newDate) {
-      return res.status(400).json({ message: "New date is required" })
-    }
+    if (!newDate) return res.status(400).json({ message: "New date is required" })
 
-    // Find the patient record for this employee
-    const patientQuery = user.patientId
-      ? { _id: user.patientId, companyId: user.companyId }
-      : { companyId: user.companyId, email: user.email }
+    let patientQuery
+    try {
+      if (user.patientId) {
+        patientQuery = {
+          _id: new mongoose.Types.ObjectId(user.patientId.toString()),
+          companyId: new mongoose.Types.ObjectId(user.companyId.toString())
+        }
+      } else {
+        patientQuery = {
+          companyId: new mongoose.Types.ObjectId(user.companyId.toString()),
+          email: user.email
+        }
+      }
+    } catch (idErr) {
+      patientQuery = { email: user.email }
+    }
 
     const patient = await Patient.findOne(patientQuery)
 
-    if (!patient) {
-      return res.status(404).json({ message: "Patient record not found" })
-    }
+    if (!patient) return res.status(404).json({ message: "Patient record not found" })
+    if (!patient.appointmentDate) return res.status(400).json({ message: "No appointment date set" })
 
-    if (!patient.appointmentDate) {
-      return res.status(400).json({ message: "No appointment date set" })
-    }
-
-    // ── Check 48hr restriction
-    const now = new Date()
-    const apptDate = new Date(patient.appointmentDate)
-    const hoursRemaining = (apptDate - now) / (1000 * 60 * 60)
+    const hoursRemaining = (new Date(patient.appointmentDate) - new Date()) / (1000 * 60 * 60)
 
     if (hoursRemaining <= 48) {
-      return res.status(400).json({
-        message: "Reschedule not allowed — less than 48 hours remaining before appointment"
-      })
+      return res.status(400).json({ message: "Reschedule not allowed — less than 48 hours remaining before appointment" })
     }
 
-    // ── Check if reschedule already pending
     if (patient.rescheduleStatus === "requested") {
-      return res.status(400).json({
-        message: "A reschedule request is already pending admin approval"
-      })
+      return res.status(400).json({ message: "A reschedule request is already pending admin approval" })
     }
 
     patient.rescheduleRequestDate = new Date(newDate)
     patient.rescheduleStatus = "requested"
     await patient.save()
 
-    res.json({
-      message: "Reschedule request submitted successfully",
-      rescheduleRequestDate: patient.rescheduleRequestDate
-    })
+    res.json({ message: "Reschedule request submitted successfully", rescheduleRequestDate: patient.rescheduleRequestDate })
 
   } catch (error) {
     res.status(500).json({ message: error.message })

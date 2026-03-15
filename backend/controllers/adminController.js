@@ -9,8 +9,6 @@ const bcrypt = require("bcryptjs")
 const User = require("../models/User")
 const { sendConfirmationEmail } = require("../utils/emailService")
 
-// ─── Company ─────────────────────────────────────────────────────────────────
-
 exports.addCompany = async (req, res) => {
   try {
     const company = new Company(req.body)
@@ -29,8 +27,6 @@ exports.getCompanies = async (req, res) => {
     res.status(500).json({ message: error.message })
   }
 }
-
-// ─── Center ──────────────────────────────────────────────────────────────────
 
 exports.addCenter = async (req, res) => {
   try {
@@ -92,7 +88,6 @@ exports.getNearbyCenters = async (req, res) => {
       return res.json(centersWithDistance.sort((a, b) => a.distance - b.distance).slice(0, parseInt(limit)))
     }
 
-    // Fallback: match by pincode prefix
     const prefix4 = String(pincode).substring(0, 4)
     let matches = allCenters.filter(c => c.pincode && c.pincode.startsWith(prefix4))
     if (matches.length === 0) {
@@ -109,8 +104,6 @@ exports.getNearbyCenters = async (req, res) => {
     res.status(500).json({ message: error.message })
   }
 }
-
-// ─── Uploads ─────────────────────────────────────────────────────────────────
 
 exports.getUploads = async (req, res) => {
   try {
@@ -165,8 +158,6 @@ exports.rejectUpload = async (req, res) => {
   }
 }
 
-// ─── Patients ────────────────────────────────────────────────────────────────
-
 exports.assignCenter = async (req, res) => {
   try {
     const { centerId } = req.body
@@ -182,7 +173,6 @@ exports.assignCenter = async (req, res) => {
 
     if (!patient) return res.status(404).json({ message: "Patient not found" })
 
-    // If all patients in this upload are confirmed, mark upload as confirmed
     if (patient.uploadId) {
       const totalInUpload = await Patient.countDocuments({ uploadId: patient.uploadId })
       const confirmedInUpload = await Patient.countDocuments({
@@ -205,7 +195,6 @@ exports.assignCenter = async (req, res) => {
       let isExistingUser = false
       let tempPassword = null
 
-      // Only match employee accounts by email — never match HR/admin users
       const existingUser = await User.findOne({
         email: patient.email,
         role: "employee"
@@ -220,23 +209,33 @@ exports.assignCenter = async (req, res) => {
 
         const hashedPassword = await bcrypt.hash(tempPassword, 12)
 
+        // ── FIX: only set employeeId if it exists — avoids null duplicate key error
+        const newUserData = {
+          name:                patient.name,
+          email:               patient.email,
+          password:            hashedPassword,
+          role:                "employee",
+          companyId:           patient.companyId?._id || null,
+          patientId:           patient._id,
+          phone:               patient.phone || "",
+          address:             patient.address || "",
+          pincode:             patient.pincode || "",
+          isTemporaryPassword: true,
+        }
+        if (patient.employeeId) {
+          newUserData.employeeId = patient.employeeId
+        }
+
         try {
-          await User.create({
-            name:                patient.name,
-            email:               patient.email,
-            password:            hashedPassword,
-            role:                "employee",
-            companyId:           patient.companyId?._id || null,
-            patientId:           patient._id,
-            phone:               patient.phone || "",
-            address:             patient.address || "",
-            pincode:             patient.pincode || "",
-            isTemporaryPassword: true,
-          })
+          await User.create(newUserData)
         } catch (createErr) {
-          console.warn("User already exists:", createErr.message)
-          isExistingUser = true
-          tempPassword = null
+          console.warn("User create failed:", createErr.message)
+          // Check if user actually got created despite error
+          const checkUser = await User.findOne({ email: patient.email, role: "employee" })
+          if (checkUser) {
+            isExistingUser = true
+            tempPassword = null
+          }
         }
 
       } else {
@@ -284,33 +283,24 @@ exports.getAllPatients = async (req, res) => {
   }
 }
 
-// ─── Date Change Request ──────────────────────────────────────────────────────
-
 exports.requestDateChange = async (req, res) => {
   try {
     const { requestedDate, requestedBy, requestedByName } = req.body
-
     if (!requestedDate) return res.status(400).json({ message: "requestedDate is required" })
     if (!["hr", "employee"].includes(requestedBy)) {
       return res.status(400).json({ message: "requestedBy must be 'hr' or 'employee'" })
     }
-
     const patient = await Patient.findById(req.params.patientId)
     if (!patient) return res.status(404).json({ message: "Patient not found" })
-
     if (patient.appointmentDate) {
       const hoursUntilAppointment = (new Date(patient.appointmentDate) - new Date()) / (1000 * 60 * 60)
       if (hoursUntilAppointment < 48) {
-        return res.status(400).json({
-          message: "Cannot request date change — appointment is less than 48 hours away"
-        })
+        return res.status(400).json({ message: "Cannot request date change — appointment is less than 48 hours away" })
       }
     }
-
     if (new Date(requestedDate) <= new Date()) {
       return res.status(400).json({ message: "Requested date must be in the future" })
     }
-
     patient.dateChangeRequest = {
       requestedDate: new Date(requestedDate),
       requestedBy,
@@ -318,7 +308,6 @@ exports.requestDateChange = async (req, res) => {
       status: "pending",
       requestedAt: new Date()
     }
-
     await patient.save()
     res.json({ message: "Date change request submitted", patient })
   } catch (error) {
@@ -345,58 +334,46 @@ exports.reviewDateChange = async (req, res) => {
     if (!["approve", "reject"].includes(action)) {
       return res.status(400).json({ message: "action must be 'approve' or 'reject'" })
     }
-
     const patient = await Patient.findById(req.params.patientId)
     if (!patient) return res.status(404).json({ message: "Patient not found" })
     if (!patient.dateChangeRequest || patient.dateChangeRequest.status !== "pending") {
       return res.status(400).json({ message: "No pending date change request found" })
     }
-
     if (action === "approve") {
       const newDate = patient.dateChangeRequest.requestedDate
       const hoursUntilNew = (new Date(newDate) - new Date()) / (1000 * 60 * 60)
       if (hoursUntilNew < 48) {
-        return res.status(400).json({
-          message: "Cannot approve — requested date is less than 48 hours away"
-        })
+        return res.status(400).json({ message: "Cannot approve — requested date is less than 48 hours away" })
       }
       patient.appointmentDate = newDate
       patient.dateChangeRequest.status = "approved"
     } else {
       patient.dateChangeRequest.status = "rejected"
     }
-
     await patient.save()
-
     const populated = await Patient
       .findById(patient._id)
       .populate("assignedCenterId", "name phone address pincode")
       .populate("companyId", "name")
-
     res.json({ message: `Date change ${action}d`, patient: populated })
   } catch (error) {
     res.status(500).json({ message: error.message })
   }
 }
 
-// ─── Reports ─────────────────────────────────────────────────────────────────
-
 exports.uploadReport = async (req, res) => {
   try {
     if (!req.file) return res.status(400).json({ message: "No file uploaded" })
-
     const reportEntry = {
       url: `/uploads/reports/${req.file.filename}`,
       originalName: req.file.originalname,
       uploadedAt: new Date()
     }
-
     const patient = await Patient.findByIdAndUpdate(
       req.params.patientId,
       { $push: { reportUrls: reportEntry } },
       { new: true }
     )
-
     if (!patient) return res.status(404).json({ message: "Patient not found" })
     res.json({ reportEntry, patient })
   } catch (error) {
@@ -408,43 +385,33 @@ exports.deleteReport = async (req, res) => {
   try {
     const { reportUrl } = req.body
     if (!reportUrl) return res.status(400).json({ message: "reportUrl is required" })
-
     const patient = await Patient.findByIdAndUpdate(
       req.params.patientId,
       { $pull: { reportUrls: { url: reportUrl } } },
       { new: true }
     )
-
     if (!patient) return res.status(404).json({ message: "Patient not found" })
-
     const filePath = path.join(__dirname, "../", reportUrl)
     if (fs.existsSync(filePath)) fs.unlinkSync(filePath)
-
     res.json({ message: "Report deleted", patient })
   } catch (error) {
     res.status(500).json({ message: error.message })
   }
 }
 
-// ─── Reschedule ──────────────────────────────────────────────────────────────
-
 exports.approveReschedule = async (req, res) => {
   try {
     const patient = await Patient.findById(req.params.patientId)
       .populate("companyId", "name")
       .populate("assignedCenterId", "name address")
-
     if (!patient) return res.status(404).json({ message: "Patient not found" })
-
     if (patient.rescheduleStatus !== "requested") {
       return res.status(400).json({ message: "No pending reschedule request" })
     }
-
     patient.appointmentDate = patient.rescheduleRequestDate
     patient.rescheduleRequestDate = null
     patient.rescheduleStatus = "approved"
     await patient.save()
-
     if (patient.email) {
       try {
         await sendConfirmationEmail({
@@ -464,9 +431,7 @@ exports.approveReschedule = async (req, res) => {
         console.error("Reschedule approval email failed:", emailErr.message)
       }
     }
-
     res.json({ message: "Reschedule approved", patient })
-
   } catch (error) {
     console.error("❌ approveReschedule error:", error.message)
     res.status(500).json({ message: error.message })
@@ -478,17 +443,13 @@ exports.rejectReschedule = async (req, res) => {
     const patient = await Patient.findById(req.params.patientId)
       .populate("companyId", "name")
       .populate("assignedCenterId", "name address")
-
     if (!patient) return res.status(404).json({ message: "Patient not found" })
-
     if (patient.rescheduleStatus !== "requested") {
       return res.status(400).json({ message: "No pending reschedule request" })
     }
-
     patient.rescheduleRequestDate = null
     patient.rescheduleStatus = "rejected"
     await patient.save()
-
     if (patient.email) {
       try {
         await sendConfirmationEmail({
@@ -508,9 +469,7 @@ exports.rejectReschedule = async (req, res) => {
         console.error("Reschedule rejection email failed:", emailErr.message)
       }
     }
-
     res.json({ message: "Reschedule rejected", patient })
-
   } catch (error) {
     console.error("❌ rejectReschedule error:", error.message)
     res.status(500).json({ message: error.message })

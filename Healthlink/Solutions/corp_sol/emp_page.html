@@ -492,13 +492,18 @@ function openRescheduleModal(appointmentId) {
         return new Date(dateString).toLocaleDateString('en-US', options);
     }
 
-    function formatTime(timeString) {
-        const [hours, minutes] = timeString.split(':');
-        const hour = parseInt(hours);
-        const ampm = hour >= 12 ? 'PM' : 'AM';
-        const formattedHour = hour % 12 || 12;
-        return `${formattedHour}:${minutes} ${ampm}`;
-    }
+    // REPLACE WITH:
+function formatTime(timeString) {
+    if (!timeString) return "10:00 AM"
+    // ── FIX: if already formatted (contains AM/PM), return as-is
+    if (timeString.includes('AM') || timeString.includes('PM')) return timeString
+    const [hours, minutes] = timeString.split(':')
+    const hour = parseInt(hours)
+    if (isNaN(hour)) return timeString
+    const ampm = hour >= 12 ? 'PM' : 'AM'
+    const formattedHour = hour % 12 || 12
+    return `${formattedHour}:${minutes} ${ampm}`
+}
 
     window.onclick = function(event) {
         if (event.target.classList.contains('modal')) {
