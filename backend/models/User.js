@@ -50,6 +50,19 @@ const userSchema = new mongoose.Schema(
     pincode: {
       type: String,
       default: ""
+    },
+
+    // ── ADDED: link back to Patient record
+    patientId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Patient",
+      default: null
+    },
+
+    // ── ADDED: flag so employee is prompted to change password on first login
+    isTemporaryPassword: {
+      type: Boolean,
+      default: false
     }
   },
   { timestamps: true }

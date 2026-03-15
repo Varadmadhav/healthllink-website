@@ -1,7 +1,8 @@
 const jwt = require("jsonwebtoken")
 const User = require("../models/User")
 
-module.exports = async function (req, res, next) {
+// ── EXISTING: default export for protecting routes
+const authMiddleware = async function (req, res, next) {
   const authHeader = req.headers["authorization"]
 
   if (!authHeader) {
@@ -16,7 +17,6 @@ module.exports = async function (req, res, next) {
 
   try {
     const decoded = jwt.verify(token, process.env.JWT_SECRET)
-
     const user = await User.findById(decoded.id)
 
     if (!user) {
@@ -29,3 +29,15 @@ module.exports = async function (req, res, next) {
     return res.status(401).json({ message: "Invalid token" })
   }
 }
+
+// ── ADDED: restrict employees to their own company + patient data only
+const enforceCompanyScope = (req, res, next) => {
+  if (req.user.role === "admin" || req.user.role === "hr") return next()
+  req.scopedCompanyId = req.user.companyId
+  req.scopedPatientId = req.user.patientId
+  next()
+}
+
+// ── Export both as named exports AND default
+module.exports = authMiddleware
+module.exports.enforceCompanyScope = enforceCompanyScope

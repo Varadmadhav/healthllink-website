@@ -24,7 +24,17 @@ const patientSchema = new mongoose.Schema({
     type: Date,
     default: null
   },
+ rescheduleRequestDate: {
+    type: Date,
+    default: null
+  },
 
+  rescheduleStatus: {
+    type: String,
+    enum: ["none", "requested", "approved", "rejected"],
+    default: "none"
+  },
+  
   status: {
     type: String,
     default: "pending"

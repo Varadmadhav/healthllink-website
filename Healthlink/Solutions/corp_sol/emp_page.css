@@ -453,3 +453,17 @@
                 grid-template-columns: 1fr;
             }
         }
+        /* Reschedule pending card — yellow highlight */
+.reschedule-pending-card {
+  border-left: 4px solid #ed8936 !important;
+  background: #fffaf0;
+}
+
+.status-reschedule {
+  background: #fef3c7;
+  color: #92400e;
+  padding: 4px 10px;
+  border-radius: 20px;
+  font-size: 13px;
+  font-weight: 600;
+}

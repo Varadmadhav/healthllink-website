@@ -166,94 +166,111 @@
     }
 
    function loadAppointments() {
-    const container = document.getElementById('appointmentsContainer');
+  const container = document.getElementById('appointmentsContainer')
 
-    if (appointments.length === 0) {
-        container.innerHTML = `
-            <div class="no-data">
-                <div class="no-data-icon">📅</div>
-                <p>No upcoming appointments found.</p>
-            </div>
-        `;
-        return;
-    }
+  if (appointments.length === 0) {
+    container.innerHTML = `
+      <div class="no-data">
+        <div class="no-data-icon">📅</div>
+        <p>No upcoming appointments found.</p>
+      </div>
+    `
+    return
+  }
 
-    container.innerHTML = appointments.map(apt => {
-        const status = (apt.status || "requested").toLowerCase();
+  container.innerHTML = appointments.map(apt => {
+    const status = (apt.status || "requested").toLowerCase()
 
-        const statusText =
-            status === "confirmed"
-                ? "✓ Appointment Confirmed"
-                : status === "requested"
-                ? "⏳ Request Sent"
-                : "⏳ Pending";
+    const statusText =
+      status === "confirmed"           ? "✓ Appointment Confirmed"
+      : status === "reschedule_requested" ? "🔄 Reschedule Pending"
+      : status === "requested"         ? "⏳ Request Sent"
+      : "⏳ Pending"
 
-        const statusClass =
-            status === "confirmed"
-                ? "status-confirmed"
-                : "status-changeable";
+    const statusClass =
+      status === "confirmed"              ? "status-confirmed"
+      : status === "reschedule_requested" ? "status-reschedule"
+      : "status-changeable"
 
-        const bottomMessage =
-            status === "confirmed"
-                ? "Appointment confirmed by admin"
-                : "Waiting for admin approval and center assignment";
+    const bottomMessage =
+      status === "confirmed"              ? "Appointment confirmed by admin"
+      : status === "reschedule_requested" ? "Reschedule request sent — awaiting admin approval"
+      : "Waiting for admin approval and center assignment"
 
-        const bottomMessageClass =
-            status === "confirmed"
-                ? "time-info"
-                : "time-warning";
+    const bottomMessageClass =
+      status === "confirmed"              ? "time-info"
+      : status === "reschedule_requested" ? "time-warning"
+      : "time-warning"
 
-        return `
-            <div class="appointment-card">
-                <div class="appointment-header">
-                    <span class="appointment-id">Appointment ID: ${apt.id}</span>
-                    <span class="status-badge ${statusClass}">
-                        ${statusText}
-                    </span>
-                </div>
+    // ── 48hr check for reschedule button
+    const now = new Date()
+    const apptDate = new Date(apt.appointmentDate)
+    const hoursRemaining = (apptDate - now) / (1000 * 60 * 60)
+    const canReschedule = status === "confirmed" && hoursRemaining > 48
 
-                <div class="appointment-details">
-                    <div class="detail-item">
-                        <span class="detail-label">Employee Name</span>
-                        <span class="detail-value">${apt.employeeName || "-"}</span>
-                    </div>
-                    <div class="detail-item">
-                        <span class="detail-label">Age</span>
-                        <span class="detail-value">${apt.age || "-"}</span>
-                    </div>
-                    <div class="detail-item">
-                        <span class="detail-label">Gender</span>
-                        <span class="detail-value">${apt.gender || "-"}</span>
-                    </div>
-                    <div class="detail-item">
-                        <span class="detail-label">Appointment Date</span>
-                        <span class="detail-value">${formatDate(apt.appointmentDate)}</span>
-                    </div>
-                    <div class="detail-item">
-                        <span class="detail-label">Time</span>
-                        <span class="detail-value">${formatTime(apt.appointmentTime || "10:00")}</span>
-                    </div>
-                    <div class="detail-item">
-                        <span class="detail-label">Center Name</span>
-                        <span class="detail-value">${apt.centerName || "Not Assigned Yet"}</span>
-                    </div>
-                    <div class="detail-item" style="grid-column: 1 / -1;">
-                        <span class="detail-label">Center Address</span>
-                        <span class="detail-value">${apt.centerAddress || "Center not assigned yet"}</span>
-                    </div>
-                </div>
+    const rescheduleButton = canReschedule
+      ? `<button class="btn btn-secondary"
+           style="margin-left:8px;background:#ed8936;border:none;color:white;
+                  padding:8px 14px;border-radius:6px;cursor:pointer;font-weight:600;"
+           onclick="openRescheduleModal('${apt.id}')">
+           🔄 Request Reschedule
+         </button>`
+      : status === "confirmed"
+        ? `<span style="font-size:12px;color:#e53e3e;margin-left:8px;">
+             ⚠️ Reschedule not allowed (less than 48hrs remaining)
+           </span>`
+        : ""
 
-                <div class="action-buttons">
-                    <button class="btn" disabled>
-                        ${status === "confirmed" ? "🔒 Confirmed" : "⏳ Waiting"}
-                    </button>
-                    <span class="${bottomMessageClass}">
-                        ${bottomMessage}
-                    </span>
-                </div>
-            </div>
-        `;
-    }).join('');
+    return `
+      <div class="appointment-card ${status === 'reschedule_requested' ? 'reschedule-pending-card' : ''}">
+        <div class="appointment-header">
+          <span class="appointment-id">Appointment ID: ${apt.id}</span>
+          <span class="status-badge ${statusClass}">${statusText}</span>
+        </div>
+
+        <div class="appointment-details">
+          <div class="detail-item">
+            <span class="detail-label">Employee Name</span>
+            <span class="detail-value">${apt.employeeName || "-"}</span>
+          </div>
+          <div class="detail-item">
+            <span class="detail-label">Age</span>
+            <span class="detail-value">${apt.age || "-"}</span>
+          </div>
+          <div class="detail-item">
+            <span class="detail-label">Gender</span>
+            <span class="detail-value">${apt.gender || "-"}</span>
+          </div>
+          <div class="detail-item">
+            <span class="detail-label">Appointment Date</span>
+            <span class="detail-value">${formatDate(apt.appointmentDate)}</span>
+          </div>
+          <div class="detail-item">
+            <span class="detail-label">Time</span>
+            <span class="detail-value">${formatTime(apt.appointmentTime || "10:00")}</span>
+          </div>
+          <div class="detail-item">
+            <span class="detail-label">Center Name</span>
+            <span class="detail-value">${apt.centerName || "Not Assigned Yet"}</span>
+          </div>
+          <div class="detail-item" style="grid-column: 1 / -1;">
+            <span class="detail-label">Center Address</span>
+            <span class="detail-value">${apt.centerAddress || "Center not assigned yet"}</span>
+          </div>
+        </div>
+
+        <div class="action-buttons">
+          <button class="btn" disabled>
+            ${status === "confirmed" ? "🔒 Confirmed"
+              : status === "reschedule_requested" ? "🔄 Reschedule Pending"
+              : "⏳ Waiting"}
+          </button>
+          ${rescheduleButton}
+          <span class="${bottomMessageClass}">${bottomMessage}</span>
+        </div>
+      </div>
+    `
+  }).join('')
 }
 
     function loadReports(filteredReports = null) {
@@ -413,10 +430,61 @@
         currentAppointmentId = null;
     }
 
-    function confirmDateChange() {
-        document.getElementById('modalAlert').innerHTML =
-            '<div class="alert alert-warning">⚠️ Appointment reschedule API not connected yet.</div>';
+   // REPLACE existing confirmDateChange:
+async function confirmDateChange() {
+  const newDate = document.getElementById('newAppointmentDate').value
+  const token = localStorage.getItem("employeeToken")
+
+  if (!newDate) {
+    document.getElementById('modalAlert').innerHTML =
+      '<div style="color:red;margin-top:8px;">Please select a new date</div>'
+    return
+  }
+
+  try {
+    const res = await fetch(`${API_BASE}/reschedule`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "Authorization": `Bearer ${token}`
+      },
+      body: JSON.stringify({ newDate })
+    })
+
+    const data = await res.json()
+
+    if (res.ok) {
+      document.getElementById('modalAlert').innerHTML =
+        '<div style="color:green;margin-top:8px;">✅ Reschedule request submitted! Awaiting admin approval.</div>'
+      setTimeout(() => {
+        closeModal()
+        loadEmployeeDashboard()
+      }, 1500)
+    } else {
+      document.getElementById('modalAlert').innerHTML =
+        `<div style="color:red;margin-top:8px;">${data.message || "Request failed"}</div>`
     }
+  } catch (err) {
+    document.getElementById('modalAlert').innerHTML =
+      '<div style="color:red;margin-top:8px;">Server error. Please try again.</div>'
+  }
+}
+
+// ADD this new function right after confirmDateChange:
+function openRescheduleModal(appointmentId) {
+  currentAppointmentId = appointmentId
+  const apt = appointments.find(a => a.id === appointmentId)
+
+  if (apt) {
+    // Set min date to tomorrow
+    const tomorrow = new Date()
+    tomorrow.setDate(tomorrow.getDate() + 1)
+    document.getElementById('newAppointmentDate').min = tomorrow.toISOString().split('T')[0]
+    document.getElementById('newAppointmentDate').value = ''
+    document.getElementById('modalAlert').innerHTML = ''
+    document.getElementById('changeAppointmentModal').classList.add('active')
+  }
+}
 
     function formatDate(dateString) {
         if (!dateString) return "-";

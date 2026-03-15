@@ -31,7 +31,9 @@ const {
   getUploads, getPatientsByUpload, approveUpload, rejectUpload,
   assignCenter, getAllPatients,
   uploadReport: uploadReportHandler,
-  deleteReport
+  deleteReport,
+  approveReschedule,    // ← ADDED
+  rejectReschedule      // ← ADDED
 } = require("../controllers/adminController")
 
 // ─── Companies ───────────────────────────────────────────────────────────────
@@ -54,5 +56,9 @@ router.get("/patients", getAllPatients)
 router.put("/patients/:patientId/assign", assignCenter)
 router.post("/patients/:patientId/report", uploadReport.single("report"), uploadReportHandler)
 router.delete("/patients/:patientId/report", deleteReport)
+
+// ─── Reschedule ──────────────────────────────────────────────────────────────  ← ADDED
+router.put("/patients/:patientId/reschedule/approve", approveReschedule)          // ← ADDED
+router.put("/patients/:patientId/reschedule/reject", rejectReschedule)            // ← ADDED
 
 module.exports = router

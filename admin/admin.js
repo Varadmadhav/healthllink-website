@@ -181,6 +181,8 @@ function normalisePatient(p) {
       pincode: p.assignedCenterId.pincode || "",
       address: p.assignedCenterId.address || ""
     } : null,
+    rescheduleStatus: p.rescheduleStatus || "none",
+rescheduleRequestDate: p.rescheduleRequestDate || null,
     reportUrls: p.reportUrls && p.reportUrls.length > 0
       ? p.reportUrls
       : (p.reportUrl ? [{ url: p.reportUrl, originalName: 'Report', uploadedAt: null }] : [])
@@ -493,15 +495,50 @@ function renderConfirmedTable() {
     return
   }
 
-  tbody.innerHTML = confirmed.map(emp => `
-    <tr>
-      <td><strong>${emp.employeeName}</strong></td>
+ tbody.innerHTML = confirmed.map(emp => {
+  const isReschedule = emp.rescheduleStatus === "requested"
+
+  return `
+    <tr style="${isReschedule ? 'background:#fffbeb;border-left:4px solid #f6ad55;' : ''}">
+      <td>
+        <strong>${emp.employeeName}</strong>
+        ${isReschedule ? `
+          <div style="margin-top:4px;">
+            <span style="background:#fef3c7;color:#92400e;padding:2px 8px;
+                         border-radius:10px;font-size:11px;font-weight:600;">
+              🔄 Reschedule Requested
+            </span>
+            <div style="font-size:12px;color:#744210;margin-top:4px;">
+              New date requested: <strong>
+                ${new Date(emp.rescheduleRequestDate).toDateString()}
+              </strong>
+            </div>
+          </div>
+        ` : ''}
+      </td>
       <td><span class="badge badge-info">${emp.id.toString().slice(-6)}</span></td>
       <td>${emp.assignedCenter ? emp.assignedCenter.name : 'N/A'}</td>
       <td>${emp.assignedCenter ? emp.assignedCenter.phone : 'N/A'}</td>
-      <td><span class="badge badge-success">✓ Confirmed</span></td>
+      <td>
+        ${isReschedule
+          ? `
+            <div style="display:flex;gap:6px;flex-wrap:wrap;">
+              <button class="btn btn-success btn-sm"
+                onclick="approveReschedule('${emp.id}')">
+                ✅ Approve
+              </button>
+              <button class="btn btn-danger btn-sm"
+                onclick="rejectReschedule('${emp.id}')">
+                ❌ Reject
+              </button>
+            </div>
+          `
+          : '<span class="badge badge-success">✓ Confirmed</span>'
+        }
+      </td>
     </tr>
-  `).join('')
+  `
+}).join('')
 }
 
 function updateStats() {
@@ -911,4 +948,38 @@ function formatFileSize(bytes) {
   if (bytes < 1024) return bytes + ' B'
   if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(1) + ' KB'
   return (bytes / (1024 * 1024)).toFixed(1) + ' MB'
+}
+
+// ── NEW: Approve reschedule request
+async function approveReschedule(patientId) {
+  if (!confirm("Approve this reschedule request?")) return
+  try {
+    const res = await fetch(`${API_BASE}/admin/patients/${patientId}/reschedule/approve`, {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" }
+    })
+    if (!res.ok) throw new Error("Approval failed")
+    showToast("Reschedule approved! Employee will be notified.", "success")
+    fetchAllPatientsForConfirmation()
+  } catch (err) {
+    console.error("approveReschedule:", err)
+    showToast("Error approving reschedule", "error")
+  }
+}
+
+// ── NEW: Reject reschedule request
+async function rejectReschedule(patientId) {
+  if (!confirm("Reject this reschedule request? Original date will be kept.")) return
+  try {
+    const res = await fetch(`${API_BASE}/admin/patients/${patientId}/reschedule/reject`, {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" }
+    })
+    if (!res.ok) throw new Error("Rejection failed")
+    showToast("Reschedule rejected. Employee will be notified.", "success")
+    fetchAllPatientsForConfirmation()
+  } catch (err) {
+    console.error("rejectReschedule:", err)
+    showToast("Error rejecting reschedule", "error")
+  }
 }

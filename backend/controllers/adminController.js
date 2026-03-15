@@ -5,8 +5,11 @@ const Patient = require("../models/Patient")
 const { getCoordinatesForPincode, haversineDistance } = require("../utils/pincodeUtils")
 const fs = require("fs")
 const path = require("path")
+const bcrypt = require("bcryptjs")
+const User = require("../models/User")
+const { sendConfirmationEmail } = require("../utils/emailService")
 
-// ─── Company ────────────────────────────────────────────────────────────────
+// ─── Company ─────────────────────────────────────────────────────────────────
 
 exports.addCompany = async (req, res) => {
   try {
@@ -27,18 +30,16 @@ exports.getCompanies = async (req, res) => {
   }
 }
 
-// ─── Center ─────────────────────────────────────────────────────────────────
+// ─── Center ──────────────────────────────────────────────────────────────────
 
 exports.addCenter = async (req, res) => {
   try {
     const { name, email, phone, address, pincode } = req.body
     let latitude = null, longitude = null
-
     if (pincode) {
       const coords = await getCoordinatesForPincode(pincode)
       if (coords) { latitude = coords.lat; longitude = coords.lng }
     }
-
     const center = new Center({ name, email, phone, address, pincode, latitude, longitude })
     await center.save()
     res.status(201).json(center)
@@ -56,7 +57,6 @@ exports.getCenters = async (req, res) => {
   }
 }
 
-// GET /api/admin/centers/nearby?pincode=421305&limit=3
 exports.getNearbyCenters = async (req, res) => {
   try {
     const { pincode, limit = 3 } = req.query
@@ -92,7 +92,6 @@ exports.getNearbyCenters = async (req, res) => {
       return res.json(centersWithDistance.sort((a, b) => a.distance - b.distance).slice(0, parseInt(limit)))
     }
 
-    // Fallback
     const prefix4 = String(pincode).substring(0, 4)
     let matches = allCenters.filter(c => c.pincode && c.pincode.startsWith(prefix4))
     if (matches.length === 0) {
@@ -167,8 +166,6 @@ exports.rejectUpload = async (req, res) => {
 
 // ─── Patients ────────────────────────────────────────────────────────────────
 
-// FIX 6: After assigning a center, check if ALL patients in that upload are
-// confirmed — if so, mark the upload as "confirmed" so HR sees it updated
 exports.assignCenter = async (req, res) => {
   try {
     const { centerId } = req.body
@@ -178,30 +175,97 @@ exports.assignCenter = async (req, res) => {
       req.params.patientId,
       { assignedCenterId: centerId, status: "confirmed" },
       { new: true }
-    ).populate("assignedCenterId", "name phone address pincode")
+    )
+      .populate("assignedCenterId", "name phone address pincode")
+      .populate("companyId", "name")
 
     if (!patient) return res.status(404).json({ message: "Patient not found" })
 
-    // Check if all patients in this upload are now confirmed
     if (patient.uploadId) {
       const totalInUpload = await Patient.countDocuments({ uploadId: patient.uploadId })
       const confirmedInUpload = await Patient.countDocuments({
         uploadId: patient.uploadId,
         assignedCenterId: { $ne: null }
       })
-
-      // All patients have a centre assigned → mark upload as "confirmed"
       if (totalInUpload > 0 && totalInUpload === confirmedInUpload) {
-        await Upload.findByIdAndUpdate(
-          patient.uploadId,
-          { status: "confirmed" },
-          { new: true }
-        )
+        await Upload.findByIdAndUpdate(patient.uploadId, { status: "confirmed" }, { new: true })
+      }
+    }
+
+    if (patient.email) {
+      const companyName = patient.companyId?.name || "Your Company"
+      const centerName = patient.assignedCenterId?.name || "N/A"
+      const centerAddress = patient.assignedCenterId?.address || "N/A"
+      const appointmentDate = patient.appointmentDate
+        ? new Date(patient.appointmentDate).toDateString()
+        : "To be announced"
+
+      let isExistingUser = false
+      let tempPassword = null
+
+     // REPLACE WITH:
+// Only match by email — never match HR/admin users by patientId
+      const existingUser = await User.findOne({
+        email: patient.email,
+        role:  "employee"       // ← only match employee accounts
+      })
+
+      if (!existingUser) {
+        const chars = "ABCDEFGHJKLMNPQRSTUVWXYZabcdefghjkmnpqrstuvwxyz23456789@#"
+        tempPassword = Array.from(
+          { length: 10 },
+          () => chars[Math.floor(Math.random() * chars.length)]
+        ).join("")
+
+        const hashedPassword = await bcrypt.hash(tempPassword, 12)
+
+        try {
+          await User.create({
+            name:                patient.name,
+            email:               patient.email,
+            password:            hashedPassword,
+            role:                "employee",
+            companyId:           patient.companyId?._id || null,
+            patientId:           patient._id,
+            phone:               patient.phone || "",
+            address:             patient.address || "",
+            pincode:             patient.pincode || "",
+            isTemporaryPassword: true,
+          })
+        } catch (createErr) {
+          console.warn("User already exists:", createErr.message)
+          isExistingUser = true
+          tempPassword = null
+        }
+
+      } else {
+        isExistingUser = true
+        if (!existingUser.patientId) {
+          existingUser.patientId = patient._id
+          await existingUser.save()
+        }
+      }
+
+      try {
+        await sendConfirmationEmail({
+          toEmail:         patient.email,
+          employeeName:    patient.name,
+          companyName,
+          centerName,
+          centerAddress,
+          appointmentDate,
+          loginId:         patient.email,
+          tempPassword,
+          isExistingUser,
+        })
+      } catch (emailErr) {
+        console.error("❌ Email failed:", emailErr.message)
       }
     }
 
     res.json(patient)
   } catch (error) {
+    console.error("❌ assignCenter error:", error.message)
     res.status(500).json({ message: error.message })
   }
 }
@@ -221,7 +285,6 @@ exports.getAllPatients = async (req, res) => {
 
 // ─── Reports ─────────────────────────────────────────────────────────────────
 
-// POST /api/admin/patients/:patientId/report
 exports.uploadReport = async (req, res) => {
   try {
     if (!req.file) return res.status(400).json({ message: "No file uploaded" })
@@ -245,14 +308,11 @@ exports.uploadReport = async (req, res) => {
   }
 }
 
-// FIX 4: DELETE /api/admin/patients/:patientId/report
-// Body: { reportUrl: "/uploads/reports/filename.pdf" }
 exports.deleteReport = async (req, res) => {
   try {
     const { reportUrl } = req.body
     if (!reportUrl) return res.status(400).json({ message: "reportUrl is required" })
 
-    // Remove from patient's reportUrls array in DB
     const patient = await Patient.findByIdAndUpdate(
       req.params.patientId,
       { $pull: { reportUrls: { url: reportUrl } } },
@@ -261,7 +321,6 @@ exports.deleteReport = async (req, res) => {
 
     if (!patient) return res.status(404).json({ message: "Patient not found" })
 
-    // Also delete the physical file from disk
     const filePath = path.join(__dirname, "../", reportUrl)
     if (fs.existsSync(filePath)) {
       fs.unlinkSync(filePath)
@@ -269,6 +328,97 @@ exports.deleteReport = async (req, res) => {
 
     res.json({ message: "Report deleted", patient })
   } catch (error) {
+    res.status(500).json({ message: error.message })
+  }
+}
+
+// ─── Reschedule ──────────────────────────────────────────────────────────────
+
+exports.approveReschedule = async (req, res) => {
+  try {
+    const patient = await Patient.findById(req.params.patientId)
+      .populate("companyId", "name")
+      .populate("assignedCenterId", "name address")
+
+    if (!patient) return res.status(404).json({ message: "Patient not found" })
+
+    if (patient.rescheduleStatus !== "requested") {
+      return res.status(400).json({ message: "No pending reschedule request" })
+    }
+
+    patient.appointmentDate = patient.rescheduleRequestDate
+    patient.rescheduleRequestDate = null
+    patient.rescheduleStatus = "approved"
+    await patient.save()
+
+    if (patient.email) {
+      try {
+        await sendConfirmationEmail({
+          toEmail:            patient.email,
+          employeeName:       patient.name,
+          companyName:        patient.companyId?.name || "Your Company",
+          centerName:         patient.assignedCenterId?.name || "N/A",
+          centerAddress:      patient.assignedCenterId?.address || "N/A",
+          appointmentDate:    new Date(patient.appointmentDate).toDateString(),
+          loginId:            patient.email,
+          tempPassword:       null,
+          isExistingUser:     true,
+          isReschedule:       true,
+          rescheduleApproved: true,
+        })
+      } catch (emailErr) {
+        console.error("Reschedule approval email failed:", emailErr.message)
+      }
+    }
+
+    res.json({ message: "Reschedule approved", patient })
+
+  } catch (error) {
+    console.error("❌ approveReschedule error:", error.message)
+    res.status(500).json({ message: error.message })
+  }
+}
+
+exports.rejectReschedule = async (req, res) => {
+  try {
+    const patient = await Patient.findById(req.params.patientId)
+      .populate("companyId", "name")
+      .populate("assignedCenterId", "name address")
+
+    if (!patient) return res.status(404).json({ message: "Patient not found" })
+
+    if (patient.rescheduleStatus !== "requested") {
+      return res.status(400).json({ message: "No pending reschedule request" })
+    }
+
+    patient.rescheduleRequestDate = null
+    patient.rescheduleStatus = "rejected"
+    await patient.save()
+
+    if (patient.email) {
+      try {
+        await sendConfirmationEmail({
+          toEmail:            patient.email,
+          employeeName:       patient.name,
+          companyName:        patient.companyId?.name || "Your Company",
+          centerName:         patient.assignedCenterId?.name || "N/A",
+          centerAddress:      patient.assignedCenterId?.address || "N/A",
+          appointmentDate:    new Date(patient.appointmentDate).toDateString(),
+          loginId:            patient.email,
+          tempPassword:       null,
+          isExistingUser:     true,
+          isReschedule:       true,
+          rescheduleApproved: false,
+        })
+      } catch (emailErr) {
+        console.error("Reschedule rejection email failed:", emailErr.message)
+      }
+    }
+
+    res.json({ message: "Reschedule rejected", patient })
+
+  } catch (error) {
+    console.error("❌ rejectReschedule error:", error.message)
     res.status(500).json({ message: error.message })
   }
 }
