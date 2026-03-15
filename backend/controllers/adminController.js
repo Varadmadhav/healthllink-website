@@ -92,7 +92,7 @@ exports.getNearbyCenters = async (req, res) => {
       return res.json(centersWithDistance.sort((a, b) => a.distance - b.distance).slice(0, parseInt(limit)))
     }
 
-    // Fallback
+    // Fallback: match by pincode prefix
     const prefix4 = String(pincode).substring(0, 4)
     let matches = allCenters.filter(c => c.pincode && c.pincode.startsWith(prefix4))
     if (matches.length === 0) {
@@ -167,8 +167,6 @@ exports.rejectUpload = async (req, res) => {
 
 // ─── Patients ────────────────────────────────────────────────────────────────
 
-// FIX 6: After assigning a center, check if ALL patients in that upload are
-// confirmed — if so, mark the upload as "confirmed" so HR sees it updated
 exports.assignCenter = async (req, res) => {
   try {
     const { centerId } = req.body
@@ -182,21 +180,15 @@ exports.assignCenter = async (req, res) => {
 
     if (!patient) return res.status(404).json({ message: "Patient not found" })
 
-    // Check if all patients in this upload are now confirmed
+    // If all patients in this upload are confirmed, mark upload as confirmed
     if (patient.uploadId) {
       const totalInUpload = await Patient.countDocuments({ uploadId: patient.uploadId })
       const confirmedInUpload = await Patient.countDocuments({
         uploadId: patient.uploadId,
         assignedCenterId: { $ne: null }
       })
-
-      // All patients have a centre assigned → mark upload as "confirmed"
       if (totalInUpload > 0 && totalInUpload === confirmedInUpload) {
-        await Upload.findByIdAndUpdate(
-          patient.uploadId,
-          { status: "confirmed" },
-          { new: true }
-        )
+        await Upload.findByIdAndUpdate(patient.uploadId, { status: "confirmed" }, { new: true })
       }
     }
 
@@ -219,9 +211,120 @@ exports.getAllPatients = async (req, res) => {
   }
 }
 
+// ─── Date Change Request ──────────────────────────────────────────────────────
+// POST /api/admin/patients/:patientId/request-date
+// Called by HR (or employee portal) to request a new appointment date
+// Body: { requestedDate, requestedBy ("hr"|"employee"), requestedByName }
+
+exports.requestDateChange = async (req, res) => {
+  try {
+    const { requestedDate, requestedBy, requestedByName } = req.body
+
+    if (!requestedDate) return res.status(400).json({ message: "requestedDate is required" })
+    if (!["hr", "employee"].includes(requestedBy)) {
+      return res.status(400).json({ message: "requestedBy must be 'hr' or 'employee'" })
+    }
+
+    const patient = await Patient.findById(req.params.patientId)
+    if (!patient) return res.status(404).json({ message: "Patient not found" })
+
+    // 48-hour rule: cannot request change if current appointment is within 48 hours
+    if (patient.appointmentDate) {
+      const hoursUntilAppointment = (new Date(patient.appointmentDate) - new Date()) / (1000 * 60 * 60)
+      if (hoursUntilAppointment < 48) {
+        return res.status(400).json({
+          message: "Cannot request date change — appointment is less than 48 hours away"
+        })
+      }
+    }
+
+    // Also check the requested date is in the future
+    if (new Date(requestedDate) <= new Date()) {
+      return res.status(400).json({ message: "Requested date must be in the future" })
+    }
+
+    // Overwrite any existing pending request (no duplicate entries)
+    patient.dateChangeRequest = {
+      requestedDate: new Date(requestedDate),
+      requestedBy,
+      requestedByName: requestedByName || requestedBy,
+      status: "pending",
+      requestedAt: new Date()
+    }
+
+    await patient.save()
+    res.json({ message: "Date change request submitted", patient })
+  } catch (error) {
+    res.status(500).json({ message: error.message })
+  }
+}
+
+// GET /api/admin/patients/date-change-requests
+// Returns all patients that have a pending date change request
+
+exports.getDateChangeRequests = async (req, res) => {
+  try {
+    const patients = await Patient
+      .find({ "dateChangeRequest.status": "pending" })
+      .populate("assignedCenterId", "name phone address pincode")
+      .populate("companyId", "name")
+      .sort({ "dateChangeRequest.requestedAt": -1 })
+    res.json(patients)
+  } catch (error) {
+    res.status(500).json({ message: error.message })
+  }
+}
+
+// PUT /api/admin/patients/:patientId/approve-date
+// Admin approves a date change request
+// Body: { action: "approve" | "reject" }
+
+exports.reviewDateChange = async (req, res) => {
+  try {
+    const { action } = req.body
+    if (!["approve", "reject"].includes(action)) {
+      return res.status(400).json({ message: "action must be 'approve' or 'reject'" })
+    }
+
+    const patient = await Patient.findById(req.params.patientId)
+    if (!patient) return res.status(404).json({ message: "Patient not found" })
+    if (!patient.dateChangeRequest || patient.dateChangeRequest.status !== "pending") {
+      return res.status(400).json({ message: "No pending date change request found" })
+    }
+
+    if (action === "approve") {
+      const newDate = patient.dateChangeRequest.requestedDate
+
+      // 48-hour rule also applies to the new date from admin side
+      // (the new requested date must be >48hrs away from now)
+      const hoursUntilNew = (new Date(newDate) - new Date()) / (1000 * 60 * 60)
+      if (hoursUntilNew < 48) {
+        return res.status(400).json({
+          message: "Cannot approve — requested date is less than 48 hours away"
+        })
+      }
+
+      patient.appointmentDate = newDate
+      patient.dateChangeRequest.status = "approved"
+    } else {
+      patient.dateChangeRequest.status = "rejected"
+    }
+
+    await patient.save()
+
+    const populated = await Patient
+      .findById(patient._id)
+      .populate("assignedCenterId", "name phone address pincode")
+      .populate("companyId", "name")
+
+    res.json({ message: `Date change ${action}d`, patient: populated })
+  } catch (error) {
+    res.status(500).json({ message: error.message })
+  }
+}
+
 // ─── Reports ─────────────────────────────────────────────────────────────────
 
-// POST /api/admin/patients/:patientId/report
 exports.uploadReport = async (req, res) => {
   try {
     if (!req.file) return res.status(400).json({ message: "No file uploaded" })
@@ -245,14 +348,11 @@ exports.uploadReport = async (req, res) => {
   }
 }
 
-// FIX 4: DELETE /api/admin/patients/:patientId/report
-// Body: { reportUrl: "/uploads/reports/filename.pdf" }
 exports.deleteReport = async (req, res) => {
   try {
     const { reportUrl } = req.body
     if (!reportUrl) return res.status(400).json({ message: "reportUrl is required" })
 
-    // Remove from patient's reportUrls array in DB
     const patient = await Patient.findByIdAndUpdate(
       req.params.patientId,
       { $pull: { reportUrls: { url: reportUrl } } },
@@ -261,11 +361,8 @@ exports.deleteReport = async (req, res) => {
 
     if (!patient) return res.status(404).json({ message: "Patient not found" })
 
-    // Also delete the physical file from disk
     const filePath = path.join(__dirname, "../", reportUrl)
-    if (fs.existsSync(filePath)) {
-      fs.unlinkSync(filePath)
-    }
+    if (fs.existsSync(filePath)) fs.unlinkSync(filePath)
 
     res.json({ message: "Report deleted", patient })
   } catch (error) {

@@ -31,7 +31,10 @@ const {
   getUploads, getPatientsByUpload, approveUpload, rejectUpload,
   assignCenter, getAllPatients,
   uploadReport: uploadReportHandler,
-  deleteReport
+  deleteReport,
+  requestDateChange,
+  getDateChangeRequests,
+  reviewDateChange
 } = require("../controllers/adminController")
 
 // ─── Companies ───────────────────────────────────────────────────────────────
@@ -54,5 +57,12 @@ router.get("/patients", getAllPatients)
 router.put("/patients/:patientId/assign", assignCenter)
 router.post("/patients/:patientId/report", uploadReport.single("report"), uploadReportHandler)
 router.delete("/patients/:patientId/report", deleteReport)
+
+// ─── Date Change Requests ─────────────────────────────────────────────────────
+// NOTE: /patients/date-change-requests must come BEFORE /patients/:patientId
+// otherwise Express matches "date-change-requests" as a patientId param
+router.get("/patients/date-change-requests", getDateChangeRequests)
+router.post("/patients/:patientId/request-date", requestDateChange)
+router.put("/patients/:patientId/review-date", reviewDateChange)
 
 module.exports = router

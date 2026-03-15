@@ -36,6 +36,16 @@ const patientSchema = new mongoose.Schema({
     default: null
   },
 
+  // Date change request — only one active request at a time
+  // If HR submits again before admin reviews, it just overwrites
+  dateChangeRequest: {
+    requestedDate: { type: Date, default: null },
+    requestedBy: { type: String, enum: ["hr", "employee"], default: null },
+    requestedByName: { type: String, default: null },
+    status: { type: String, enum: ["pending", "approved", "rejected"], default: null },
+    requestedAt: { type: Date, default: null }
+  },
+
   // Multiple reports — each entry has url, originalName, uploadedAt
   reportUrls: {
     type: [
@@ -51,7 +61,7 @@ const patientSchema = new mongoose.Schema({
     default: []
   },
 
-  // Keep old field for backward compatibility with existing data
+  // Keep old field for backward compatibility
   reportUrl: {
     type: String,
     default: null
