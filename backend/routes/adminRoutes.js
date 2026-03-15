@@ -32,8 +32,11 @@ const {
   assignCenter, getAllPatients,
   uploadReport: uploadReportHandler,
   deleteReport,
-  approveReschedule,    // ← ADDED
-  rejectReschedule      // ← ADDED
+  approveReschedule,
+  rejectReschedule,
+  requestDateChange,
+  getDateChangeRequests,
+  reviewDateChange
 } = require("../controllers/adminController")
 
 // ─── Companies ───────────────────────────────────────────────────────────────
@@ -57,8 +60,14 @@ router.put("/patients/:patientId/assign", assignCenter)
 router.post("/patients/:patientId/report", uploadReport.single("report"), uploadReportHandler)
 router.delete("/patients/:patientId/report", deleteReport)
 
-// ─── Reschedule ──────────────────────────────────────────────────────────────  ← ADDED
-router.put("/patients/:patientId/reschedule/approve", approveReschedule)          // ← ADDED
-router.put("/patients/:patientId/reschedule/reject", rejectReschedule)            // ← ADDED
+// ─── Reschedule ──────────────────────────────────────────────────────────────
+router.put("/patients/:patientId/reschedule/approve", approveReschedule)
+router.put("/patients/:patientId/reschedule/reject", rejectReschedule)
+
+// ─── Date Change Requests ─────────────────────────────────────────────────────
+// NOTE: /patients/date-change-requests must come BEFORE /patients/:patientId
+router.get("/patients/date-change-requests", getDateChangeRequests)
+router.post("/patients/:patientId/request-date", requestDateChange)
+router.put("/patients/:patientId/review-date", reviewDateChange)
 
 module.exports = router

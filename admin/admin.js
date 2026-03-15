@@ -9,6 +9,7 @@ let selectedFileId = null
 let allPatients = []
 let confirmedPatientsForReports = []
 let preselectedCenterMap = {}
+let dateChangeRequests = []
 
 // ===== Init =====
 document.addEventListener('DOMContentLoaded', function () {
@@ -16,13 +17,13 @@ document.addEventListener('DOMContentLoaded', function () {
   fetchCompanies()
   fetchCenters()
   fetchUploads()
+  fetchDateChangeRequests()
 })
 
 // ===== Tabs =====
 function initializeTabs() {
   const tabs = document.querySelectorAll('.nav-tab')
   const contents = document.querySelectorAll('.tab-content')
-
   tabs.forEach(tab => {
     tab.addEventListener('click', () => {
       const targetId = tab.dataset.tab
@@ -40,7 +41,7 @@ function initializeTabs() {
 function refreshTabData(tabId) {
   switch (tabId) {
     case 'review-requests':   fetchUploads(); break
-    case 'make-confirmation': fetchAllPatientsForConfirmation(); break
+    case 'make-confirmation': fetchAllPatientsForConfirmation(); fetchDateChangeRequests(); break
     case 'reports':           fetchConfirmedPatientsForReports(); break
     case 'add-centers':       renderCentersTable(); break
     case 'add-companies':     renderCompaniesTable(); break
@@ -78,29 +79,20 @@ function renderExcelFilesGrid() {
   const grid = document.getElementById('excel-files-grid')
   const emptyState = document.getElementById('excel-empty')
   const countBadge = document.getElementById('file-count-badge')
-
   countBadge.textContent = `${uploadedFiles.length} File${uploadedFiles.length !== 1 ? 's' : ''}`
-
   if (uploadedFiles.length === 0) {
     grid.style.display = 'none'
     emptyState.style.display = 'flex'
     return
   }
-
   grid.style.display = 'grid'
   emptyState.style.display = 'none'
-
   const sorted = [...uploadedFiles].sort((a, b) => b.uploadTimestamp - a.uploadTimestamp)
-
   grid.innerHTML = sorted.map(file => {
-    const statusClass = file.status === 'approved' ? 'processed'
-      : file.status === 'rejected' ? 'rejected' : 'new'
-    const statusLabel = file.status === 'approved' ? '✓ Approved'
-      : file.status === 'rejected' ? '✗ Rejected' : '🆕 Pending'
-
+    const statusClass = file.status === 'approved' ? 'processed' : file.status === 'rejected' ? 'rejected' : 'new'
+    const statusLabel = file.status === 'approved' ? '✓ Approved' : file.status === 'rejected' ? '✗ Rejected' : '🆕 Pending'
     return `
-      <div class="excel-file-card ${selectedFileId === file.id ? 'selected' : ''}"
-           onclick="openFileView('${file.id}')">
+      <div class="excel-file-card ${selectedFileId === file.id ? 'selected' : ''}" onclick="openFileView('${file.id}')">
         <span class="excel-file-badge ${statusClass}">${statusLabel}</span>
         <div class="excel-file-icon">📊</div>
         <h3>${file.fileName}</h3>
@@ -111,10 +103,7 @@ function renderExcelFilesGrid() {
           <span>⏳ ${file.pendingCount} pending • ✅ ${file.confirmedCount} confirmed</span>
         </div>
         <div class="file-actions">
-          <button class="btn btn-primary btn-sm"
-            onclick="event.stopPropagation(); openFileView('${file.id}')">
-            View Data →
-          </button>
+          <button class="btn btn-primary btn-sm" onclick="event.stopPropagation(); openFileView('${file.id}')">View Data →</button>
         </div>
       </div>
     `
@@ -125,16 +114,12 @@ async function openFileView(fileId) {
   selectedFileId = fileId
   const file = uploadedFiles.find(f => f.id === fileId)
   if (!file) return
-
   document.getElementById('selected-file-card').style.display = 'block'
   document.getElementById('selected-file-name').textContent = file.fileName
-  document.getElementById('selected-file-meta').textContent =
-    `${file.records} records • Uploaded on ${file.uploadDate}`
-
+  document.getElementById('selected-file-meta').textContent = `${file.records} records • Uploaded on ${file.uploadDate}`
   document.getElementById('review-table-body').innerHTML =
-    `<tr><td colspan="11" style="text-align:center;padding:30px;color:var(--text-tertiary);">Loading...</td></tr>`
+    `<tr><td colspan="12" style="text-align:center;padding:30px;color:var(--text-tertiary);">Loading...</td></tr>`
   document.getElementById('center-matching-card').style.display = 'none'
-
   try {
     const res = await fetch(`${API_BASE}/admin/uploads/${fileId}/patients`)
     const patients = await res.json()
@@ -145,7 +130,6 @@ async function openFileView(fileId) {
     console.error("openFileView:", err)
     showToast("Could not load employee data", "error")
   }
-
   renderExcelFilesGrid()
 }
 
@@ -159,11 +143,10 @@ function closeFileView() {
 function normalisePatient(p) {
   const rawStatus = (p.status || "pending").toLowerCase()
   const finalStatus = p.assignedCenterId ? "confirmed" : rawStatus
-
   return {
     id: p._id,
     employeeName: p.name || "",
-    employeeId: p._id,           // Varad's addition
+    employeeId: p._id,
     age: p.age || "",
     gender: p.gender || "",
     phone: p.phone || "",
@@ -174,6 +157,9 @@ function normalisePatient(p) {
     appointmentDate: p.appointmentDate || null,
     appointmentTime: p.appointmentTime || "10:00",
     status: finalStatus,
+    dateChangeRequest: p.dateChangeRequest || null,
+    rescheduleStatus: p.rescheduleStatus || "none",
+    rescheduleRequestDate: p.rescheduleRequestDate || null,
     assignedCenter: p.assignedCenterId ? {
       id: p.assignedCenterId._id || p.assignedCenterId,
       name: p.assignedCenterId.name || "",
@@ -181,8 +167,6 @@ function normalisePatient(p) {
       pincode: p.assignedCenterId.pincode || "",
       address: p.assignedCenterId.address || ""
     } : null,
-    rescheduleStatus: p.rescheduleStatus || "none",
-rescheduleRequestDate: p.rescheduleRequestDate || null,
     reportUrls: p.reportUrls && p.reportUrls.length > 0
       ? p.reportUrls
       : (p.reportUrl ? [{ url: p.reportUrl, originalName: 'Report', uploadedAt: null }] : [])
@@ -193,10 +177,7 @@ function renderEmployeesTable(file) {
   const tbody = document.getElementById('review-table-body')
   tbody.innerHTML = file.employees.map(emp => `
     <tr>
-      <td>
-        <input type="checkbox" class="employee-checkbox" data-id="${emp.id}"
-          ${emp.status === 'confirmed' ? 'disabled' : ''}>
-      </td>
+      <td><input type="checkbox" class="employee-checkbox" data-id="${emp.id}" ${emp.status === 'confirmed' ? 'disabled' : ''}></td>
       <td><strong>${emp.employeeName}</strong></td>
       <td><span class="badge badge-info">${emp.employeeId.toString().slice(-6)}</span></td>
       <td>${emp.age || '-'}</td>
@@ -209,59 +190,34 @@ function renderEmployeesTable(file) {
       <td>${emp.appointmentDate ? new Date(emp.appointmentDate).toLocaleDateString() : '-'}</td>
       <td>
         <span class="badge ${
-          emp.status === 'confirmed'
-            ? 'badge-success'
-            : emp.status === 'requested'
-            ? 'badge-info'
-            : emp.status === 'approved'
-            ? 'badge-warning'
-            : 'badge-pending'
+          emp.status === 'confirmed' ? 'badge-success'
+          : emp.status === 'requested' ? 'badge-info'
+          : emp.status === 'approved' ? 'badge-warning'
+          : 'badge-pending'
         }">
-          ${
-            emp.status === 'confirmed'
-              ? '✅ Confirmed'
-              : emp.status === 'requested'
-              ? '📝 Requested'
-              : emp.status === 'approved'
-              ? '👍 Approved'
-              : '⏳ Pending'
-          }
+          ${emp.status === 'confirmed' ? '✅ Confirmed'
+            : emp.status === 'requested' ? '📝 Requested'
+            : emp.status === 'approved' ? '👍 Approved'
+            : '⏳ Pending'}
         </span>
       </td>
     </tr>
   `).join('')
 }
 
-// YOUR async version with fetchNearbyCenters API call (more accurate than local filter)
 async function renderCenterMatchingForFile(file) {
   const card = document.getElementById('center-matching-card')
   const tbody = document.getElementById('center-matching-body')
-
   const pendingEmployees = file.employees.filter(
     emp => emp.status === 'requested' || emp.status === 'approved' || emp.status === 'pending'
   )
-
-  if (pendingEmployees.length === 0) {
-    card.style.display = 'none'
-    return
-  }
-
+  if (pendingEmployees.length === 0) { card.style.display = 'none'; return }
   card.style.display = 'block'
-  tbody.innerHTML = `
-    <tr>
-      <td colspan="6" style="text-align:center;padding:20px;color:var(--text-tertiary);">
-        🔍 Finding nearby centres...
-      </td>
-    </tr>
-  `
-
-  const rows = await Promise.all(
-    pendingEmployees.map(async (emp) => {
-      const nearby = await fetchNearbyCenters(emp.pincode, 3)
-      return { emp, nearby }
-    })
-  )
-
+  tbody.innerHTML = `<tr><td colspan="7" style="text-align:center;padding:20px;color:var(--text-tertiary);">🔍 Finding nearby centres...</td></tr>`
+  const rows = await Promise.all(pendingEmployees.map(async (emp) => {
+    const nearby = await fetchNearbyCenters(emp.pincode, 3)
+    return { emp, nearby }
+  }))
   tbody.innerHTML = rows.map(({ emp, nearby }) => `
     <tr>
       <td><strong>${emp.employeeName}</strong></td>
@@ -270,71 +226,41 @@ async function renderCenterMatchingForFile(file) {
       <td>${renderCenterCell(nearby[0])}</td>
       <td>${renderCenterCell(nearby[1])}</td>
       <td>${renderCenterCell(nearby[2])}</td>
-      <td>
-        <button class="btn btn-primary btn-sm"
-          onclick="document.querySelector('[data-tab=make-confirmation]').click()">
-          Assign →
-        </button>
-      </td>
+      <td><button class="btn btn-primary btn-sm" onclick="document.querySelector('[data-tab=make-confirmation]').click()">Assign →</button></td>
     </tr>
   `).join('')
 }
 
 function renderCenterCell(center) {
   if (!center) return '<span style="color:var(--text-tertiary);">-</span>'
-  return `
-    <div class="center-info">
-      <div class="center-name">${center.name}</div>
-      <div class="center-phone">📞 ${center.phone}</div>
-    </div>
-  `
+  return `<div class="center-info"><div class="center-name">${center.name}</div><div class="center-phone">📞 ${center.phone}</div></div>`
 }
 
 async function fetchNearbyCenters(pincode, limit = 3) {
   if (!pincode || String(pincode).trim() === "") return []
   try {
-    const res = await fetch(
-      `${API_BASE}/admin/centers/nearby?pincode=${encodeURIComponent(pincode)}&limit=${limit}`
-    )
+    const res = await fetch(`${API_BASE}/admin/centers/nearby?pincode=${encodeURIComponent(pincode)}&limit=${limit}`)
     const data = await res.json()
     return Array.isArray(data) ? data : []
-  } catch (err) {
-    console.error("fetchNearbyCenters:", err)
-    return []
-  }
+  } catch (err) { console.error("fetchNearbyCenters:", err); return [] }
 }
 
 function toggleSelectAll(checkbox) {
-  document.querySelectorAll('.employee-checkbox:not(:disabled)')
-    .forEach(cb => cb.checked = checkbox.checked)
+  document.querySelectorAll('.employee-checkbox:not(:disabled)').forEach(cb => cb.checked = checkbox.checked)
 }
 
-// FIX 2: Process All — pre-fetches nearest centre per employee,
-// navigates to Make Confirmation with centres auto-selected
 async function processAllEmployees() {
   const file = uploadedFiles.find(f => f.id === selectedFileId)
   if (!file) return
-
   const pending = file.employees.filter(e => e.status !== 'confirmed')
-  if (pending.length === 0) {
-    showToast('No pending employees to process!', 'warning')
-    return
-  }
-
+  if (pending.length === 0) { showToast('No pending employees to process!', 'warning'); return }
   showToast('Finding nearest centres for all employees...', 'success')
-
   await Promise.all(pending.map(async (emp) => {
     const nearby = await fetchNearbyCenters(emp.pincode, 1)
     if (nearby.length > 0) emp._preselectedCenterId = String(nearby[0]._id)
   }))
-
   preselectedCenterMap = {}
-  pending.forEach(emp => {
-    if (emp._preselectedCenterId) {
-      preselectedCenterMap[emp.id] = emp._preselectedCenterId
-    }
-  })
-
+  pending.forEach(emp => { if (emp._preselectedCenterId) preselectedCenterMap[emp.id] = emp._preselectedCenterId })
   await fetchAllPatientsForConfirmation()
   showToast(`${pending.length} employees ready — nearest centre pre-selected!`, 'success')
   document.querySelector('[data-tab="make-confirmation"]').click()
@@ -361,99 +287,166 @@ async function fetchAllPatientsForConfirmation() {
 async function renderConfirmationTable() {
   const tbody = document.getElementById('confirmation-table-body')
   const emptyState = document.getElementById('confirmation-empty')
-
-  // YOUR logic: show all non-confirmed (includes pending, requested, approved)
-  const pending = allPatients.filter(emp => emp.status !== 'confirmed')
-
-  if (pending.length === 0) {
-    tbody.innerHTML = ''
-    emptyState.style.display = 'flex'
-    return
-  }
-
-  emptyState.style.display = 'none'
-  tbody.innerHTML = `
-    <tr>
-      <td colspan="6" style="text-align:center;padding:20px;color:var(--text-tertiary);">
-        🔍 Loading centres...
-      </td>
-    </tr>
-  `
-
-  const rows = await Promise.all(
-    pending.map(async (emp) => {
-      const nearby = await fetchNearbyCenters(emp.pincode, 3)
-      return { emp, nearby }
-    })
+  const pending = allPatients.filter(emp =>
+    emp.status !== 'confirmed' ||
+    (emp.dateChangeRequest && emp.dateChangeRequest.status === 'pending')
   )
+  if (pending.length === 0) { tbody.innerHTML = ''; emptyState.style.display = 'flex'; return }
+  emptyState.style.display = 'none'
+  tbody.innerHTML = `<tr><td colspan="7" style="text-align:center;padding:20px;color:var(--text-tertiary);">🔍 Loading centres...</td></tr>`
+
+  const rows = await Promise.all(pending.map(async (emp) => {
+    const nearby = await fetchNearbyCenters(emp.pincode, 3)
+    return { emp, nearby }
+  }))
 
   tbody.innerHTML = rows.map(({ emp, nearby }) => {
     const nearbyIds = new Set(nearby.map(c => String(c._id)))
     const otherCenters = centersData.filter(c => !nearbyIds.has(String(c.id)))
-
-    const autoSelectId = preselectedCenterMap[emp.id]
-      || (nearby.length > 0 ? String(nearby[0]._id) : '')
-
+    const autoSelectId = preselectedCenterMap[emp.id] || (nearby.length > 0 ? String(nearby[0]._id) : '')
+    const appointmentDate = emp.appointmentDate ? new Date(emp.appointmentDate) : null
+    const dcr = emp.dateChangeRequest
+    let dcrBadge = ''
+    if (dcr && dcr.status === 'pending') {
+      dcrBadge = `<br><span style="font-size:11px;background:#fff3cd;color:#856404;padding:1px 6px;border-radius:8px;white-space:nowrap;">⏳ ${new Date(dcr.requestedDate).toLocaleDateString()}</span>`
+    }
     return `
       <tr>
         <td><strong>${emp.employeeName}</strong></td>
         <td>${emp.phone || '-'}</td>
         <td>${emp.company || '-'}</td>
-<td>${emp.pincode || '-'}</td>
-<td>${emp.appointmentDate ? new Date(emp.appointmentDate).toLocaleDateString() : '-'}</td>
-
+        <td>${emp.pincode || '-'}</td>
+        <td style="white-space:nowrap;">${appointmentDate ? appointmentDate.toLocaleDateString() : '-'}${dcrBadge}</td>
         <td>
           <select class="center-select" id="select-${emp.id}">
             <option value="">Select a center...</option>
-            ${nearby.map(c => `
-              <option value="${c._id}" ${String(c._id) === autoSelectId ? 'selected' : ''}>
-                ${c.name} (${c.pincode})
-              </option>
-            `).join('')}
+            ${nearby.map(c => `<option value="${c._id}" ${String(c._id) === autoSelectId ? 'selected' : ''}>${c.name} (${c.pincode})</option>`).join('')}
             ${otherCenters.length > 0 ? `<option disabled>──── Other centres ────</option>` : ''}
-            ${otherCenters.map(c => `
-              <option value="${c.id}" ${String(c.id) === autoSelectId ? 'selected' : ''}>
-                ${c.name} (${c.pincode})
-              </option>
-            `).join('')}
+            ${otherCenters.map(c => `<option value="${c.id}" ${String(c.id) === autoSelectId ? 'selected' : ''}>${c.name} (${c.pincode})</option>`).join('')}
           </select>
         </td>
         <td>
-          <button class="btn btn-success btn-sm" onclick="confirmAssignment('${emp.id}')">
-            ✓ Confirm
-          </button>
+          <button class="btn btn-success btn-sm" onclick="confirmAssignment('${emp.id}')">✓ Confirm</button>
         </td>
       </tr>
     `
   }).join('')
-
   updateStats()
+}
+
+// =====================================================================
+// DATE CHANGE REQUESTS
+// =====================================================================
+
+async function fetchDateChangeRequests() {
+  try {
+    const res = await fetch(`${API_BASE}/admin/patients/date-change-requests`)
+    const data = await res.json()
+    dateChangeRequests = data.map(normalisePatient)
+    renderDateChangeRequestsTable()
+  } catch (err) {
+    console.error("fetchDateChangeRequests:", err)
+  }
+}
+
+function renderDateChangeRequestsTable() {
+  const container = document.getElementById('date-change-requests-section')
+  if (!container) return
+  if (dateChangeRequests.length === 0) { container.innerHTML = ''; return }
+  container.innerHTML = `
+    <div class="card">
+      <div class="card-header">
+        <h2>📅 Date Change Requests</h2>
+        <span class="badge badge-warning">${dateChangeRequests.length} pending</span>
+      </div>
+      <div class="table-container">
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th>Employee</th><th>Company</th><th>Current Date</th>
+              <th>Requested Date</th><th>Requested By</th><th>Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${dateChangeRequests.map(p => {
+              const dcr = p.dateChangeRequest
+              const currentDate = p.appointmentDate ? new Date(p.appointmentDate).toLocaleDateString('en-IN') : '-'
+              const requestedDate = dcr && dcr.requestedDate ? new Date(dcr.requestedDate).toLocaleDateString('en-IN') : '-'
+              const requestedBy = dcr ? (dcr.requestedByName || dcr.requestedBy) : '-'
+              const requestedAt = dcr && dcr.requestedAt ? new Date(dcr.requestedAt).toLocaleDateString('en-IN') : ''
+              const reqDateObj = dcr && dcr.requestedDate ? new Date(dcr.requestedDate) : null
+              const hoursUntilReq = reqDateObj ? (reqDateObj - new Date()) / (1000 * 60 * 60) : 999
+              const canApprove = hoursUntilReq > 48
+              const approveTitle = !canApprove
+                ? (reqDateObj && reqDateObj < new Date()
+                  ? "Cannot approve — requested date is in the past"
+                  : "Cannot approve — requested date is less than 48 hours away")
+                : ""
+              return `
+                <tr>
+                  <td><strong>${p.employeeName}</strong></td>
+                  <td>${p.company || '-'}</td>
+                  <td>${currentDate}</td>
+                  <td>
+                    <span style="color:var(--primary-color);font-weight:600;">${requestedDate}</span>
+                    <br><span style="font-size:12px;color:var(--text-tertiary);">on ${requestedAt}</span>
+                  </td>
+                  <td><span class="badge badge-info">${requestedBy}</span></td>
+                  <td>
+                    <div class="action-btns">
+                      ${canApprove
+                        ? `<button class="btn btn-success btn-sm" onclick="reviewDateRequest('${p.id}', 'approve')">✓ Approve</button>`
+                        : `<button class="btn btn-secondary btn-sm" disabled style="opacity:0.4;cursor:not-allowed;" title="${approveTitle}">✓ Approve</button>`
+                      }
+                      <button class="btn btn-danger btn-sm" onclick="reviewDateRequest('${p.id}', 'reject')">✗ Reject</button>
+                    </div>
+                  </td>
+                </tr>
+              `
+            }).join('')}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  `
+}
+
+async function reviewDateRequest(patientId, action) {
+  try {
+    const res = await fetch(`${API_BASE}/admin/patients/${patientId}/review-date`, {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ action })
+    })
+    if (!res.ok) {
+      const d = await res.json()
+      showToast(d.message || "Failed to review request", "error")
+      return
+    }
+    showToast(`Date change request ${action}d!`, "success")
+    fetchAllPatientsForConfirmation()
+    fetchDateChangeRequests()
+  } catch (err) {
+    console.error("reviewDateRequest:", err)
+    showToast("Server error", "error")
+  }
 }
 
 async function confirmAssignment(patientId) {
   const selectEl = document.getElementById(`select-${patientId}`)
   const centerId = selectEl ? selectEl.value : ''
-
-  if (!centerId) {
-    showToast('Please select a center first!', 'warning')
-    return
-  }
-
+  if (!centerId) { showToast('Please select a center first!', 'warning'); return }
   try {
     const res = await fetch(`${API_BASE}/admin/patients/${patientId}/assign`, {
       method: "PUT",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ centerId })
     })
-
     if (!res.ok) throw new Error("Assignment failed")
-
     const updated = await res.json()
     const normUpdated = normalisePatient(updated)
-
     const idx = allPatients.findIndex(p => p.id === patientId)
     if (idx !== -1) allPatients[idx] = normUpdated
-
     if (selectedFileId) {
       const file = uploadedFiles.find(f => f.id === selectedFileId)
       if (file) {
@@ -463,13 +456,10 @@ async function confirmAssignment(patientId) {
         renderCenterMatchingForFile(file)
       }
     }
-
     delete preselectedCenterMap[patientId]
-
     renderConfirmationTable()
     renderConfirmedTable()
     updateStats()
-
     showToast(`${normUpdated.employeeName} assigned to ${normUpdated.assignedCenter?.name || 'centre'}!`, 'success')
   } catch (err) {
     console.error("confirmAssignment:", err)
@@ -480,71 +470,56 @@ async function confirmAssignment(patientId) {
 function renderConfirmedTable() {
   const tbody = document.getElementById('confirmed-table-body')
   const countBadge = document.getElementById('confirmed-count')
-
-  const confirmed = allPatients.filter(emp => emp.status === 'confirmed')
+  const confirmed = allPatients.filter(emp =>
+    emp.status === 'confirmed' &&
+    !(emp.dateChangeRequest && emp.dateChangeRequest.status === 'pending')
+  )
   countBadge.textContent = `${confirmed.length} Confirmed`
-
   if (confirmed.length === 0) {
-    tbody.innerHTML = `
-      <tr>
-        <td colspan="5" style="text-align:center;padding:40px;color:var(--text-tertiary);">
-          No confirmed assignments yet
+    tbody.innerHTML = `<tr><td colspan="5" style="text-align:center;padding:40px;color:var(--text-tertiary);">No confirmed assignments yet</td></tr>`
+    return
+  }
+  tbody.innerHTML = confirmed.map(emp => {
+    const isReschedule = emp.rescheduleStatus === "requested"
+    return `
+      <tr style="${isReschedule ? 'background:#fffbeb;border-left:4px solid #f6ad55;' : ''}">
+        <td>
+          <strong>${emp.employeeName}</strong>
+          ${isReschedule ? `
+            <div style="margin-top:4px;">
+              <span style="background:#fef3c7;color:#92400e;padding:2px 8px;
+                           border-radius:10px;font-size:11px;font-weight:600;">
+                🔄 Reschedule Requested
+              </span>
+              <div style="font-size:12px;color:#744210;margin-top:4px;">
+                New date: <strong>${new Date(emp.rescheduleRequestDate).toDateString()}</strong>
+              </div>
+            </div>
+          ` : ''}
+        </td>
+        <td><span class="badge badge-info">${emp.id.toString().slice(-6)}</span></td>
+        <td>${emp.assignedCenter ? emp.assignedCenter.name : 'N/A'}</td>
+        <td>${emp.assignedCenter ? emp.assignedCenter.phone : 'N/A'}</td>
+        <td>
+          ${isReschedule
+            ? `<div style="display:flex;gap:6px;flex-wrap:wrap;">
+                <button class="btn btn-success btn-sm" onclick="approveReschedule('${emp.id}')">✅ Approve</button>
+                <button class="btn btn-danger btn-sm" onclick="rejectReschedule('${emp.id}')">❌ Reject</button>
+               </div>`
+            : '<span class="badge badge-success">✓ Confirmed</span>'
+          }
         </td>
       </tr>
     `
-    return
-  }
-
- tbody.innerHTML = confirmed.map(emp => {
-  const isReschedule = emp.rescheduleStatus === "requested"
-
-  return `
-    <tr style="${isReschedule ? 'background:#fffbeb;border-left:4px solid #f6ad55;' : ''}">
-      <td>
-        <strong>${emp.employeeName}</strong>
-        ${isReschedule ? `
-          <div style="margin-top:4px;">
-            <span style="background:#fef3c7;color:#92400e;padding:2px 8px;
-                         border-radius:10px;font-size:11px;font-weight:600;">
-              🔄 Reschedule Requested
-            </span>
-            <div style="font-size:12px;color:#744210;margin-top:4px;">
-              New date requested: <strong>
-                ${new Date(emp.rescheduleRequestDate).toDateString()}
-              </strong>
-            </div>
-          </div>
-        ` : ''}
-      </td>
-      <td><span class="badge badge-info">${emp.id.toString().slice(-6)}</span></td>
-      <td>${emp.assignedCenter ? emp.assignedCenter.name : 'N/A'}</td>
-      <td>${emp.assignedCenter ? emp.assignedCenter.phone : 'N/A'}</td>
-      <td>
-        ${isReschedule
-          ? `
-            <div style="display:flex;gap:6px;flex-wrap:wrap;">
-              <button class="btn btn-success btn-sm"
-                onclick="approveReschedule('${emp.id}')">
-                ✅ Approve
-              </button>
-              <button class="btn btn-danger btn-sm"
-                onclick="rejectReschedule('${emp.id}')">
-                ❌ Reject
-              </button>
-            </div>
-          `
-          : '<span class="badge badge-success">✓ Confirmed</span>'
-        }
-      </td>
-    </tr>
-  `
-}).join('')
+  }).join('')
 }
 
 function updateStats() {
-  // YOUR logic: pending = everything not confirmed
-  const pending = allPatients.filter(e => e.status !== 'confirmed').length
-  const confirmed = allPatients.filter(e => e.status === 'confirmed').length
+  const confirmed = allPatients.filter(e =>
+    e.status === 'confirmed' &&
+    !(e.dateChangeRequest && e.dateChangeRequest.status === 'pending')
+  ).length
+  const pending = allPatients.length - confirmed
   document.getElementById('pending-count').textContent = pending
   document.getElementById('confirmed-count-stat').textContent = confirmed
   document.getElementById('total-count').textContent = allPatients.length
@@ -558,9 +533,7 @@ async function fetchConfirmedPatientsForReports() {
   try {
     const res = await fetch(`${API_BASE}/admin/patients`)
     const data = await res.json()
-    confirmedPatientsForReports = data
-      .filter(p => p.assignedCenterId)
-      .map(normalisePatient)
+    confirmedPatientsForReports = data.filter(p => p.assignedCenterId).map(normalisePatient)
     renderReportsTable()
   } catch (err) {
     console.error("fetchConfirmedPatientsForReports:", err)
@@ -571,15 +544,10 @@ async function fetchConfirmedPatientsForReports() {
 function renderReportsTable() {
   const tbody = document.getElementById('reports-table-body')
   const emptyState = document.getElementById('reports-empty')
-
   if (confirmedPatientsForReports.length === 0) {
-    tbody.innerHTML = ''
-    emptyState.style.display = 'flex'
-    return
+    tbody.innerHTML = ''; emptyState.style.display = 'flex'; return
   }
-
   emptyState.style.display = 'none'
-
   tbody.innerHTML = confirmedPatientsForReports.map(emp => `
     <tr>
       <td><strong>${emp.employeeName}</strong></td>
@@ -588,38 +556,21 @@ function renderReportsTable() {
       <td>${emp.assignedCenter ? emp.assignedCenter.name : 'N/A'}</td>
       <td>
         <div class="file-upload-cell">
-          <label class="file-input-label">
-            📎 Upload PDF
-            <input type="file" accept=".pdf"
-              onchange="handleReportUpload('${emp.id}', this)">
+          <label class="file-input-label">📎 Upload PDF
+            <input type="file" accept=".pdf" onchange="handleReportUpload('${emp.id}', this)">
           </label>
         </div>
       </td>
       <td>
-        ${emp.reportUrls && emp.reportUrls.length > 0
-          ? `
-            <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
-              <select class="center-select" id="report-select-${emp.id}"
-                style="min-width:150px;font-size:12px;padding:6px 8px;">
-                ${emp.reportUrls.map((r, i) => `
-                  <option value="${r.url}">
-                    ${r.originalName || 'Report ' + (i + 1)}
-                  </option>
-                `).join('')}
-              </select>
-              <button class="btn btn-sm btn-secondary"
-                onclick="viewSelectedReport('${emp.id}')">
-                👁 View
-              </button>
-              <button class="btn btn-sm btn-danger"
-                onclick="removeSelectedReport('${emp.id}')">
-                🗑 Remove
-              </button>
-              <span class="badge badge-info">${emp.reportUrls.length} file${emp.reportUrls.length > 1 ? 's' : ''}</span>
-            </div>
-          `
-          : '<span style="color:var(--text-tertiary);">No reports</span>'
-        }
+        ${emp.reportUrls && emp.reportUrls.length > 0 ? `
+          <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
+            <select class="center-select" id="report-select-${emp.id}" style="min-width:150px;font-size:12px;padding:6px 8px;">
+              ${emp.reportUrls.map((r, i) => `<option value="${r.url}">${r.originalName || 'Report ' + (i + 1)}</option>`).join('')}
+            </select>
+            <button class="btn btn-sm btn-secondary" onclick="viewSelectedReport('${emp.id}')">👁 View</button>
+            <button class="btn btn-sm btn-danger" onclick="removeSelectedReport('${emp.id}')">🗑 Remove</button>
+            <span class="badge badge-info">${emp.reportUrls.length} file${emp.reportUrls.length > 1 ? 's' : ''}</span>
+          </div>` : '<span style="color:var(--text-tertiary);">No reports</span>'}
       </td>
     </tr>
   `).join('')
@@ -628,27 +579,17 @@ function renderReportsTable() {
 async function handleReportUpload(patientId, inputEl) {
   const file = inputEl.files[0]
   if (!file) return
-
   const formData = new FormData()
   formData.append("report", file)
-
   try {
-    const res = await fetch(`${API_BASE}/admin/patients/${patientId}/report`, {
-      method: "POST",
-      body: formData
-    })
+    const res = await fetch(`${API_BASE}/admin/patients/${patientId}/report`, { method: "POST", body: formData })
     if (!res.ok) throw new Error("Upload failed")
     const data = await res.json()
-
     const idx = confirmedPatientsForReports.findIndex(p => p.id === patientId)
     if (idx !== -1) confirmedPatientsForReports[idx].reportUrls.push(data.reportEntry)
-
     renderReportsTable()
     showToast(`Report "${file.name}" uploaded successfully!`, 'success')
-  } catch (err) {
-    console.error("handleReportUpload:", err)
-    showToast("Error uploading report", "error")
-  }
+  } catch (err) { console.error("handleReportUpload:", err); showToast("Error uploading report", "error") }
 }
 
 function viewSelectedReport(patientId) {
@@ -661,9 +602,7 @@ async function removeSelectedReport(patientId) {
   const select = document.getElementById(`report-select-${patientId}`)
   if (!select || !select.value) return
   if (!confirm('Remove this report?')) return
-
   const reportUrl = select.value
-
   try {
     const res = await fetch(`${API_BASE}/admin/patients/${patientId}/report`, {
       method: "DELETE",
@@ -671,19 +610,11 @@ async function removeSelectedReport(patientId) {
       body: JSON.stringify({ reportUrl })
     })
     if (!res.ok) throw new Error("Delete failed")
-
     const idx = confirmedPatientsForReports.findIndex(p => p.id === patientId)
-    if (idx !== -1) {
-      confirmedPatientsForReports[idx].reportUrls =
-        confirmedPatientsForReports[idx].reportUrls.filter(r => r.url !== reportUrl)
-    }
-
+    if (idx !== -1) confirmedPatientsForReports[idx].reportUrls = confirmedPatientsForReports[idx].reportUrls.filter(r => r.url !== reportUrl)
     renderReportsTable()
     showToast('Report removed successfully!', 'success')
-  } catch (err) {
-    console.error("removeSelectedReport:", err)
-    showToast("Error removing report", "error")
-  }
+  } catch (err) { console.error("removeSelectedReport:", err); showToast("Error removing report", "error") }
 }
 
 // =====================================================================
@@ -694,10 +625,7 @@ async function fetchCenters() {
   try {
     const res = await fetch(API_BASE + "/admin/centers")
     const data = await res.json()
-    centersData = data.map(c => ({
-      id: c._id, name: c.name, email: c.email || "",
-      phone: c.phone || "", address: c.address || "", pincode: c.pincode || ""
-    }))
+    centersData = data.map(c => ({ id: c._id, name: c.name, email: c.email || "", phone: c.phone || "", address: c.address || "", pincode: c.pincode || "" }))
     renderCentersTable()
   } catch (err) { console.error(err) }
 }
@@ -705,22 +633,18 @@ async function fetchCenters() {
 function renderCentersTable() {
   const tbody = document.getElementById('centers-table-body')
   if (centersData.length === 0) {
-    tbody.innerHTML = `<tr><td colspan="6" style="text-align:center;padding:40px;color:var(--text-tertiary);">No centers added yet. Click "+ Add Center" to get started.</td></tr>`
+    tbody.innerHTML = `<tr><td colspan="6" style="text-align:center;padding:40px;color:var(--text-tertiary);">No centers added yet.</td></tr>`
     return
   }
   tbody.innerHTML = centersData.map(center => `
     <tr>
       <td><strong>${center.name}</strong></td>
-      <td>${center.email}</td>
-      <td>${center.phone}</td>
-      <td>${center.address}</td>
+      <td>${center.email}</td><td>${center.phone}</td><td>${center.address}</td>
       <td><span class="badge badge-info">${center.pincode}</span></td>
-      <td>
-        <div class="action-btns">
-          <button class="btn btn-sm btn-secondary" onclick="editCenter('${center.id}')">✏️</button>
-          <button class="btn btn-sm btn-danger" onclick="deleteCenter('${center.id}')">🗑️</button>
-        </div>
-      </td>
+      <td><div class="action-btns">
+        <button class="btn btn-sm btn-secondary" onclick="editCenter('${center.id}')">✏️</button>
+        <button class="btn btn-sm btn-danger" onclick="deleteCenter('${center.id}')">🗑️</button>
+      </div></td>
     </tr>
   `).join('')
 }
@@ -728,43 +652,31 @@ function renderCentersTable() {
 async function saveCenter(event) {
   event.preventDefault()
   const center = {
-    name: document.getElementById('center-name').value,
-    email: document.getElementById('center-email').value,
-    phone: document.getElementById('center-phone').value,
-    address: document.getElementById('center-address').value,
+    name: document.getElementById('center-name').value, email: document.getElementById('center-email').value,
+    phone: document.getElementById('center-phone').value, address: document.getElementById('center-address').value,
     pincode: document.getElementById('center-pincode').value
   }
   try {
-    const res = await fetch(API_BASE + "/admin/centers", {
-      method: "POST", headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(center)
-    })
+    const res = await fetch(API_BASE + "/admin/centers", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(center) })
     const data = await res.json()
     centersData.push({ id: data._id, name: data.name, email: data.email || "", phone: data.phone || "", address: data.address || "", pincode: data.pincode || "" })
-    renderCentersTable()
-    closeModal('center-modal')
-    showToast("Center added successfully!", "success")
+    renderCentersTable(); closeModal('center-modal'); showToast("Center added successfully!", "success")
   } catch (err) { showToast("Error adding center", "error") }
 }
 
 function editCenter(id) {
   const c = centersData.find(x => x.id === id)
   if (c) {
-    document.getElementById('center-name').value = c.name
-    document.getElementById('center-email').value = c.email
-    document.getElementById('center-phone').value = c.phone
-    document.getElementById('center-address').value = c.address
+    document.getElementById('center-name').value = c.name; document.getElementById('center-email').value = c.email
+    document.getElementById('center-phone').value = c.phone; document.getElementById('center-address').value = c.address
     document.getElementById('center-pincode').value = c.pincode
-    centersData = centersData.filter(x => x.id !== id)
-    openModal('center-modal')
+    centersData = centersData.filter(x => x.id !== id); openModal('center-modal')
   }
 }
 
 function deleteCenter(id) {
   if (confirm('Are you sure you want to delete this center?')) {
-    centersData = centersData.filter(c => c.id !== id)
-    renderCentersTable()
-    showToast('Center deleted successfully!', 'success')
+    centersData = centersData.filter(c => c.id !== id); renderCentersTable(); showToast('Center deleted successfully!', 'success')
   }
 }
 
@@ -776,10 +688,7 @@ async function fetchCompanies() {
   try {
     const res = await fetch(API_BASE + "/admin/companies")
     const data = await res.json()
-    companiesData = data.map(c => ({
-      id: c._id, name: c.name, address: c.address || "",
-      email: c.email || "", phone: c.phone || "", pincode: c.pincode || ""
-    }))
+    companiesData = data.map(c => ({ id: c._id, name: c.name, address: c.address || "", email: c.email || "", phone: c.phone || "", pincode: c.pincode || "" }))
     renderCompaniesTable()
   } catch (err) { console.error(err) }
 }
@@ -787,22 +696,18 @@ async function fetchCompanies() {
 function renderCompaniesTable() {
   const tbody = document.getElementById('companies-table-body')
   if (companiesData.length === 0) {
-    tbody.innerHTML = `<tr><td colspan="6" style="text-align:center;padding:40px;color:var(--text-tertiary);">No companies added yet. Click "+ Add Company" to get started.</td></tr>`
+    tbody.innerHTML = `<tr><td colspan="6" style="text-align:center;padding:40px;color:var(--text-tertiary);">No companies added yet.</td></tr>`
     return
   }
   tbody.innerHTML = companiesData.map(company => `
     <tr>
       <td><strong>${company.name}</strong></td>
-      <td>${company.address}</td>
-      <td>${company.email}</td>
-      <td>${company.phone}</td>
+      <td>${company.address}</td><td>${company.email}</td><td>${company.phone}</td>
       <td><span class="badge badge-info">${company.pincode}</span></td>
-      <td>
-        <div class="action-btns">
-          <button class="btn btn-sm btn-secondary" onclick="editCompany('${company.id}')">✏️</button>
-          <button class="btn btn-sm btn-danger" onclick="deleteCompany('${company.id}')">🗑️</button>
-        </div>
-      </td>
+      <td><div class="action-btns">
+        <button class="btn btn-sm btn-secondary" onclick="editCompany('${company.id}')">✏️</button>
+        <button class="btn btn-sm btn-danger" onclick="deleteCompany('${company.id}')">🗑️</button>
+      </div></td>
     </tr>
   `).join('')
 }
@@ -810,43 +715,31 @@ function renderCompaniesTable() {
 async function saveCompany(event) {
   event.preventDefault()
   const company = {
-    name: document.getElementById('company-name').value,
-    address: document.getElementById('company-address').value,
-    email: document.getElementById('company-email').value,
-    phone: document.getElementById('company-phone').value,
+    name: document.getElementById('company-name').value, address: document.getElementById('company-address').value,
+    email: document.getElementById('company-email').value, phone: document.getElementById('company-phone').value,
     pincode: document.getElementById('company-pincode').value
   }
   try {
-    const res = await fetch(API_BASE + "/admin/companies", {
-      method: "POST", headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(company)
-    })
+    const res = await fetch(API_BASE + "/admin/companies", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(company) })
     const data = await res.json()
     companiesData.push({ id: data._id, name: data.name, address: data.address || "", email: data.email || "", phone: data.phone || "", pincode: data.pincode || "" })
-    renderCompaniesTable()
-    closeModal('company-modal')
-    showToast("Company added successfully!", "success")
+    renderCompaniesTable(); closeModal('company-modal'); showToast("Company added successfully!", "success")
   } catch (err) { showToast("Error adding company", "error") }
 }
 
 function editCompany(id) {
   const c = companiesData.find(x => x.id === id)
   if (c) {
-    document.getElementById('company-name').value = c.name
-    document.getElementById('company-address').value = c.address
-    document.getElementById('company-email').value = c.email
-    document.getElementById('company-phone').value = c.phone
+    document.getElementById('company-name').value = c.name; document.getElementById('company-address').value = c.address
+    document.getElementById('company-email').value = c.email; document.getElementById('company-phone').value = c.phone
     document.getElementById('company-pincode').value = c.pincode
-    companiesData = companiesData.filter(x => x.id !== id)
-    openModal('company-modal')
+    companiesData = companiesData.filter(x => x.id !== id); openModal('company-modal')
   }
 }
 
 function deleteCompany(id) {
   if (confirm('Are you sure you want to delete this company?')) {
-    companiesData = companiesData.filter(c => c.id !== id)
-    renderCompaniesTable()
-    showToast('Company deleted successfully!', 'success')
+    companiesData = companiesData.filter(c => c.id !== id); renderCompaniesTable(); showToast('Company deleted successfully!', 'success')
   }
 }
 
@@ -862,18 +755,12 @@ function populateCompanyDropdown() {
 async function createHR(event) {
   event.preventDefault()
   const hr = {
-    name: document.getElementById("hr-name").value,
-    email: document.getElementById("hr-email").value,
-    password: document.getElementById("hr-password").value,
-    companyId: document.getElementById("hr-company").value
+    name: document.getElementById("hr-name").value, email: document.getElementById("hr-email").value,
+    password: document.getElementById("hr-password").value, companyId: document.getElementById("hr-company").value
   }
   try {
-    await fetch(API_BASE + "/hr/create", {
-      method: "POST", headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(hr)
-    })
-    closeModal("hr-modal")
-    showToast("HR account created successfully", "success")
+    await fetch(API_BASE + "/hr/create", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(hr) })
+    closeModal("hr-modal"); showToast("HR account created successfully", "success")
   } catch (err) { showToast("Error creating HR", "error") }
 }
 
@@ -950,7 +837,10 @@ function formatFileSize(bytes) {
   return (bytes / (1024 * 1024)).toFixed(1) + ' MB'
 }
 
-// ── NEW: Approve reschedule request
+// =====================================================================
+// RESCHEDULE
+// =====================================================================
+
 async function approveReschedule(patientId) {
   if (!confirm("Approve this reschedule request?")) return
   try {
@@ -967,7 +857,6 @@ async function approveReschedule(patientId) {
   }
 }
 
-// ── NEW: Reject reschedule request
 async function rejectReschedule(patientId) {
   if (!confirm("Reject this reschedule request? Original date will be kept.")) return
   try {

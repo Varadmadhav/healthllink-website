@@ -92,6 +92,7 @@ exports.getNearbyCenters = async (req, res) => {
       return res.json(centersWithDistance.sort((a, b) => a.distance - b.distance).slice(0, parseInt(limit)))
     }
 
+    // Fallback: match by pincode prefix
     const prefix4 = String(pincode).substring(0, 4)
     let matches = allCenters.filter(c => c.pincode && c.pincode.startsWith(prefix4))
     if (matches.length === 0) {
@@ -181,6 +182,7 @@ exports.assignCenter = async (req, res) => {
 
     if (!patient) return res.status(404).json({ message: "Patient not found" })
 
+    // If all patients in this upload are confirmed, mark upload as confirmed
     if (patient.uploadId) {
       const totalInUpload = await Patient.countDocuments({ uploadId: patient.uploadId })
       const confirmedInUpload = await Patient.countDocuments({
@@ -203,11 +205,10 @@ exports.assignCenter = async (req, res) => {
       let isExistingUser = false
       let tempPassword = null
 
-     // REPLACE WITH:
-// Only match by email — never match HR/admin users by patientId
+      // Only match employee accounts by email — never match HR/admin users
       const existingUser = await User.findOne({
         email: patient.email,
-        role:  "employee"       // ← only match employee accounts
+        role: "employee"
       })
 
       if (!existingUser) {
@@ -283,6 +284,101 @@ exports.getAllPatients = async (req, res) => {
   }
 }
 
+// ─── Date Change Request ──────────────────────────────────────────────────────
+
+exports.requestDateChange = async (req, res) => {
+  try {
+    const { requestedDate, requestedBy, requestedByName } = req.body
+
+    if (!requestedDate) return res.status(400).json({ message: "requestedDate is required" })
+    if (!["hr", "employee"].includes(requestedBy)) {
+      return res.status(400).json({ message: "requestedBy must be 'hr' or 'employee'" })
+    }
+
+    const patient = await Patient.findById(req.params.patientId)
+    if (!patient) return res.status(404).json({ message: "Patient not found" })
+
+    if (patient.appointmentDate) {
+      const hoursUntilAppointment = (new Date(patient.appointmentDate) - new Date()) / (1000 * 60 * 60)
+      if (hoursUntilAppointment < 48) {
+        return res.status(400).json({
+          message: "Cannot request date change — appointment is less than 48 hours away"
+        })
+      }
+    }
+
+    if (new Date(requestedDate) <= new Date()) {
+      return res.status(400).json({ message: "Requested date must be in the future" })
+    }
+
+    patient.dateChangeRequest = {
+      requestedDate: new Date(requestedDate),
+      requestedBy,
+      requestedByName: requestedByName || requestedBy,
+      status: "pending",
+      requestedAt: new Date()
+    }
+
+    await patient.save()
+    res.json({ message: "Date change request submitted", patient })
+  } catch (error) {
+    res.status(500).json({ message: error.message })
+  }
+}
+
+exports.getDateChangeRequests = async (req, res) => {
+  try {
+    const patients = await Patient
+      .find({ "dateChangeRequest.status": "pending" })
+      .populate("assignedCenterId", "name phone address pincode")
+      .populate("companyId", "name")
+      .sort({ "dateChangeRequest.requestedAt": -1 })
+    res.json(patients)
+  } catch (error) {
+    res.status(500).json({ message: error.message })
+  }
+}
+
+exports.reviewDateChange = async (req, res) => {
+  try {
+    const { action } = req.body
+    if (!["approve", "reject"].includes(action)) {
+      return res.status(400).json({ message: "action must be 'approve' or 'reject'" })
+    }
+
+    const patient = await Patient.findById(req.params.patientId)
+    if (!patient) return res.status(404).json({ message: "Patient not found" })
+    if (!patient.dateChangeRequest || patient.dateChangeRequest.status !== "pending") {
+      return res.status(400).json({ message: "No pending date change request found" })
+    }
+
+    if (action === "approve") {
+      const newDate = patient.dateChangeRequest.requestedDate
+      const hoursUntilNew = (new Date(newDate) - new Date()) / (1000 * 60 * 60)
+      if (hoursUntilNew < 48) {
+        return res.status(400).json({
+          message: "Cannot approve — requested date is less than 48 hours away"
+        })
+      }
+      patient.appointmentDate = newDate
+      patient.dateChangeRequest.status = "approved"
+    } else {
+      patient.dateChangeRequest.status = "rejected"
+    }
+
+    await patient.save()
+
+    const populated = await Patient
+      .findById(patient._id)
+      .populate("assignedCenterId", "name phone address pincode")
+      .populate("companyId", "name")
+
+    res.json({ message: `Date change ${action}d`, patient: populated })
+  } catch (error) {
+    res.status(500).json({ message: error.message })
+  }
+}
+
 // ─── Reports ─────────────────────────────────────────────────────────────────
 
 exports.uploadReport = async (req, res) => {
@@ -322,9 +418,7 @@ exports.deleteReport = async (req, res) => {
     if (!patient) return res.status(404).json({ message: "Patient not found" })
 
     const filePath = path.join(__dirname, "../", reportUrl)
-    if (fs.existsSync(filePath)) {
-      fs.unlinkSync(filePath)
-    }
+    if (fs.existsSync(filePath)) fs.unlinkSync(filePath)
 
     res.json({ message: "Report deleted", patient })
   } catch (error) {
