@@ -9,6 +9,7 @@ const {
   getMyDashboard,
   bookAppointment,
   requestReschedule,
+  changePassword,        // ← ADD
 } = require("../controllers/employeeController")
 
 // ── Public routes
@@ -19,5 +20,6 @@ router.post("/login", employeeLogin)
 router.get("/dashboard", authMiddleware, enforceCompanyScope, getMyDashboard)
 router.post("/book-appointment", authMiddleware, enforceCompanyScope, bookAppointment)
 router.post("/reschedule", authMiddleware, enforceCompanyScope, requestReschedule)
+router.post("/change-password", authMiddleware, changePassword)   // ← ADD
 
 module.exports = router
