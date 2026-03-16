@@ -9,84 +9,81 @@
 <body>
     <div class="container">
         <!-- Change Password Banner -->
-<div id="changePasswordBanner" style="display:none; background:#fff3cd; border:1px solid #ffc107;
-     border-radius:8px; padding:14px 20px; margin-bottom:16px;
-     display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:10px;">
-  <span style="font-weight:600; color:#856404;">
-    🔐 You are using a temporary password. Please change it to secure your account.
-  </span>
-  <button onclick="openChangePasswordModal()"
-    style="background:#ffc107; border:none; padding:8px 16px; border-radius:6px;
-           cursor:pointer; font-weight:600; color:#000;">
-    Change Password
-  </button>
-</div>
+        <div id="changePasswordBanner" style="display:none; background:#fff3cd; border:1px solid #ffc107;
+             border-radius:8px; padding:14px 20px; margin-bottom:16px;
+             display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:10px;">
+          <span style="font-weight:600; color:#856404;">
+            🔐 You are using a temporary password. Please change it to secure your account.
+          </span>
+          <button onclick="openChangePasswordModal()"
+            style="background:#ffc107; border:none; padding:8px 16px; border-radius:6px;
+                   cursor:pointer; font-weight:600; color:#000;">
+            Change Password
+          </button>
+        </div>
 
-<!-- Change Password Modal -->
-<div id="changePasswordModal" class="modal">
-  <div class="modal-content" style="max-width:400px;">
-    <div class="modal-header">
-      <h2>🔐 Change Password</h2>
-    </div>
-    <div class="modal-body" style="padding:20px;">
-      <div class="form-group" style="margin-bottom:14px;">
-        <label style="display:block;margin-bottom:6px;font-weight:500;">Current Password</label>
-        <input type="password" id="currentPassword" placeholder="Enter current/temp password"
-          style="width:100%;padding:10px;border:1px solid #ccc;border-radius:6px;box-sizing:border-box;">
-      </div>
-      <div class="form-group" style="margin-bottom:14px;">
-        <label style="display:block;margin-bottom:6px;font-weight:500;">New Password</label>
-        <input type="password" id="newPassword" placeholder="Min 6 characters"
-          style="width:100%;padding:10px;border:1px solid #ccc;border-radius:6px;box-sizing:border-box;">
-      </div>
-      <div class="form-group" style="margin-bottom:14px;">
-        <label style="display:block;margin-bottom:6px;font-weight:500;">Confirm New Password</label>
-        <input type="password" id="confirmNewPassword" placeholder="Re-enter new password"
-          style="width:100%;padding:10px;border:1px solid #ccc;border-radius:6px;box-sizing:border-box;">
-      </div>
-      <div id="changePasswordMessage" style="margin-top:8px;font-weight:500;"></div>
-    </div>
-    <div class="modal-footer" style="padding:16px 20px;display:flex;gap:10px;justify-content:flex-end;">
-      <button onclick="closeChangePasswordModal()"
-        style="padding:10px 18px;border:1px solid #ccc;background:white;border-radius:6px;cursor:pointer;">
-        Cancel
-      </button>
-      <button onclick="submitChangePassword()"
-        style="padding:10px 18px;background:#2c7be5;color:white;border:none;border-radius:6px;
-               cursor:pointer;font-weight:600;">
-        Save Password
-      </button>
-    </div>
-  </div>
-</div>
+        <!-- Change Password Modal -->
+        <div id="changePasswordModal" class="modal">
+          <div class="modal-content" style="max-width:400px;">
+            <div class="modal-header">
+              <h2>🔐 Change Password</h2>
+            </div>
+            <div class="modal-body" style="padding:20px;">
+              <div class="form-group" style="margin-bottom:14px;">
+                <label style="display:block;margin-bottom:6px;font-weight:500;">Current Password</label>
+                <input type="password" id="currentPassword" placeholder="Enter current/temp password"
+                  style="width:100%;padding:10px;border:1px solid #ccc;border-radius:6px;box-sizing:border-box;">
+              </div>
+              <div class="form-group" style="margin-bottom:14px;">
+                <label style="display:block;margin-bottom:6px;font-weight:500;">New Password</label>
+                <input type="password" id="newPassword" placeholder="Min 6 characters"
+                  style="width:100%;padding:10px;border:1px solid #ccc;border-radius:6px;box-sizing:border-box;">
+              </div>
+              <div class="form-group" style="margin-bottom:14px;">
+                <label style="display:block;margin-bottom:6px;font-weight:500;">Confirm New Password</label>
+                <input type="password" id="confirmNewPassword" placeholder="Re-enter new password"
+                  style="width:100%;padding:10px;border:1px solid #ccc;border-radius:6px;box-sizing:border-box;">
+              </div>
+              <div id="changePasswordMessage" style="margin-top:8px;font-weight:500;"></div>
+            </div>
+            <div class="modal-footer" style="padding:16px 20px;display:flex;gap:10px;justify-content:flex-end;">
+              <button onclick="closeChangePasswordModal()"
+                style="padding:10px 18px;border:1px solid #ccc;background:white;border-radius:6px;cursor:pointer;">
+                Cancel
+              </button>
+              <button onclick="submitChangePassword()"
+                style="padding:10px 18px;background:#2c7be5;color:white;border:none;border-radius:6px;
+                       cursor:pointer;font-weight:600;">
+                Save Password
+              </button>
+            </div>
+          </div>
+        </div>
+
         <!-- Header -->
-       <div class="header" style="display:flex; justify-content:space-between; align-items:center; gap:16px; flex-wrap:wrap;">
-    <div>
-        <h1>Employee Dashboard</h1>
-        <p>Welcome back, <span id="employeeName">John Doe</span></p>
-    </div>
+        <div class="header" style="display:flex; justify-content:space-between; align-items:center; gap:16px; flex-wrap:wrap;">
+            <div>
+                <h1>Employee Dashboard</h1>
+                <p>Welcome back, <span id="employeeName">John Doe</span></p>
+            </div>
+            <button onclick="logout()" style="padding:10px 18px; background:#ff0000; color:white; border:none; border-radius:8px; cursor:pointer; font-weight:600;">
+                Logout
+            </button>
+        </div>
 
-    <button onclick="logout()" style="padding:10px 18px; background:#ff0000; color:white; border:none; border-radius:8px; cursor:pointer; font-weight:600;">
-        Logout
-    </button>
-</div>
-
-<div class="dashboard-card">
-    <h2>🗓 Book Appointment</h2>
-    <p class="subtitle">Choose your preferred appointment date and send request to admin</p>
-
-    <div style="display:flex; gap:12px; align-items:center; flex-wrap:wrap; margin-top:15px;">
-        <input type="date" id="bookAppointmentDate"
-            style="padding:10px 14px; border:1px solid #ccc; border-radius:8px; min-width:220px;">
-        
-        <button onclick="bookAppointment()"
-            style="padding:10px 18px; background:#2c7be5; color:white; border:none; border-radius:8px; cursor:pointer; font-weight:600;">
-            Book Appointment
-        </button>
-    </div>
-
-    <div id="bookAppointmentMessage" style="margin-top:12px; font-weight:500;"></div>
-</div>
+        <div class="dashboard-card">
+            <h2>🗓 Book Appointment</h2>
+            <p class="subtitle">Choose your preferred appointment date and send request to admin</p>
+            <div style="display:flex; gap:12px; align-items:center; flex-wrap:wrap; margin-top:15px;">
+                <input type="date" id="bookAppointmentDate"
+                    style="padding:10px 14px; border:1px solid #ccc; border-radius:8px; min-width:220px;">
+                <button onclick="bookAppointment()"
+                    style="padding:10px 18px; background:#2c7be5; color:white; border:none; border-radius:8px; cursor:pointer; font-weight:600;">
+                    Book Appointment
+                </button>
+            </div>
+            <div id="bookAppointmentMessage" style="margin-top:12px; font-weight:500;"></div>
+        </div>
 
         <!-- Upcoming Appointments Section -->
         <div class="section">
@@ -97,7 +94,6 @@
         <!-- Reports Section -->
         <div class="section">
             <h2 class="section-title">📄 My Reports</h2>
-            
             <div class="filter-section">
                 <div class="filter-grid">
                     <div class="form-group">
@@ -108,15 +104,10 @@
                         <label for="reportToDate">To Date</label>
                         <input type="date" id="reportToDate">
                     </div>
-                    <button class="btn btn-primary" onclick="filterReports()">
-                        🔍 Filter
-                    </button>
-                    <button class="btn btn-secondary" onclick="resetFilter()">
-                        ↻ Reset
-                    </button>
+                    <button class="btn btn-primary" onclick="filterReports()">🔍 Filter</button>
+                    <button class="btn btn-secondary" onclick="resetFilter()">↻ Reset</button>
                 </div>
             </div>
-
             <div class="reports-grid" id="reportsContainer"></div>
         </div>
     </div>
@@ -125,22 +116,22 @@
     <div id="changeAppointmentModal" class="modal">
         <div class="modal-content">
             <div class="modal-header">
-                <h2>Change Appointment Date</h2>
+                <h2>📅 Request Date Change</h2>
             </div>
             <div class="modal-body">
+                <p style="font-size:0.9rem;color:#666;margin-bottom:12px;">
+                    ⚠️ Only allowed if appointment is more than 48 hours away.<br>
+                    Your request will be reviewed by admin.
+                </p>
                 <div class="form-group">
                     <label for="newAppointmentDate">Select New Date</label>
                     <input type="date" id="newAppointmentDate">
-                </div>
-                <div class="form-group">
-                    <label for="newAppointmentTime">Select Time Slot</label>
-                    <input type="time" id="newAppointmentTime">
                 </div>
                 <div id="modalAlert"></div>
             </div>
             <div class="modal-footer">
                 <button class="btn btn-secondary" onclick="closeModal()">Cancel</button>
-                <button class="btn btn-success" onclick="confirmDateChange()">Confirm Change</button>
+                <button class="btn btn-success" onclick="confirmDateChange()">Submit Request</button>
             </div>
         </div>
     </div>
@@ -151,182 +142,208 @@
             <div class="modal-header">
                 <h2 id="pdfViewerTitle">View Report</h2>
             </div>
-            <div class="pdf-viewer-container" id="pdfViewerContainer">
-                <!-- PDF will be loaded here -->
-            </div>
+            <div class="pdf-viewer-container" id="pdfViewerContainer"></div>
             <div class="modal-footer" style="margin-top: 15px;">
                 <button class="btn btn-secondary" onclick="closePdfViewer()">Close</button>
-                <button class="btn btn-success" id="downloadFromViewer" onclick="downloadCurrentPdf()">
-                    ⬇ Download
-                </button>
+                <button class="btn btn-success" id="downloadFromViewer" onclick="downloadCurrentPdf()">⬇ Download</button>
             </div>
         </div>
     </div>
 
    <script>
-    const API_BASE = "http://localhost:5000/api/employee";
+    const API_BASE = "http://localhost:5000/api/employee"
 
-    let appointments = [];
-    let reports = [];
-
-    let currentAppointmentId = null;
-    let currentPdfUrl = null;
-    let currentPdfName = null;
+    let appointments = []
+    let reports = []
+    let currentAppointmentId = null
+    let currentPdfUrl = null
+    let currentPdfName = null
 
     document.addEventListener('DOMContentLoaded', function () {
-        loadEmployeeDashboard();
-        setDefaultDateRange();
-    });
+        loadEmployeeDashboard()
+        setDefaultDateRange()
+    })
 
     async function loadEmployeeDashboard() {
         const token = localStorage.getItem("employeeToken")
-;
-        const user = JSON.parse(localStorage.getItem("employeeUser")
-);
+        const user = JSON.parse(localStorage.getItem("employeeUser"))
 
         if (!token || !user) {
-            window.location.href = "/Healthlink/Solutions/corp_sol/corp_solsignup.html";
-            return;
+            window.location.href = "/Healthlink/Solutions/corp_sol/corp_solsignup.html"
+            return
         }
 
         try {
             const res = await fetch(`${API_BASE}/dashboard`, {
-                headers: {
-                    "Authorization": `Bearer ${token}`
-                }
-            });
-
-            const data = await res.json();
+                headers: { "Authorization": `Bearer ${token}` }
+            })
+            const data = await res.json()
 
             if (!res.ok) {
-                alert(data.message || "Failed to load dashboard");
-                return;
+                alert(data.message || "Failed to load dashboard")
+                return
             }
 
-            document.getElementById("employeeName").textContent = data.employee?.name || "Employee";
+            document.getElementById("employeeName").textContent = data.employee?.name || "Employee"
             checkTemporaryPassword(data)
-            appointments = data.appointments || [];
-            reports = data.reports || [];
+            appointments = data.appointments || []
+            reports = data.reports || []
 
-            loadAppointments();
-            loadReports();
+            loadAppointments()
+            loadReports()
         } catch (error) {
-            console.error("Dashboard load error:", error);
-            alert("Server error while loading employee dashboard");
+            console.error("Dashboard load error:", error)
+            alert("Server error while loading employee dashboard")
         }
     }
 
-   function loadAppointments() {
-  const container = document.getElementById('appointmentsContainer')
+    function loadAppointments() {
+        const container = document.getElementById('appointmentsContainer')
 
-  if (appointments.length === 0) {
-    container.innerHTML = `
-      <div class="no-data">
-        <div class="no-data-icon">📅</div>
-        <p>No upcoming appointments found.</p>
-      </div>
-    `
-    return
-  }
+        if (appointments.length === 0) {
+            container.innerHTML = `
+              <div class="no-data">
+                <div class="no-data-icon">📅</div>
+                <p>No upcoming appointments found.</p>
+              </div>
+            `
+            return
+        }
 
-  container.innerHTML = appointments.map(apt => {
-    const status = (apt.status || "requested").toLowerCase()
+        container.innerHTML = appointments.map(apt => {
+            const status = (apt.status || "requested").toLowerCase()
+            const dcr = apt.dateChangeRequest
 
-    const statusText =
-      status === "confirmed"           ? "✓ Appointment Confirmed"
-      : status === "reschedule_requested" ? "🔄 Reschedule Pending"
-      : status === "requested"         ? "⏳ Request Sent"
-      : "⏳ Pending"
+            // ── Date change request in-app badge ──────────────────────────────
+            let dateChangeBadge = ""
+            if (dcr && dcr.status === "pending") {
+                const reqDate = new Date(dcr.requestedDate).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })
+                dateChangeBadge = `
+                    <div style="margin-top:10px;padding:10px 14px;background:#fff3cd;border:1px solid #ffc107;
+                                border-radius:8px;display:flex;align-items:center;gap:10px;flex-wrap:wrap;">
+                        <span style="font-size:1.1rem;">⏳</span>
+                        <div>
+                            <strong style="color:#856404;font-size:0.9rem;">Date Change Pending</strong>
+                            <div style="font-size:0.82rem;color:#856404;margin-top:2px;">
+                                Requested: <strong>${reqDate}</strong> — awaiting admin approval
+                            </div>
+                        </div>
+                    </div>`
+            } else if (dcr && dcr.status === "approved") {
+                dateChangeBadge = `
+                    <div style="margin-top:10px;padding:10px 14px;background:#d4edda;border:1px solid #c3e6cb;
+                                border-radius:8px;display:flex;align-items:center;gap:10px;">
+                        <span style="font-size:1.1rem;">✅</span>
+                        <div>
+                            <strong style="color:#155724;font-size:0.9rem;">Date Change Approved</strong>
+                            <div style="font-size:0.82rem;color:#155724;margin-top:2px;">
+                                Your appointment date has been updated.
+                            </div>
+                        </div>
+                    </div>`
+            } else if (dcr && dcr.status === "rejected") {
+                dateChangeBadge = `
+                    <div style="margin-top:10px;padding:10px 14px;background:#f8d7da;border:1px solid #f5c6cb;
+                                border-radius:8px;display:flex;align-items:center;gap:10px;">
+                        <span style="font-size:1.1rem;">❌</span>
+                        <div>
+                            <strong style="color:#721c24;font-size:0.9rem;">Date Change Rejected</strong>
+                            <div style="font-size:0.82rem;color:#721c24;margin-top:2px;">
+                                Your original appointment date remains unchanged.
+                            </div>
+                        </div>
+                    </div>`
+            }
 
-    const statusClass =
-      status === "confirmed"              ? "status-confirmed"
-      : status === "reschedule_requested" ? "status-reschedule"
-      : "status-changeable"
+            const statusText =
+                status === "confirmed"  ? "✓ Appointment Confirmed"
+                : status === "requested" ? "⏳ Request Sent"
+                : "⏳ Pending"
 
-    const bottomMessage =
-      status === "confirmed"              ? "Appointment confirmed by admin"
-      : status === "reschedule_requested" ? "Reschedule request sent — awaiting admin approval"
-      : "Waiting for admin approval and center assignment"
+            const statusClass =
+                status === "confirmed"  ? "status-confirmed"
+                : "status-changeable"
 
-    const bottomMessageClass =
-      status === "confirmed"              ? "time-info"
-      : status === "reschedule_requested" ? "time-warning"
-      : "time-warning"
+            const bottomMessage =
+                status === "confirmed"  ? "Appointment confirmed by admin"
+                : "Waiting for admin approval and center assignment"
 
-    // ── 48hr check for reschedule button
-    const now = new Date()
-    const apptDate = new Date(apt.appointmentDate)
-    const hoursRemaining = (apptDate - now) / (1000 * 60 * 60)
-    const canReschedule = status === "confirmed" && hoursRemaining > 48
+            const bottomMessageClass = status === "confirmed" ? "time-info" : "time-warning"
 
-    const rescheduleButton = canReschedule
-      ? `<button class="btn btn-secondary"
-           style="margin-left:8px;background:#ed8936;border:none;color:white;
-                  padding:8px 14px;border-radius:6px;cursor:pointer;font-weight:600;"
-           onclick="openRescheduleModal('${apt.id}')">
-           🔄 Request Reschedule
-         </button>`
-      : status === "confirmed"
-        ? `<span style="font-size:12px;color:#e53e3e;margin-left:8px;">
-             ⚠️ Reschedule not allowed (less than 48hrs remaining)
-           </span>`
-        : ""
+            // ── 48hr check for date change button ─────────────────────────────
+            const now = new Date()
+            const apptDate = new Date(apt.appointmentDate)
+            const hoursRemaining = (apptDate - now) / (1000 * 60 * 60)
+            // Only show button if confirmed and >48hrs away and no pending request
+            const canRequestChange = status === "confirmed"
+                && hoursRemaining > 48
+                && !(dcr && dcr.status === "pending")
 
-    return `
-      <div class="appointment-card ${status === 'reschedule_requested' ? 'reschedule-pending-card' : ''}">
-        <div class="appointment-header">
-          <span class="appointment-id">Appointment ID: ${apt.id}</span>
-          <span class="status-badge ${statusClass}">${statusText}</span>
-        </div>
+            const changeDateButton = canRequestChange
+                ? `<button class="btn btn-secondary"
+                       style="margin-left:8px;background:#ed8936;border:none;color:white;
+                              padding:8px 14px;border-radius:6px;cursor:pointer;font-weight:600;"
+                       onclick="openRescheduleModal('${apt.id}')">
+                       📅 Request Date Change
+                   </button>`
+                : status === "confirmed" && hoursRemaining <= 48
+                    ? `<span style="font-size:12px;color:#e53e3e;margin-left:8px;">
+                           ⚠️ Date change not allowed (less than 48hrs remaining)
+                       </span>`
+                    : ""
 
-        <div class="appointment-details">
-          <div class="detail-item">
-            <span class="detail-label">Employee Name</span>
-            <span class="detail-value">${apt.employeeName || "-"}</span>
-          </div>
-          <div class="detail-item">
-            <span class="detail-label">Age</span>
-            <span class="detail-value">${apt.age || "-"}</span>
-          </div>
-          <div class="detail-item">
-            <span class="detail-label">Gender</span>
-            <span class="detail-value">${apt.gender || "-"}</span>
-          </div>
-          <div class="detail-item">
-            <span class="detail-label">Appointment Date</span>
-            <span class="detail-value">${formatDate(apt.appointmentDate)}</span>
-          </div>
-          <div class="detail-item">
-            <span class="detail-label">Time</span>
-            <span class="detail-value">${formatTime(apt.appointmentTime || "10:00")}</span>
-          </div>
-          <div class="detail-item">
-            <span class="detail-label">Center Name</span>
-            <span class="detail-value">${apt.centerName || "Not Assigned Yet"}</span>
-          </div>
-          <div class="detail-item" style="grid-column: 1 / -1;">
-            <span class="detail-label">Center Address</span>
-            <span class="detail-value">${apt.centerAddress || "Center not assigned yet"}</span>
-          </div>
-        </div>
-
-        <div class="action-buttons">
-          <button class="btn" disabled>
-            ${status === "confirmed" ? "🔒 Confirmed"
-              : status === "reschedule_requested" ? "🔄 Reschedule Pending"
-              : "⏳ Waiting"}
-          </button>
-          ${rescheduleButton}
-          <span class="${bottomMessageClass}">${bottomMessage}</span>
-        </div>
-      </div>
-    `
-  }).join('')
-}
+            return `
+              <div class="appointment-card">
+                <div class="appointment-header">
+                  <span class="appointment-id">Appointment ID: ${apt.id}</span>
+                  <span class="status-badge ${statusClass}">${statusText}</span>
+                </div>
+                <div class="appointment-details">
+                  <div class="detail-item">
+                    <span class="detail-label">Employee Name</span>
+                    <span class="detail-value">${apt.employeeName || "-"}</span>
+                  </div>
+                  <div class="detail-item">
+                    <span class="detail-label">Age</span>
+                    <span class="detail-value">${apt.age || "-"}</span>
+                  </div>
+                  <div class="detail-item">
+                    <span class="detail-label">Gender</span>
+                    <span class="detail-value">${apt.gender || "-"}</span>
+                  </div>
+                  <div class="detail-item">
+                    <span class="detail-label">Appointment Date</span>
+                    <span class="detail-value">${formatDate(apt.appointmentDate)}</span>
+                  </div>
+                  <div class="detail-item">
+                    <span class="detail-label">Time</span>
+                    <span class="detail-value">${formatTime(apt.appointmentTime || "10:00")}</span>
+                  </div>
+                  <div class="detail-item">
+                    <span class="detail-label">Center Name</span>
+                    <span class="detail-value">${apt.centerName || "Not Assigned Yet"}</span>
+                  </div>
+                  <div class="detail-item" style="grid-column: 1 / -1;">
+                    <span class="detail-label">Center Address</span>
+                    <span class="detail-value">${apt.centerAddress || "Center not assigned yet"}</span>
+                  </div>
+                </div>
+                ${dateChangeBadge}
+                <div class="action-buttons">
+                  <button class="btn" disabled>
+                    ${status === "confirmed" ? "🔒 Confirmed" : "⏳ Waiting"}
+                  </button>
+                  ${changeDateButton}
+                  <span class="${bottomMessageClass}">${bottomMessage}</span>
+                </div>
+              </div>
+            `
+        }).join('')
+    }
 
     function loadReports(filteredReports = null) {
-        const container = document.getElementById('reportsContainer');
-        const reportsToShow = filteredReports || reports;
+        const container = document.getElementById('reportsContainer')
+        const reportsToShow = filteredReports || reports
 
         if (reportsToShow.length === 0) {
             container.innerHTML = `
@@ -334,8 +351,8 @@
                     <div class="no-data-icon">📄</div>
                     <p>No reports found for the selected date range.</p>
                 </div>
-            `;
-            return;
+            `
+            return
         }
 
         container.innerHTML = reportsToShow.map(report => `
@@ -344,357 +361,272 @@
                 <div class="pdf-name">${report.fileName}</div>
                 <div class="pdf-date">${formatDate(report.date)}</div>
                 <div class="pdf-actions">
-                    <button class="btn btn-view" onclick="viewPdf('${report.id}')">
-                        👁 View
-                    </button>
-                    <button class="btn btn-success" onclick="downloadPdf('${report.id}')">
-                        ⬇ Download
-                    </button>
+                    <button class="btn btn-view" onclick="viewPdf('${report.id}')">👁 View</button>
+                    <button class="btn btn-success" onclick="downloadPdf('${report.id}')">⬇ Download</button>
                 </div>
             </div>
-        `).join('');
+        `).join('')
     }
 
     function filterReports() {
-        const fromDate = document.getElementById('reportFromDate').value;
-        const toDate = document.getElementById('reportToDate').value;
-
-        let filtered = reports;
-
-        if (fromDate) {
-            filtered = filtered.filter(r => new Date(r.date) >= new Date(fromDate));
-        }
-
-        if (toDate) {
-            filtered = filtered.filter(r => new Date(r.date) <= new Date(toDate));
-        }
-
-        loadReports(filtered);
+        const fromDate = document.getElementById('reportFromDate').value
+        const toDate = document.getElementById('reportToDate').value
+        let filtered = reports
+        if (fromDate) filtered = filtered.filter(r => new Date(r.date) >= new Date(fromDate))
+        if (toDate) filtered = filtered.filter(r => new Date(r.date) <= new Date(toDate))
+        loadReports(filtered)
     }
 
     function resetFilter() {
-        setDefaultDateRange();
-        loadReports();
+        setDefaultDateRange()
+        loadReports()
     }
 
     function viewPdf(reportId) {
-        const report = reports.find(r => r.id === reportId);
+        const report = reports.find(r => r.id === reportId)
         if (report) {
-            currentPdfUrl = report.fileUrl;
-            currentPdfName = report.fileName;
-
-            document.getElementById('pdfViewerTitle').textContent = report.fileName;
-
-            document.getElementById('pdfViewerContainer').innerHTML = `
-                <iframe src="${report.fileUrl}" type="application/pdf" style="width:100%; height:70vh; border:none;"></iframe>
-            `;
-
-            document.getElementById('pdfViewerModal').classList.add('active');
+            currentPdfUrl = report.fileUrl
+            currentPdfName = report.fileName
+            document.getElementById('pdfViewerTitle').textContent = report.fileName
+            document.getElementById('pdfViewerContainer').innerHTML =
+                `<iframe src="${report.fileUrl}" type="application/pdf" style="width:100%; height:70vh; border:none;"></iframe>`
+            document.getElementById('pdfViewerModal').classList.add('active')
         }
     }
 
     function closePdfViewer() {
-        document.getElementById('pdfViewerModal').classList.remove('active');
-        currentPdfUrl = null;
-        currentPdfName = null;
+        document.getElementById('pdfViewerModal').classList.remove('active')
+        currentPdfUrl = null
+        currentPdfName = null
     }
 
     function downloadPdf(reportId) {
-        const report = reports.find(r => r.id === reportId);
+        const report = reports.find(r => r.id === reportId)
         if (report) {
-            const link = document.createElement('a');
-            link.href = report.fileUrl;
-            link.download = report.fileName;
-            document.body.appendChild(link);
-            link.click();
-            document.body.removeChild(link);
+            const link = document.createElement('a')
+            link.href = report.fileUrl
+            link.download = report.fileName
+            document.body.appendChild(link)
+            link.click()
+            document.body.removeChild(link)
         }
     }
 
     function downloadCurrentPdf() {
         if (currentPdfUrl && currentPdfName) {
-            const link = document.createElement('a');
-            link.href = currentPdfUrl;
-            link.download = currentPdfName;
-            document.body.appendChild(link);
-            link.click();
-            document.body.removeChild(link);
+            const link = document.createElement('a')
+            link.href = currentPdfUrl
+            link.download = currentPdfName
+            document.body.appendChild(link)
+            link.click()
+            document.body.removeChild(link)
         }
     }
 
     function setDefaultDateRange() {
-        const today = new Date();
-        const sixMonthsAgo = new Date();
-        sixMonthsAgo.setMonth(today.getMonth() - 6);
+        const today = new Date()
+        const sixMonthsAgo = new Date()
+        sixMonthsAgo.setMonth(today.getMonth() - 6)
 
-        document.getElementById('reportFromDate').value = sixMonthsAgo.toISOString().split('T')[0];
-        document.getElementById('reportToDate').value = today.toISOString().split('T')[0];
+        const fmt = d => `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`
+        document.getElementById('reportFromDate').value = fmt(sixMonthsAgo)
+        document.getElementById('reportToDate').value = fmt(today)
     }
 
-    function canChangeAppointment(appointmentDate, appointmentTime) {
-        const now = new Date();
-        const aptDateTime = new Date(`${new Date(appointmentDate).toISOString().split('T')[0]}T${appointmentTime || "10:00"}`);
-        const hoursRemaining = (aptDateTime - now) / (1000 * 60 * 60);
-        return hoursRemaining > 72;
-    }
-
-    function getHoursRemaining(appointmentDate, appointmentTime) {
-        const now = new Date();
-        const aptDateTime = new Date(`${new Date(appointmentDate).toISOString().split('T')[0]}T${appointmentTime || "10:00"}`);
-        const hoursDiff = (aptDateTime - now) / (1000 * 60 * 60);
-        return Math.max(0, hoursDiff);
-    }
-
-    function getDeadlineDate(appointmentDate, appointmentTime) {
-        const aptDateTime = new Date(`${new Date(appointmentDate).toISOString().split('T')[0]}T${appointmentTime || "10:00"}`);
-        const deadline = new Date(aptDateTime);
-        deadline.setHours(deadline.getHours() - 72);
-
-        return deadline.toLocaleDateString('en-US', {
-            month: 'short',
-            day: 'numeric',
-            year: 'numeric',
-            hour: '2-digit',
-            minute: '2-digit'
-        });
-    }
-
-    function openChangeAppointmentModal(appointmentId) {
-        currentAppointmentId = appointmentId;
-        const appointment = appointments.find(a => a.id === appointmentId);
-
-        if (appointment) {
-            const tomorrow = new Date();
-            tomorrow.setDate(tomorrow.getDate() + 1);
-            document.getElementById('newAppointmentDate').min = tomorrow.toISOString().split('T')[0];
-            document.getElementById('newAppointmentDate').value = new Date(appointment.appointmentDate).toISOString().split('T')[0];
-            document.getElementById('newAppointmentTime').value = appointment.appointmentTime || "10:00";
-            document.getElementById('changeAppointmentModal').classList.add('active');
+    // Open date change modal
+    function openRescheduleModal(appointmentId) {
+        currentAppointmentId = appointmentId
+        const apt = appointments.find(a => a.id === appointmentId)
+        if (apt) {
+            // Min date: 48hrs from now
+            // Min date: 48hrs from now in LOCAL time (not UTC — avoids IST timezone offset bugs)
+            const minDate = new Date()
+            minDate.setHours(minDate.getHours() + 49)
+            const minY = minDate.getFullYear()
+            const minM = String(minDate.getMonth() + 1).padStart(2, '0')
+            const minD = String(minDate.getDate()).padStart(2, '0')
+            document.getElementById('newAppointmentDate').min = `${minY}-${minM}-${minD}`
+            document.getElementById('newAppointmentDate').value = ''
+            document.getElementById('modalAlert').innerHTML = ''
+            document.getElementById('changeAppointmentModal').classList.add('active')
         }
     }
 
     function closeModal() {
-        document.getElementById('changeAppointmentModal').classList.remove('active');
-        document.getElementById('newAppointmentDate').value = '';
-        document.getElementById('newAppointmentTime').value = '';
-        document.getElementById('modalAlert').innerHTML = '';
-        currentAppointmentId = null;
+        document.getElementById('changeAppointmentModal').classList.remove('active')
+        document.getElementById('newAppointmentDate').value = ''
+        document.getElementById('modalAlert').innerHTML = ''
+        currentAppointmentId = null
     }
 
-   // REPLACE existing confirmDateChange:
-async function confirmDateChange() {
-  const newDate = document.getElementById('newAppointmentDate').value
-  const token = localStorage.getItem("employeeToken")
+    // Unified date change request — calls new endpoint, writes to dateChangeRequest
+    async function confirmDateChange() {
+        const newDate = document.getElementById('newAppointmentDate').value
+        const token = localStorage.getItem("employeeToken")
 
-  if (!newDate) {
-    document.getElementById('modalAlert').innerHTML =
-      '<div style="color:red;margin-top:8px;">Please select a new date</div>'
-    return
-  }
+        if (!newDate) {
+            document.getElementById('modalAlert').innerHTML =
+                '<div style="color:red;margin-top:8px;">Please select a new date</div>'
+            return
+        }
 
-  try {
-    const res = await fetch(`${API_BASE}/reschedule`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        "Authorization": `Bearer ${token}`
-      },
-      body: JSON.stringify({ newDate })
-    })
+        try {
+            const res = await fetch(`${API_BASE}/request-date-change`, {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                    "Authorization": `Bearer ${token}`
+                },
+                body: JSON.stringify({ newDate })
+            })
 
-    const data = await res.json()
+            const data = await res.json()
 
-    if (res.ok) {
-      document.getElementById('modalAlert').innerHTML =
-        '<div style="color:green;margin-top:8px;">✅ Reschedule request submitted! Awaiting admin approval.</div>'
-      setTimeout(() => {
-        closeModal()
-        loadEmployeeDashboard()
-      }, 1500)
-    } else {
-      document.getElementById('modalAlert').innerHTML =
-        `<div style="color:red;margin-top:8px;">${data.message || "Request failed"}</div>`
+            if (res.ok) {
+                document.getElementById('modalAlert').innerHTML =
+                    '<div style="color:green;margin-top:8px;">✅ Date change request submitted! Awaiting admin approval.</div>'
+                setTimeout(() => {
+                    closeModal()
+                    loadEmployeeDashboard()
+                }, 1500)
+            } else {
+                document.getElementById('modalAlert').innerHTML =
+                    `<div style="color:red;margin-top:8px;">${data.message || "Request failed"}</div>`
+            }
+        } catch (err) {
+            document.getElementById('modalAlert').innerHTML =
+                '<div style="color:red;margin-top:8px;">Server error. Please try again.</div>'
+        }
     }
-  } catch (err) {
-    document.getElementById('modalAlert').innerHTML =
-      '<div style="color:red;margin-top:8px;">Server error. Please try again.</div>'
-  }
-}
-
-// ADD this new function right after confirmDateChange:
-function openRescheduleModal(appointmentId) {
-  currentAppointmentId = appointmentId
-  const apt = appointments.find(a => a.id === appointmentId)
-
-  if (apt) {
-    // Set min date to tomorrow
-    const tomorrow = new Date()
-    tomorrow.setDate(tomorrow.getDate() + 1)
-    document.getElementById('newAppointmentDate').min = tomorrow.toISOString().split('T')[0]
-    document.getElementById('newAppointmentDate').value = ''
-    document.getElementById('modalAlert').innerHTML = ''
-    document.getElementById('changeAppointmentModal').classList.add('active')
-  }
-}
 
     function formatDate(dateString) {
-        if (!dateString) return "-";
-        const options = { year: 'numeric', month: 'short', day: 'numeric' };
-        return new Date(dateString).toLocaleDateString('en-US', options);
+        if (!dateString) return "-"
+        return new Date(dateString).toLocaleDateString('en-IN', { year: 'numeric', month: 'short', day: 'numeric' })
     }
 
-    // REPLACE WITH:
-function formatTime(timeString) {
-    if (!timeString) return "10:00 AM"
-    // ── FIX: if already formatted (contains AM/PM), return as-is
-    if (timeString.includes('AM') || timeString.includes('PM')) return timeString
-    const [hours, minutes] = timeString.split(':')
-    const hour = parseInt(hours)
-    if (isNaN(hour)) return timeString
-    const ampm = hour >= 12 ? 'PM' : 'AM'
-    const formattedHour = hour % 12 || 12
-    return `${formattedHour}:${minutes} ${ampm}`
-}
+    function formatTime(timeString) {
+        if (!timeString) return "10:00 AM"
+        if (timeString.includes('AM') || timeString.includes('PM')) return timeString
+        const [hours, minutes] = timeString.split(':')
+        const hour = parseInt(hours)
+        if (isNaN(hour)) return timeString
+        const ampm = hour >= 12 ? 'PM' : 'AM'
+        return `${hour % 12 || 12}:${minutes} ${ampm}`
+    }
 
     window.onclick = function(event) {
         if (event.target.classList.contains('modal')) {
-            event.target.classList.remove('active');
+            event.target.classList.remove('active')
         }
     }
 
     document.addEventListener('keydown', function(e) {
         if (e.key === 'Escape') {
-            document.querySelectorAll('.modal.active').forEach(modal => {
-                modal.classList.remove('active');
-            });
+            document.querySelectorAll('.modal.active').forEach(m => m.classList.remove('active'))
         }
-    });
-
-    async function bookAppointment() {
-    const token = localStorage.getItem("employeeToken")
-
-    const appointmentDate = document.getElementById("bookAppointmentDate").value
-    const messageBox = document.getElementById("bookAppointmentMessage")
-
-    if (!appointmentDate) {
-        messageBox.innerHTML = `<span style="color:red;">Please select appointment date</span>`
-        return
-    }
-
-    try {
-        const res = await fetch("http://localhost:5000/api/employee/book-appointment", {
-            method: "POST",
-            headers: {
-                "Content-Type": "application/json",
-                "Authorization": `Bearer ${token}`
-            },
-            body: JSON.stringify({ appointmentDate })
-        })
-
-        const data = await res.json()
-
-        if (res.ok) {
-            messageBox.innerHTML = `<span style="color:green;">${data.message}</span>`
-            document.getElementById("bookAppointmentDate").value = ""
-
-           loadEmployeeDashboard()
-
-        } else {
-            messageBox.innerHTML = `<span style="color:red;">${data.message || "Booking failed"}</span>`
-        }
-    } catch (error) {
-        console.error("Book appointment error:", error)
-        messageBox.innerHTML = `<span style="color:red;">Server error</span>`
-    }
-}
-
-function logout() {
-    localStorage.removeItem("employeeUser");
-    localStorage.removeItem("employeeToken");
-    window.location.href = "/Healthlink/Solutions/corp_sol/corp_solsignup.html";
-}
-
-// ── Show banner if temp password
-function checkTemporaryPassword(data) {
-  const banner = document.getElementById('changePasswordBanner')
-  if (data.isTemporaryPassword) {
-    banner.style.display = 'flex'
-  } else {
-    banner.style.display = 'none'
-  }
-}
-
-function openChangePasswordModal() {
-  document.getElementById('currentPassword').value = ''
-  document.getElementById('newPassword').value = ''
-  document.getElementById('confirmNewPassword').value = ''
-  document.getElementById('changePasswordMessage').innerHTML = ''
-  document.getElementById('changePasswordModal').classList.add('active')
-}
-
-function closeChangePasswordModal() {
-  document.getElementById('changePasswordModal').classList.remove('active')
-}
-
-async function submitChangePassword() {
-  const currentPassword = document.getElementById('currentPassword').value
-  const newPassword = document.getElementById('newPassword').value
-  const confirmNewPassword = document.getElementById('confirmNewPassword').value
-  const msgBox = document.getElementById('changePasswordMessage')
-  const token = localStorage.getItem('employeeToken')
-
-  if (!currentPassword || !newPassword || !confirmNewPassword) {
-    msgBox.innerHTML = '<span style="color:red;">All fields are required</span>'
-    return
-  }
-
-  if (newPassword.length < 6) {
-    msgBox.innerHTML = '<span style="color:red;">New password must be at least 6 characters</span>'
-    return
-  }
-
-  if (newPassword !== confirmNewPassword) {
-    msgBox.innerHTML = '<span style="color:red;">New passwords do not match</span>'
-    return
-  }
-
-  if (newPassword === currentPassword) {
-    msgBox.innerHTML = '<span style="color:red;">New password must be different from current password</span>'
-    return
-  }
-
-  try {
-    const res = await fetch('http://localhost:5000/api/employee/change-password', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${token}`
-      },
-      body: JSON.stringify({ currentPassword, newPassword })
     })
 
-    const data = await res.json()
+    async function bookAppointment() {
+        const token = localStorage.getItem("employeeToken")
+        const appointmentDate = document.getElementById("bookAppointmentDate").value
+        const messageBox = document.getElementById("bookAppointmentMessage")
 
-    if (res.ok) {
-      msgBox.innerHTML = '<span style="color:green;">✅ Password changed successfully!</span>'
-      setTimeout(() => {
-        closeChangePasswordModal()
-        // Hide banner
-        document.getElementById('changePasswordBanner').style.display = 'none'
-        // Update stored user
-        const user = JSON.parse(localStorage.getItem('employeeUser') || '{}')
-        user.isTemporaryPassword = false
-        localStorage.setItem('employeeUser', JSON.stringify(user))
-      }, 1500)
-    } else {
-      msgBox.innerHTML = `<span style="color:red;">${data.message || 'Failed to change password'}</span>`
+        if (!appointmentDate) {
+            messageBox.innerHTML = `<span style="color:red;">Please select appointment date</span>`
+            return
+        }
+
+        try {
+            const res = await fetch("http://localhost:5000/api/employee/book-appointment", {
+                method: "POST",
+                headers: { "Content-Type": "application/json", "Authorization": `Bearer ${token}` },
+                body: JSON.stringify({ appointmentDate })
+            })
+            const data = await res.json()
+            if (res.ok) {
+                messageBox.innerHTML = `<span style="color:green;">${data.message}</span>`
+                document.getElementById("bookAppointmentDate").value = ""
+                loadEmployeeDashboard()
+            } else {
+                messageBox.innerHTML = `<span style="color:red;">${data.message || "Booking failed"}</span>`
+            }
+        } catch (error) {
+            console.error("Book appointment error:", error)
+            messageBox.innerHTML = `<span style="color:red;">Server error</span>`
+        }
     }
-  } catch (err) {
-    msgBox.innerHTML = '<span style="color:red;">Server error. Try again.</span>'
-  }
-}
 
-</script>
+    function logout() {
+        localStorage.removeItem("employeeUser")
+        localStorage.removeItem("employeeToken")
+        window.location.href = "/Healthlink/Solutions/corp_sol/corp_solsignup.html"
+    }
+
+    function checkTemporaryPassword(data) {
+        const banner = document.getElementById('changePasswordBanner')
+        banner.style.display = data.isTemporaryPassword ? 'flex' : 'none'
+    }
+
+    function openChangePasswordModal() {
+        document.getElementById('currentPassword').value = ''
+        document.getElementById('newPassword').value = ''
+        document.getElementById('confirmNewPassword').value = ''
+        document.getElementById('changePasswordMessage').innerHTML = ''
+        document.getElementById('changePasswordModal').classList.add('active')
+    }
+
+    function closeChangePasswordModal() {
+        document.getElementById('changePasswordModal').classList.remove('active')
+    }
+
+    async function submitChangePassword() {
+        const currentPassword = document.getElementById('currentPassword').value
+        const newPassword = document.getElementById('newPassword').value
+        const confirmNewPassword = document.getElementById('confirmNewPassword').value
+        const msgBox = document.getElementById('changePasswordMessage')
+        const token = localStorage.getItem('employeeToken')
+
+        if (!currentPassword || !newPassword || !confirmNewPassword) {
+            msgBox.innerHTML = '<span style="color:red;">All fields are required</span>'
+            return
+        }
+        if (newPassword.length < 6) {
+            msgBox.innerHTML = '<span style="color:red;">New password must be at least 6 characters</span>'
+            return
+        }
+        if (newPassword !== confirmNewPassword) {
+            msgBox.innerHTML = '<span style="color:red;">New passwords do not match</span>'
+            return
+        }
+        if (newPassword === currentPassword) {
+            msgBox.innerHTML = '<span style="color:red;">New password must be different from current password</span>'
+            return
+        }
+
+        try {
+            const res = await fetch('http://localhost:5000/api/employee/change-password', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+                body: JSON.stringify({ currentPassword, newPassword })
+            })
+            const data = await res.json()
+            if (res.ok) {
+                msgBox.innerHTML = '<span style="color:green;">✅ Password changed successfully!</span>'
+                setTimeout(() => {
+                    closeChangePasswordModal()
+                    document.getElementById('changePasswordBanner').style.display = 'none'
+                    const user = JSON.parse(localStorage.getItem('employeeUser') || '{}')
+                    user.isTemporaryPassword = false
+                    localStorage.setItem('employeeUser', JSON.stringify(user))
+                }, 1500)
+            } else {
+                msgBox.innerHTML = `<span style="color:red;">${data.message || 'Failed to change password'}</span>`
+            }
+        } catch (err) {
+            msgBox.innerHTML = '<span style="color:red;">Server error. Try again.</span>'
+        }
+    }
+    </script>
 
 </body>
 </html>

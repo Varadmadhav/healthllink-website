@@ -9,7 +9,7 @@ let selectedFileId = null
 let allPatients = []
 let confirmedPatientsForReports = []
 let preselectedCenterMap = {}
-let dateChangeRequests = []
+let dateChangeRequests = []   // patients with pending date change requests
 
 // ===== Init =====
 document.addEventListener('DOMContentLoaded', function () {
@@ -131,6 +131,12 @@ async function openFileView(fileId) {
     showToast("Could not load employee data", "error")
   }
   renderExcelFilesGrid()
+
+  // Auto-scroll to data table so admin sees the records immediately
+  setTimeout(() => {
+    const card = document.getElementById('selected-file-card')
+    if (card) card.scrollIntoView({ behavior: 'smooth', block: 'start' })
+  }, 100)
 }
 
 function closeFileView() {
@@ -158,8 +164,6 @@ function normalisePatient(p) {
     appointmentTime: p.appointmentTime || "10:00",
     status: finalStatus,
     dateChangeRequest: p.dateChangeRequest || null,
-    rescheduleStatus: p.rescheduleStatus || "none",
-    rescheduleRequestDate: p.rescheduleRequestDate || null,
     assignedCenter: p.assignedCenterId ? {
       id: p.assignedCenterId._id || p.assignedCenterId,
       name: p.assignedCenterId.name || "",
@@ -287,6 +291,7 @@ async function fetchAllPatientsForConfirmation() {
 async function renderConfirmationTable() {
   const tbody = document.getElementById('confirmation-table-body')
   const emptyState = document.getElementById('confirmation-empty')
+  // Include confirmed employees who have a pending date change request
   const pending = allPatients.filter(emp =>
     emp.status !== 'confirmed' ||
     (emp.dateChangeRequest && emp.dateChangeRequest.status === 'pending')
@@ -304,19 +309,25 @@ async function renderConfirmationTable() {
     const nearbyIds = new Set(nearby.map(c => String(c._id)))
     const otherCenters = centersData.filter(c => !nearbyIds.has(String(c.id)))
     const autoSelectId = preselectedCenterMap[emp.id] || (nearby.length > 0 ? String(nearby[0]._id) : '')
+
     const appointmentDate = emp.appointmentDate ? new Date(emp.appointmentDate) : null
+
+    // Show pending date change request badge if any
     const dcr = emp.dateChangeRequest
     let dcrBadge = ''
     if (dcr && dcr.status === 'pending') {
       dcrBadge = `<br><span style="font-size:11px;background:#fff3cd;color:#856404;padding:1px 6px;border-radius:8px;white-space:nowrap;">⏳ ${new Date(dcr.requestedDate).toLocaleDateString()}</span>`
     }
+
     return `
       <tr>
         <td><strong>${emp.employeeName}</strong></td>
         <td>${emp.phone || '-'}</td>
         <td>${emp.company || '-'}</td>
         <td>${emp.pincode || '-'}</td>
-        <td style="white-space:nowrap;">${appointmentDate ? appointmentDate.toLocaleDateString() : '-'}${dcrBadge}</td>
+        <td style="white-space:nowrap;">
+          ${appointmentDate ? appointmentDate.toLocaleDateString() : '-'}${dcrBadge}
+        </td>
         <td>
           <select class="center-select" id="select-${emp.id}">
             <option value="">Select a center...</option>
@@ -331,11 +342,12 @@ async function renderConfirmationTable() {
       </tr>
     `
   }).join('')
+
   updateStats()
 }
 
 // =====================================================================
-// DATE CHANGE REQUESTS
+// DATE CHANGE REQUESTS (shown in make-confirmation tab)
 // =====================================================================
 
 async function fetchDateChangeRequests() {
@@ -352,7 +364,12 @@ async function fetchDateChangeRequests() {
 function renderDateChangeRequestsTable() {
   const container = document.getElementById('date-change-requests-section')
   if (!container) return
-  if (dateChangeRequests.length === 0) { container.innerHTML = ''; return }
+
+  if (dateChangeRequests.length === 0) {
+    container.innerHTML = ''
+    return
+  }
+
   container.innerHTML = `
     <div class="card">
       <div class="card-header">
@@ -363,8 +380,12 @@ function renderDateChangeRequestsTable() {
         <table class="data-table">
           <thead>
             <tr>
-              <th>Employee</th><th>Company</th><th>Current Date</th>
-              <th>Requested Date</th><th>Requested By</th><th>Actions</th>
+              <th>Employee</th>
+              <th>Company</th>
+              <th>Current Date</th>
+              <th>Requested Date</th>
+              <th>Requested By</th>
+              <th>Actions</th>
             </tr>
           </thead>
           <tbody>
@@ -374,6 +395,7 @@ function renderDateChangeRequestsTable() {
               const requestedDate = dcr && dcr.requestedDate ? new Date(dcr.requestedDate).toLocaleDateString('en-IN') : '-'
               const requestedBy = dcr ? (dcr.requestedByName || dcr.requestedBy) : '-'
               const requestedAt = dcr && dcr.requestedAt ? new Date(dcr.requestedAt).toLocaleDateString('en-IN') : ''
+
               const reqDateObj = dcr && dcr.requestedDate ? new Date(dcr.requestedDate) : null
               const hoursUntilReq = reqDateObj ? (reqDateObj - new Date()) / (1000 * 60 * 60) : 999
               const canApprove = hoursUntilReq > 48
@@ -382,6 +404,7 @@ function renderDateChangeRequestsTable() {
                   ? "Cannot approve — requested date is in the past"
                   : "Cannot approve — requested date is less than 48 hours away")
                 : ""
+
               return `
                 <tr>
                   <td><strong>${p.employeeName}</strong></td>
@@ -389,7 +412,8 @@ function renderDateChangeRequestsTable() {
                   <td>${currentDate}</td>
                   <td>
                     <span style="color:var(--primary-color);font-weight:600;">${requestedDate}</span>
-                    <br><span style="font-size:12px;color:var(--text-tertiary);">on ${requestedAt}</span>
+                    <br>
+                    <span style="font-size:12px;color:var(--text-tertiary);">on ${requestedAt}</span>
                   </td>
                   <td><span class="badge badge-info">${requestedBy}</span></td>
                   <td>
@@ -424,6 +448,7 @@ async function reviewDateRequest(patientId, action) {
       return
     }
     showToast(`Date change request ${action}d!`, "success")
+    // Refresh both sections
     fetchAllPatientsForConfirmation()
     fetchDateChangeRequests()
   } catch (err) {
@@ -470,6 +495,9 @@ async function confirmAssignment(patientId) {
 function renderConfirmedTable() {
   const tbody = document.getElementById('confirmed-table-body')
   const countBadge = document.getElementById('confirmed-count')
+
+  // Exclude confirmed employees who have a pending date change request
+  // — they show in Pending Assignments instead until request is resolved
   const confirmed = allPatients.filter(emp =>
     emp.status === 'confirmed' &&
     !(emp.dateChangeRequest && emp.dateChangeRequest.status === 'pending')
@@ -479,39 +507,15 @@ function renderConfirmedTable() {
     tbody.innerHTML = `<tr><td colspan="5" style="text-align:center;padding:40px;color:var(--text-tertiary);">No confirmed assignments yet</td></tr>`
     return
   }
-  tbody.innerHTML = confirmed.map(emp => {
-    const isReschedule = emp.rescheduleStatus === "requested"
-    return `
-      <tr style="${isReschedule ? 'background:#fffbeb;border-left:4px solid #f6ad55;' : ''}">
-        <td>
-          <strong>${emp.employeeName}</strong>
-          ${isReschedule ? `
-            <div style="margin-top:4px;">
-              <span style="background:#fef3c7;color:#92400e;padding:2px 8px;
-                           border-radius:10px;font-size:11px;font-weight:600;">
-                🔄 Reschedule Requested
-              </span>
-              <div style="font-size:12px;color:#744210;margin-top:4px;">
-                New date: <strong>${new Date(emp.rescheduleRequestDate).toDateString()}</strong>
-              </div>
-            </div>
-          ` : ''}
-        </td>
-        <td><span class="badge badge-info">${emp.id.toString().slice(-6)}</span></td>
-        <td>${emp.assignedCenter ? emp.assignedCenter.name : 'N/A'}</td>
-        <td>${emp.assignedCenter ? emp.assignedCenter.phone : 'N/A'}</td>
-        <td>
-          ${isReschedule
-            ? `<div style="display:flex;gap:6px;flex-wrap:wrap;">
-                <button class="btn btn-success btn-sm" onclick="approveReschedule('${emp.id}')">✅ Approve</button>
-                <button class="btn btn-danger btn-sm" onclick="rejectReschedule('${emp.id}')">❌ Reject</button>
-               </div>`
-            : '<span class="badge badge-success">✓ Confirmed</span>'
-          }
-        </td>
-      </tr>
-    `
-  }).join('')
+  tbody.innerHTML = confirmed.map(emp => `
+    <tr>
+      <td><strong>${emp.employeeName}</strong></td>
+      <td><span class="badge badge-info">${emp.id.toString().slice(-6)}</span></td>
+      <td>${emp.assignedCenter ? emp.assignedCenter.name : 'N/A'}</td>
+      <td>${emp.assignedCenter ? emp.assignedCenter.phone : 'N/A'}</td>
+      <td><span class="badge badge-success">✓ Confirmed</span></td>
+    </tr>
+  `).join('')
 }
 
 function updateStats() {
@@ -556,9 +560,7 @@ function renderReportsTable() {
       <td>${emp.assignedCenter ? emp.assignedCenter.name : 'N/A'}</td>
       <td>
         <div class="file-upload-cell">
-          <label class="file-input-label">📎 Upload PDF
-            <input type="file" accept=".pdf" onchange="handleReportUpload('${emp.id}', this)">
-          </label>
+          <label class="file-input-label">📎 Upload PDF<input type="file" accept=".pdf" onchange="handleReportUpload('${emp.id}', this)"></label>
         </div>
       </td>
       <td>
@@ -633,7 +635,7 @@ async function fetchCenters() {
 function renderCentersTable() {
   const tbody = document.getElementById('centers-table-body')
   if (centersData.length === 0) {
-    tbody.innerHTML = `<tr><td colspan="6" style="text-align:center;padding:40px;color:var(--text-tertiary);">No centers added yet.</td></tr>`
+    tbody.innerHTML = `<tr><td colspan="6" style="text-align:center;padding:40px;color:var(--text-tertiary);">No centers added yet. Click "+ Add Center" to get started.</td></tr>`
     return
   }
   tbody.innerHTML = centersData.map(center => `
@@ -696,7 +698,7 @@ async function fetchCompanies() {
 function renderCompaniesTable() {
   const tbody = document.getElementById('companies-table-body')
   if (companiesData.length === 0) {
-    tbody.innerHTML = `<tr><td colspan="6" style="text-align:center;padding:40px;color:var(--text-tertiary);">No companies added yet.</td></tr>`
+    tbody.innerHTML = `<tr><td colspan="6" style="text-align:center;padding:40px;color:var(--text-tertiary);">No companies added yet. Click "+ Add Company" to get started.</td></tr>`
     return
   }
   tbody.innerHTML = companiesData.map(company => `
@@ -835,40 +837,4 @@ function formatFileSize(bytes) {
   if (bytes < 1024) return bytes + ' B'
   if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(1) + ' KB'
   return (bytes / (1024 * 1024)).toFixed(1) + ' MB'
-}
-
-// =====================================================================
-// RESCHEDULE
-// =====================================================================
-
-async function approveReschedule(patientId) {
-  if (!confirm("Approve this reschedule request?")) return
-  try {
-    const res = await fetch(`${API_BASE}/admin/patients/${patientId}/reschedule/approve`, {
-      method: "PUT",
-      headers: { "Content-Type": "application/json" }
-    })
-    if (!res.ok) throw new Error("Approval failed")
-    showToast("Reschedule approved! Employee will be notified.", "success")
-    fetchAllPatientsForConfirmation()
-  } catch (err) {
-    console.error("approveReschedule:", err)
-    showToast("Error approving reschedule", "error")
-  }
-}
-
-async function rejectReschedule(patientId) {
-  if (!confirm("Reject this reschedule request? Original date will be kept.")) return
-  try {
-    const res = await fetch(`${API_BASE}/admin/patients/${patientId}/reschedule/reject`, {
-      method: "PUT",
-      headers: { "Content-Type": "application/json" }
-    })
-    if (!res.ok) throw new Error("Rejection failed")
-    showToast("Reschedule rejected. Employee will be notified.", "success")
-    fetchAllPatientsForConfirmation()
-  } catch (err) {
-    console.error("rejectReschedule:", err)
-    showToast("Error rejecting reschedule", "error")
-  }
 }

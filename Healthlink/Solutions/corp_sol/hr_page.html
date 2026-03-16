@@ -394,9 +394,13 @@
         currentDate ? new Date(currentDate).toLocaleDateString('en-IN') : "Not set"
       document.getElementById("dateChangeInput").value = ""
       document.getElementById("dateChangeError").style.display = "none"
+      // Min date: 48hrs from now in LOCAL time (not UTC — avoids timezone offset bugs)
       const minDate = new Date()
       minDate.setHours(minDate.getHours() + 49)
-      document.getElementById("dateChangeInput").min = minDate.toISOString().split("T")[0]
+      const minY = minDate.getFullYear()
+      const minM = String(minDate.getMonth() + 1).padStart(2, '0')
+      const minD = String(minDate.getDate()).padStart(2, '0')
+      document.getElementById("dateChangeInput").min = `${minY}-${minM}-${minD}`
       document.getElementById("dateChangeModal").style.display = "flex"
     }
 
