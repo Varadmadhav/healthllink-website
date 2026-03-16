@@ -10,7 +10,6 @@ const transporter = nodemailer.createTransport({
 })
 
 exports.sendConfirmationEmail = async ({
-    
   toEmail,
   employeeName,
   companyName,
@@ -24,7 +23,6 @@ exports.sendConfirmationEmail = async ({
   rescheduleApproved = false,
 }) => {
 
-  // ── ADDED: reschedule email — separate template, returns early
   if (isReschedule) {
     const subject = rescheduleApproved
       ? `✅ Reschedule Approved — ${companyName} Health Checkup`
@@ -76,10 +74,9 @@ exports.sendConfirmationEmail = async ({
       subject,
       html,
     })
-    return  // ← stop here, don't run normal confirmation email below
+    return
   }
 
-  // ── EXISTING: normal appointment confirmation email (unchanged)
   const loginSection = isExistingUser
     ? `
       <p>You already have a login account. Please use your <strong>existing password</strong> to sign in.</p>
@@ -94,9 +91,7 @@ exports.sendConfirmationEmail = async ({
         </tr>
         <tr>
           <td style="padding:4px 16px 4px 0;"><strong>Temporary Password:</strong></td>
-          <td style="font-family:monospace;font-size:15px;letter-spacing:1px;">
-            ${tempPassword}
-          </td>
+          <td style="font-family:monospace;font-size:15px;letter-spacing:1px;">${tempPassword}</td>
         </tr>
       </table>
       <p style="color:#c53030;font-size:13px;">
@@ -114,10 +109,8 @@ exports.sendConfirmationEmail = async ({
       </div>
       <div style="padding:24px;">
         <p>Dear <strong>${employeeName}</strong>,</p>
-        <p>
-          Your health checkup appointment has been confirmed by the admin.
-          Please find your appointment and login details below.
-        </p>
+        <p>Your health checkup appointment has been confirmed by the admin.
+           Please find your appointment and login details below.</p>
         <div style="background:#f7fafc;border-left:4px solid #667eea;
                     padding:16px;margin:16px 0;border-radius:4px;">
           <h3 style="margin:0 0 12px;color:#4a5568;">📅 Appointment Details</h3>
@@ -153,6 +146,94 @@ exports.sendConfirmationEmail = async ({
     from: `"Health Checkup System" <${process.env.EMAIL_USER}>`,
     to: toEmail,
     subject: `✅ Appointment Confirmed — ${companyName} Health Checkup`,
+    html,
+  })
+}
+
+// ── Date Change Notification
+// Sent to: employee when admin approves/rejects, HR when employee makes a request
+// action: "requested" | "approved" | "rejected"
+// requestedBy: "hr" | "employee"
+exports.sendDateChangeNotification = async ({
+  toEmail,
+  recipientName,
+  employeeName,
+  currentDate,
+  requestedDate,
+  action,
+  requestedBy
+}) => {
+  const formattedCurrent = currentDate
+    ? new Date(currentDate).toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" })
+    : "-"
+  const formattedRequested = requestedDate
+    ? new Date(requestedDate).toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" })
+    : "-"
+
+  let subject, headerColor, headerTitle, bodyText
+
+  if (action === "requested") {
+    subject = `📅 Date Change Request — ${employeeName}`
+    headerColor = "#f59e0b"
+    headerTitle = "📅 Date Change Requested"
+    bodyText = `
+      <p><strong>${employeeName}</strong> has submitted a date change request.</p>
+      <p>Please review it in the admin panel.</p>
+    `
+  } else if (action === "approved") {
+    subject = `✅ Date Change Approved — Your Appointment`
+    headerColor = "#10b981"
+    headerTitle = "✅ Date Change Approved"
+    bodyText = `
+      <p>Your date change request has been <strong>approved</strong> by the admin.</p>
+      <p>Your appointment date has been updated.</p>
+    `
+  } else {
+    subject = `❌ Date Change Rejected — Your Appointment`
+    headerColor = "#ef4444"
+    headerTitle = "❌ Date Change Rejected"
+    bodyText = `
+      <p>Your date change request has been <strong>rejected</strong> by the admin.</p>
+      <p>Your original appointment date remains unchanged.</p>
+    `
+  }
+
+  const html = `
+    <div style="font-family:Arial,sans-serif;max-width:600px;margin:auto;
+                border:1px solid #e2e8f0;border-radius:8px;overflow:hidden;">
+      <div style="background:${headerColor};padding:24px;color:white;">
+        <h2 style="margin:0;">${headerTitle}</h2>
+        <p style="margin:6px 0 0;opacity:0.9;">HealthLink Health Checkup Program</p>
+      </div>
+      <div style="padding:24px;">
+        <p>Dear <strong>${recipientName}</strong>,</p>
+        ${bodyText}
+        <div style="background:#f7fafc;border-left:4px solid ${headerColor};
+                    padding:16px;margin:16px 0;border-radius:4px;">
+          <h3 style="margin:0 0 12px;color:#4a5568;">📅 Date Details</h3>
+          <p style="margin:5px 0;"><strong>Employee:</strong> ${employeeName}</p>
+          <p style="margin:5px 0;"><strong>Current Date:</strong> ${formattedCurrent}</p>
+          <p style="margin:5px 0;"><strong>Requested Date:</strong> ${formattedRequested}</p>
+        </div>
+        <p style="margin:12px 0 0;">
+          <a href="http://127.0.0.1:5501/Healthlink/Solutions/corp_sol/corp_solsignup.html"
+             style="background:#667eea;color:white;padding:10px 20px;
+                    border-radius:4px;text-decoration:none;font-size:14px;">
+            View Dashboard →
+          </a>
+        </p>
+      </div>
+      <div style="background:#f7fafc;padding:12px 24px;
+                  font-size:12px;color:#a0aec0;text-align:center;">
+        This is an automated email — please do not reply.
+      </div>
+    </div>
+  `
+
+  await transporter.sendMail({
+    from: `"Health Checkup System" <${process.env.EMAIL_USER}>`,
+    to: toEmail,
+    subject,
     html,
   })
 }

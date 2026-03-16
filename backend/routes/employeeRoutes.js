@@ -8,22 +8,24 @@ const {
   employeeLogin,
   getMyDashboard,
   bookAppointment,
-  requestReschedule,
+  requestDateChange,
+  requestReschedule,   // kept as alias for backward compat
   changePassword,
-  forgotPassword,     // ← ADD
-  resetPassword,      // ← ADD
+  forgotPassword,
+  resetPassword,
 } = require("../controllers/employeeController")
 
 // ── Public routes
 router.post("/create", createEmployee)
 router.post("/login", employeeLogin)
-router.post("/forgot-password", forgotPassword)    // ← ADD
-router.post("/reset-password", resetPassword)      // ← ADD
+router.post("/forgot-password", forgotPassword)
+router.post("/reset-password", resetPassword)
 
 // ── Protected routes
 router.get("/dashboard", authMiddleware, enforceCompanyScope, getMyDashboard)
 router.post("/book-appointment", authMiddleware, enforceCompanyScope, bookAppointment)
-router.post("/reschedule", authMiddleware, enforceCompanyScope, requestReschedule)
+router.post("/request-date-change", authMiddleware, enforceCompanyScope, requestDateChange)
+router.post("/reschedule", authMiddleware, enforceCompanyScope, requestReschedule) // backward compat
 router.post("/change-password", authMiddleware, changePassword)
 
 module.exports = router

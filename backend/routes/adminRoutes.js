@@ -32,8 +32,6 @@ const {
   assignCenter, getAllPatients,
   uploadReport: uploadReportHandler,
   deleteReport,
-  approveReschedule,
-  rejectReschedule,
   requestDateChange,
   getDateChangeRequests,
   reviewDateChange
@@ -61,8 +59,6 @@ router.post("/patients/:patientId/report", uploadReport.single("report"), upload
 router.delete("/patients/:patientId/report", deleteReport)
 
 // ─── Reschedule ──────────────────────────────────────────────────────────────
-router.put("/patients/:patientId/reschedule/approve", approveReschedule)
-router.put("/patients/:patientId/reschedule/reject", rejectReschedule)
 
 // ─── Date Change Requests ─────────────────────────────────────────────────────
 // NOTE: /patients/date-change-requests must come BEFORE /patients/:patientId

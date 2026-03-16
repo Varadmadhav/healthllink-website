@@ -12,16 +12,12 @@ exports.createEmployee = async (req, res) => {
       return res.status(400).json({ message: "All fields are required" })
     }
 
-    const existingUser = await User.findOne({
-      $or: [{ email }, { employeeId }]
-    })
-
+    const existingUser = await User.findOne({ $or: [{ email }, { employeeId }] })
     if (existingUser) {
       return res.status(400).json({ message: "Employee already exists with same email or employee ID" })
     }
 
     const hashedPassword = await bcrypt.hash(password, 10)
-
     const user = new User({
       name, email, password: hashedPassword, employeeId,
       companyId, role: "employee",
@@ -30,7 +26,6 @@ exports.createEmployee = async (req, res) => {
 
     await user.save()
     res.status(201).json({ message: "Employee created successfully", user })
-
   } catch (error) {
     res.status(500).json({ message: error.message })
   }
@@ -57,12 +52,8 @@ exports.employeeLogin = async (req, res) => {
 
     const token = jwt.sign(
       {
-        id: user._id,
-        role: user.role,
-        companyId: user.companyId,
-        email: user.email,
-        name: user.name,
-        employeeId: user.employeeId,
+        id: user._id, role: user.role, companyId: user.companyId,
+        email: user.email, name: user.name, employeeId: user.employeeId,
         isTemporaryPassword: user.isTemporaryPassword || false
       },
       process.env.JWT_SECRET,
@@ -70,7 +61,6 @@ exports.employeeLogin = async (req, res) => {
     )
 
     res.json({ token, user, isTemporaryPassword: user.isTemporaryPassword || false })
-
   } catch (error) {
     res.status(500).json({ message: error.message })
   }
@@ -78,14 +68,9 @@ exports.employeeLogin = async (req, res) => {
 
 exports.getMyDashboard = async (req, res) => {
   try {
-    // ── FIX: always fetch fresh user from DB to get latest patientId
-    // req.user comes from authMiddleware which already does User.findById
-    // so req.user is already the fresh DB record — use it directly
     const user = req.user
-
     if (!user) return res.status(401).json({ message: "Unauthorized" })
 
-    // ── FIX: safe ObjectId conversion with fallback
     let patientQuery
     try {
       if (user.patientId) {
@@ -100,7 +85,6 @@ exports.getMyDashboard = async (req, res) => {
         }
       }
     } catch (idErr) {
-      // Fallback if ObjectId conversion fails
       patientQuery = { email: user.email }
     }
 
@@ -108,7 +92,6 @@ exports.getMyDashboard = async (req, res) => {
       .populate("assignedCenterId", "name address pincode phone")
       .sort({ appointmentDate: 1, createdAt: -1 })
 
-    // Only show today or future appointments
     const now = new Date()
     now.setHours(0, 0, 0, 0)
 
@@ -124,10 +107,10 @@ exports.getMyDashboard = async (req, res) => {
           ? `${p.assignedCenterId.address || ""} - ${p.assignedCenterId.pincode || ""}`
           : "Center not assigned yet",
         appointmentDate: p.appointmentDate,
-        appointmentTime: "10:00",   // ── FIX: no AM/PM here — formatTime in frontend handles it
+        appointmentTime: "10:00",
         status: p.status || "requested",
-        rescheduleStatus: p.rescheduleStatus || "none",
-        rescheduleRequestDate: p.rescheduleRequestDate || null
+        // Unified date change request — used by both HR and employee
+        dateChangeRequest: p.dateChangeRequest || null
       }))
 
     const reports = patients.flatMap((p) => {
@@ -156,18 +139,14 @@ exports.getMyDashboard = async (req, res) => {
 
     res.json({
       employee: {
-        name: user.name,
-        email: user.email,
+        name: user.name, email: user.email,
         employeeId: user.employeeId || "",
-        phone: user.phone || "",
-        address: user.address || "",
-        pincode: user.pincode || ""
+        phone: user.phone || "", address: user.address || "", pincode: user.pincode || ""
       },
       appointments,
       reports,
       isTemporaryPassword: user.isTemporaryPassword || false
     })
-
   } catch (error) {
     console.error("getMyDashboard error:", error.message)
     res.status(500).json({ message: error.message })
@@ -204,19 +183,19 @@ exports.bookAppointment = async (req, res) => {
     })
 
     await patient.save()
-
     res.status(201).json({
       message: "Appointment request submitted successfully",
       patient,
       isTemporaryPassword: user.isTemporaryPassword || false
     })
-
   } catch (error) {
     res.status(500).json({ message: error.message })
   }
 }
 
-exports.requestReschedule = async (req, res) => {
+// ── Unified date change request — replaces old requestReschedule
+// Now writes to dateChangeRequest (same as HR flow) so admin sees all requests together
+exports.requestDateChange = async (req, res) => {
   try {
     const user = req.user
     const { newDate } = req.body
@@ -241,30 +220,64 @@ exports.requestReschedule = async (req, res) => {
     }
 
     const patient = await Patient.findOne(patientQuery)
-
     if (!patient) return res.status(404).json({ message: "Patient record not found" })
     if (!patient.appointmentDate) return res.status(400).json({ message: "No appointment date set" })
 
-    const hoursRemaining = (new Date(patient.appointmentDate) - new Date()) / (1000 * 60 * 60)
-
-    if (hoursRemaining <= 48) {
-      return res.status(400).json({ message: "Reschedule not allowed — less than 48 hours remaining before appointment" })
+    // 48hr rule — cannot request if appointment is within 48 hours
+    const hoursUntilAppointment = (new Date(patient.appointmentDate) - new Date()) / (1000 * 60 * 60)
+    if (hoursUntilAppointment < 48) {
+      return res.status(400).json({
+        message: "Date change not allowed — appointment is less than 48 hours away"
+      })
     }
 
-    if (patient.rescheduleStatus === "requested") {
-      return res.status(400).json({ message: "A reschedule request is already pending admin approval" })
+    // Requested date must also be at least 48 hours from now
+    const hoursUntilRequested = (new Date(newDate) - new Date()) / (1000 * 60 * 60)
+    if (hoursUntilRequested < 48) {
+      return res.status(400).json({
+        message: "Requested date must be at least 48 hours from now"
+      })
     }
 
-    patient.rescheduleRequestDate = new Date(newDate)
-    patient.rescheduleStatus = "requested"
+    // Overwrite any existing pending request — no duplicate entries
+    patient.dateChangeRequest = {
+      requestedDate: new Date(newDate),
+      requestedBy: "employee",
+      requestedByName: user.name,
+      status: "pending",
+      requestedAt: new Date()
+    }
+
     await patient.save()
 
-    res.json({ message: "Reschedule request submitted successfully", rescheduleRequestDate: patient.rescheduleRequestDate })
+    // Notify HR via email that employee requested a date change
+    try {
+      const { sendDateChangeNotification } = require("../utils/emailService")
+      const User = require("../models/User")
+      const hrUser = await User.findOne({ role: "hr", companyId: user.companyId })
+      if (hrUser) {
+        await sendDateChangeNotification({
+          toEmail: hrUser.email,
+          recipientName: hrUser.name,
+          employeeName: user.name,
+          currentDate: patient.appointmentDate,
+          requestedDate: new Date(newDate),
+          action: "requested",
+          requestedBy: "employee"
+        })
+      }
+    } catch (emailErr) {
+      console.error("HR notification email failed:", emailErr.message)
+    }
 
+    res.json({ message: "Date change request submitted successfully", patient })
   } catch (error) {
     res.status(500).json({ message: error.message })
   }
 }
+
+// Keep old reschedule endpoint as alias for backward compatibility
+exports.requestReschedule = exports.requestDateChange
 
 exports.changePassword = async (req, res) => {
   try {
@@ -279,20 +292,16 @@ exports.changePassword = async (req, res) => {
       return res.status(400).json({ message: "New password must be at least 6 characters" })
     }
 
-    // Verify current password
     const isMatch = await bcrypt.compare(currentPassword, user.password)
     if (!isMatch) {
       return res.status(401).json({ message: "Current password is incorrect" })
     }
 
-    // Hash new password and save
-    const hashedPassword = await bcrypt.hash(newPassword, 10)
-    user.password = hashedPassword
-    user.isTemporaryPassword = false   // ← clear the flag
+    user.password = await bcrypt.hash(newPassword, 10)
+    user.isTemporaryPassword = false
     await user.save()
 
     res.json({ message: "Password changed successfully" })
-
   } catch (error) {
     res.status(500).json({ message: error.message })
   }
@@ -303,43 +312,29 @@ const crypto = require("crypto")
 exports.forgotPassword = async (req, res) => {
   try {
     const { email, companyId } = req.body
-
     if (!email) return res.status(400).json({ message: "Email is required" })
 
-    // Find user by email — works for both HR and employee
     const query = { email: email.toLowerCase().trim() }
     if (companyId) query.companyId = companyId
 
     const user = await User.findOne(query)
+    if (!user) return res.json({ message: "If this email exists, a reset link has been sent" })
 
-    // Always return success even if user not found — security best practice
-    if (!user) {
-      return res.json({ message: "If this email exists, a reset link has been sent" })
-    }
-
-    // Generate reset token
     const resetToken = crypto.randomBytes(32).toString("hex")
-    const resetTokenExpiry = new Date(Date.now() + 60 * 60 * 1000) // 1 hour
+    const resetTokenExpiry = new Date(Date.now() + 60 * 60 * 1000)
 
     user.resetToken = resetToken
     user.resetTokenExpiry = resetTokenExpiry
     await user.save()
 
-    // Send email with reset link
     const { sendPasswordResetEmail } = require("../utils/emailService")
     try {
-      await sendPasswordResetEmail({
-        toEmail: user.email,
-        userName: user.name,
-        resetToken,
-        role: user.role
-      })
+      await sendPasswordResetEmail({ toEmail: user.email, userName: user.name, resetToken, role: user.role })
     } catch (emailErr) {
       console.error("Reset email failed:", emailErr.message)
     }
 
     res.json({ message: "If this email exists, a reset link has been sent" })
-
   } catch (error) {
     res.status(500).json({ message: error.message })
   }
@@ -359,14 +354,13 @@ exports.resetPassword = async (req, res) => {
 
     const user = await User.findOne({
       resetToken: token,
-      resetTokenExpiry: { $gt: new Date() } // token not expired
+      resetTokenExpiry: { $gt: new Date() }
     })
 
     if (!user) {
       return res.status(400).json({ message: "Invalid or expired reset link. Please request a new one." })
     }
 
-    // Update password
     user.password = await bcrypt.hash(newPassword, 10)
     user.isTemporaryPassword = false
     user.resetToken = undefined
@@ -374,7 +368,6 @@ exports.resetPassword = async (req, res) => {
     await user.save()
 
     res.json({ message: "Password reset successfully. You can now log in." })
-
   } catch (error) {
     res.status(500).json({ message: error.message })
   }
