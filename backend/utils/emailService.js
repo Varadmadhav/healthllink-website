@@ -278,3 +278,73 @@ exports.sendPasswordResetEmail = async ({ toEmail, userName, resetToken, role })
     html,
   })
 }
+exports.sendRejectionEmail = async ({ toEmail, employeeName, companyName }) => {
+  const html = `
+    <div style="font-family:Arial,sans-serif;max-width:600px;margin:auto;
+                border:1px solid #e2e8f0;border-radius:8px;overflow:hidden;">
+      
+      <div style="background:#ef4444;padding:24px;color:white;">
+        <h2 style="margin:0;">❌ Appointment Rejected</h2>
+        <p style="margin:6px 0 0;opacity:0.9;">${companyName} — Health Checkup Program</p>
+      </div>
+
+      <div style="padding:24px;">
+        <p>Dear <strong>${employeeName}</strong>,</p>
+
+        <p>Your health checkup request has been <strong>rejected</strong> by the admin.</p>
+
+        <div style="background:#fef2f2;border-left:4px solid #ef4444;
+                    padding:16px;margin:16px 0;border-radius:4px;">
+          <p style="margin:0;color:#991b1b;">
+            ❗ Please contact your HR or admin for further details.
+          </p>
+        </div>
+
+        <p style="margin-top:20px;">
+          If you have any questions, please reach out to your company HR.
+        </p>
+      </div>
+
+      <div style="background:#f7fafc;padding:12px 24px;
+                  font-size:12px;color:#a0aec0;text-align:center;">
+        This is an automated email — please do not reply.
+      </div>
+
+    </div>
+  `
+
+  await transporter.sendMail({
+    from: `"Health Checkup System" <${process.env.EMAIL_USER}>`,
+    to: toEmail,
+    subject: `❌ Appointment Rejected — ${companyName}`,
+    html,
+  })
+}
+exports.sendReportUploadEmail = async ({
+  toEmail,
+  employeeName,
+  companyName,
+  reportUrl
+}) => {
+
+  const fullUrl = `http://localhost:5000${reportUrl}`
+
+  const html = `
+    <div style="font-family:Arial,sans-serif;">
+      <h2>📄 Report Available</h2>
+      <p>Dear ${employeeName},</p>
+      <p>Your health report is ready.</p>
+
+      <a href="${fullUrl}" target="_blank">
+        View Report
+      </a>
+    </div>
+  `
+
+  await transporter.sendMail({
+    from: process.env.EMAIL_USER,
+    to: toEmail,
+    subject: `Report Ready - ${companyName}`,
+    html,
+  })
+}

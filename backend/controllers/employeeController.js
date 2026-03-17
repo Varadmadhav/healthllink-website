@@ -199,9 +199,9 @@ exports.requestDateChange = async (req, res) => {
   try {
     const user = req.user
     const { newDate } = req.body
-
+ 
     if (!newDate) return res.status(400).json({ message: "New date is required" })
-
+ 
     let patientQuery
     try {
       if (user.patientId) {
@@ -218,19 +218,19 @@ exports.requestDateChange = async (req, res) => {
     } catch (idErr) {
       patientQuery = { email: user.email }
     }
-
+ 
     const patient = await Patient.findOne(patientQuery)
     if (!patient) return res.status(404).json({ message: "Patient record not found" })
     if (!patient.appointmentDate) return res.status(400).json({ message: "No appointment date set" })
-
-    // 48hr rule — cannot request if appointment is within 48 hours
+ 
+    // 48hr rule on current appointment date
     const hoursUntilAppointment = (new Date(patient.appointmentDate) - new Date()) / (1000 * 60 * 60)
     if (hoursUntilAppointment < 48) {
       return res.status(400).json({
         message: "Date change not allowed — appointment is less than 48 hours away"
       })
     }
-
+ 
     // Requested date must also be at least 48 hours from now
     const hoursUntilRequested = (new Date(newDate) - new Date()) / (1000 * 60 * 60)
     if (hoursUntilRequested < 48) {
@@ -238,8 +238,13 @@ exports.requestDateChange = async (req, res) => {
         message: "Requested date must be at least 48 hours from now"
       })
     }
-
-    // Overwrite any existing pending request — no duplicate entries
+ 
+    // ISSUE 2 FIX: Reset status to "pending" and clear center assignment —
+    // same as the HR path in adminController.js requestDateChange.
+    // This makes the patient appear in admin's pending table AND date change
+    // requests section so admin can act on the request.
+    patient.status = "pending"
+    patient.assignedCenterId = null
     patient.dateChangeRequest = {
       requestedDate: new Date(newDate),
       requestedBy: "employee",
@@ -247,9 +252,9 @@ exports.requestDateChange = async (req, res) => {
       status: "pending",
       requestedAt: new Date()
     }
-
+ 
     await patient.save()
-
+ 
     // Notify HR via email that employee requested a date change
     try {
       const { sendDateChangeNotification } = require("../utils/emailService")
@@ -269,13 +274,13 @@ exports.requestDateChange = async (req, res) => {
     } catch (emailErr) {
       console.error("HR notification email failed:", emailErr.message)
     }
-
+ 
     res.json({ message: "Date change request submitted successfully", patient })
   } catch (error) {
     res.status(500).json({ message: error.message })
   }
 }
-
+ 
 // Keep old reschedule endpoint as alias for backward compatibility
 exports.requestReschedule = exports.requestDateChange
 

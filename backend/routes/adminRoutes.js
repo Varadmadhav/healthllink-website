@@ -34,7 +34,8 @@ const {
   deleteReport,
   requestDateChange,
   getDateChangeRequests,
-  reviewDateChange
+  reviewDateChange,
+  rejectPatient
 } = require("../controllers/adminController")
 
 // ─── Companies ───────────────────────────────────────────────────────────────

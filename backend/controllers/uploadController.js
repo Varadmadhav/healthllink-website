@@ -2,27 +2,16 @@ const Upload = require("../models/Upload")
 const Patient = require("../models/Patient")
 const XLSX = require("xlsx")
 
-// Helper: parse Excel date values
-// Excel stores dates as serial numbers — XLSX.utils.sheet_to_json with raw:false
-// gives us strings, but raw:true gives numbers. We handle both.
 function parseExcelDate(value) {
   if (!value) return null
-
-  // If it's already a JS Date
   if (value instanceof Date) return value
-
-  // If it's a number (Excel serial date)
   if (typeof value === "number") {
     const date = XLSX.SSF.parse_date_code(value)
     if (date) return new Date(date.y, date.m - 1, date.d)
   }
-
-  // If it's a string like "2025-08-15" or "15/08/2025"
   if (typeof value === "string") {
     const parsed = new Date(value)
     if (!isNaN(parsed.getTime())) return parsed
-
-    // Try DD/MM/YYYY
     const parts = value.split("/")
     if (parts.length === 3) {
       const [d, m, y] = parts
@@ -30,7 +19,6 @@ function parseExcelDate(value) {
       if (!isNaN(parsed2.getTime())) return parsed2
     }
   }
-
   return null
 }
 
@@ -38,11 +26,9 @@ exports.uploadExcel = async (req, res) => {
   try {
     if (!req.file) return res.status(400).json({ message: "No file uploaded" })
 
-    // Read with raw:true so dates come as Excel serial numbers (most accurate)
     const workbook = XLSX.read(req.file.buffer, { type: "buffer", cellDates: true })
     const sheetName = workbook.SheetNames[0]
     const sheet = workbook.Sheets[sheetName]
-    // cellDates:true makes XLSX parse date cells directly into JS Date objects
     const data = XLSX.utils.sheet_to_json(sheet, { raw: false, dateNF: "yyyy-mm-dd" })
 
     const uploadHistory = new Upload({
@@ -53,53 +39,110 @@ exports.uploadExcel = async (req, res) => {
       companyId: req.user?.companyId,
       uploadedBy: req.user?._id
     })
-
     await uploadHistory.save()
 
-    const patients = data.map(row => {
-      // Read date from the row's "Date" column — per employee
+    const companyId = req.user?.companyId || null
+    let newCount = 0
+    let updatedCount = 0
+    const now = new Date()
+
+    for (const row of data) {
       const rawDate = row["Date"] || row["date"] || row["DATE"] ||
                       row["Appointment Date"] || row["appointment date"]
       const appointmentDate = parseExcelDate(rawDate)
+      const email = row.Email || row.email
+      const name = row.Name || row.name || row["Patient Name"]
 
-      return {
-        uploadId: uploadHistory._id,
-        companyId: req.user?.companyId || null,
-        name: row.Name || row.name || row["Patient Name"],
-        gender: row.Gender || row.gender,
-        age: row.Age || row.age,
-        phone: row.Mobile || row.mobile || row.Phone || row.phone || row["Phone Number"],
-        email: row.Email || row.email,
-        address: row.Address || row.address,
-        pincode: row.Pincode || row.pincode,
-        appointmentDate: appointmentDate,   // per-row date, not global
-        status: "pending"
+      // BUG 4 FIX: Check if this employee already exists for this company
+      const existingPatient = email
+        ? await Patient.findOne({ email, companyId })
+        : null
+
+      if (existingPatient) {
+        // Employee already exists — archive old appointment if it hasn't passed yet
+        const oldDate = existingPatient.appointmentDate
+        const oldAppointmentIsFuture = oldDate && new Date(oldDate) > now
+
+        if (oldAppointmentIsFuture) {
+          // Push the current appointment into pastAppointments before overwriting
+          await Patient.findByIdAndUpdate(existingPatient._id, {
+            $push: {
+              pastAppointments: {
+                appointmentDate: oldDate,
+                assignedCenterId: existingPatient.assignedCenterId || null,
+                status: existingPatient.status,
+                uploadId: existingPatient.uploadId || null,
+                archivedAt: now
+              }
+            }
+          })
+        }
+
+        // Update existing record with new appointment details, reset to pending
+        await Patient.findByIdAndUpdate(existingPatient._id, {
+          $set: {
+            uploadId: uploadHistory._id,
+            name: name || existingPatient.name,
+            gender: row.Gender || row.gender || existingPatient.gender,
+            age: row.Age || row.age || existingPatient.age,
+            phone: row.Mobile || row.mobile || row.Phone || row.phone ||
+                   row["Phone Number"] || existingPatient.phone,
+            address: row.Address || row.address || existingPatient.address,
+            pincode: row.Pincode || row.pincode || existingPatient.pincode,
+            appointmentDate: appointmentDate || existingPatient.appointmentDate,
+            status: "pending",
+            assignedCenterId: null,
+            // Clear stale date change request from previous cycle
+            "dateChangeRequest.status": null,
+            "dateChangeRequest.requestedDate": null,
+            "dateChangeRequest.requestedBy": null,
+            "dateChangeRequest.requestedByName": null,
+            "dateChangeRequest.requestedAt": null
+          }
+        })
+
+        updatedCount++
+      } else {
+        // Brand new employee — create fresh record
+        await Patient.create({
+          uploadId: uploadHistory._id,
+          companyId,
+          name,
+          gender: row.Gender || row.gender,
+          age: row.Age || row.age,
+          phone: row.Mobile || row.mobile || row.Phone || row.phone || row["Phone Number"],
+          email,
+          address: row.Address || row.address,
+          pincode: row.Pincode || row.pincode,
+          appointmentDate,
+          status: "pending"
+        })
+        newCount++
       }
+    }
+
+    res.json({
+      message: "Upload successful",
+      records: data.length,
+      newEmployees: newCount,
+      updatedEmployees: updatedCount
     })
-
-    await Patient.insertMany(patients)
-
-    res.json({ message: "Upload successful", records: patients.length })
   } catch (error) {
     console.error("Upload Controller Error:", error)
     res.status(500).json({ message: error.message })
   }
 }
 
-// Fetch upload history for the logged-in HR's company
 exports.getUploads = async (req, res) => {
   try {
     const companyId = req.user?.companyId || null
-    const uploads = await Upload
-      .find({ companyId })
-      .sort({ uploadedAt: -1 })
+    const uploads = await Upload.find({ companyId }).sort({ uploadedAt: -1 })
     res.json(uploads)
   } catch (error) {
     res.status(500).json({ message: error.message })
   }
 }
 
-// Fetch all patients for this company
 exports.getPatients = async (req, res) => {
   try {
     const companyId = req.user?.companyId || null
@@ -113,7 +156,6 @@ exports.getPatients = async (req, res) => {
   }
 }
 
-// Fetch patients for a specific upload batch
 exports.getPatientsByUpload = async (req, res) => {
   try {
     const { uploadId } = req.params
