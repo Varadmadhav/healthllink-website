@@ -148,7 +148,7 @@ function closeFileView() {
 
 function normalisePatient(p) {
   const rawStatus = (p.status || "pending").toLowerCase()
-  const finalStatus = p.assignedCenterId ? "confirmed" : rawStatus
+  const finalStatus = rawStatus
   return {
     id: p._id,
     employeeName: p.name || "",
@@ -195,14 +195,16 @@ function renderEmployeesTable(file) {
       <td>
         <span class="badge ${
           emp.status === 'confirmed' ? 'badge-success'
-          : emp.status === 'requested' ? 'badge-info'
-          : emp.status === 'approved' ? 'badge-warning'
-          : 'badge-pending'
+: emp.status === 'rejected' ? 'badge-danger'
+: emp.status === 'requested' ? 'badge-info'
+: emp.status === 'approved' ? 'badge-warning'
+: 'badge-pending'
         }">
           ${emp.status === 'confirmed' ? '✅ Confirmed'
-            : emp.status === 'requested' ? '📝 Requested'
-            : emp.status === 'approved' ? '👍 Approved'
-            : '⏳ Pending'}
+: emp.status === 'rejected' ? '❌ Rejected'
+: emp.status === 'requested' ? '📝 Requested'
+: emp.status === 'approved' ? '👍 Approved'
+: '⏳ Pending'}
         </span>
       </td>
     </tr>
@@ -212,9 +214,7 @@ function renderEmployeesTable(file) {
 async function renderCenterMatchingForFile(file) {
   const card = document.getElementById('center-matching-card')
   const tbody = document.getElementById('center-matching-body')
-  const pendingEmployees = file.employees.filter(
-    emp => emp.status === 'requested' || emp.status === 'approved' || emp.status === 'pending'
-  )
+ const pendingEmployees = file.employees.filter(emp => emp.status === 'pending')
   if (pendingEmployees.length === 0) { card.style.display = 'none'; return }
   card.style.display = 'block'
   tbody.innerHTML = `<tr><td colspan="7" style="text-align:center;padding:20px;color:var(--text-tertiary);">🔍 Finding nearby centres...</td></tr>`
@@ -256,7 +256,7 @@ function toggleSelectAll(checkbox) {
 async function processAllEmployees() {
   const file = uploadedFiles.find(f => f.id === selectedFileId)
   if (!file) return
-  const pending = file.employees.filter(e => e.status !== 'confirmed')
+  const pending = file.employees.filter(e => e.status === 'pending')
   if (pending.length === 0) { showToast('No pending employees to process!', 'warning'); return }
   showToast('Finding nearest centres for all employees...', 'success')
   await Promise.all(pending.map(async (emp) => {
@@ -293,7 +293,7 @@ async function renderConfirmationTable() {
   const emptyState = document.getElementById('confirmation-empty')
   // Include confirmed employees who have a pending date change request
   const pending = allPatients.filter(emp =>
-    emp.status !== 'confirmed' ||
+    emp.status === 'pending'||
     (emp.dateChangeRequest && emp.dateChangeRequest.status === 'pending')
   )
   if (pending.length === 0) { tbody.innerHTML = ''; emptyState.style.display = 'flex'; return }
@@ -338,6 +338,7 @@ async function renderConfirmationTable() {
         </td>
         <td>
           <button class="btn btn-success btn-sm" onclick="confirmAssignment('${emp.id}')">✓ Confirm</button>
+          <button class="btn btn-danger btn-sm" onclick="rejectPatient('${emp.id}')">✗ Reject</button>
         </td>
       </tr>
     `
@@ -498,10 +499,12 @@ function renderConfirmedTable() {
 
   // Exclude confirmed employees who have a pending date change request
   // — they show in Pending Assignments instead until request is resolved
-  const confirmed = allPatients.filter(emp =>
-    emp.status === 'confirmed' &&
-    !(emp.dateChangeRequest && emp.dateChangeRequest.status === 'pending')
-  )
+const pending = allPatients.filter(emp =>
+  emp.status === 'pending' ||
+  (emp.status === 'confirmed' && emp.dateChangeRequest && emp.dateChangeRequest.status === 'pending')
+)
+
+countBadge.textContent = `${confirmed.length} Confirmed`
   countBadge.textContent = `${confirmed.length} Confirmed`
   if (confirmed.length === 0) {
     tbody.innerHTML = `<tr><td colspan="5" style="text-align:center;padding:40px;color:var(--text-tertiary);">No confirmed assignments yet</td></tr>`
@@ -523,7 +526,7 @@ function updateStats() {
     e.status === 'confirmed' &&
     !(e.dateChangeRequest && e.dateChangeRequest.status === 'pending')
   ).length
-  const pending = allPatients.length - confirmed
+  const pending = allPatients.filter(e => e.status === "pending").length
   document.getElementById('pending-count').textContent = pending
   document.getElementById('confirmed-count-stat').textContent = confirmed
   document.getElementById('total-count').textContent = allPatients.length
@@ -537,7 +540,7 @@ async function fetchConfirmedPatientsForReports() {
   try {
     const res = await fetch(`${API_BASE}/admin/patients`)
     const data = await res.json()
-    confirmedPatientsForReports = data.filter(p => p.assignedCenterId).map(normalisePatient)
+  confirmedPatientsForReports = data.filter(p => p.status === "confirmed").map(normalisePatient)
     renderReportsTable()
   } catch (err) {
     console.error("fetchConfirmedPatientsForReports:", err)
@@ -837,4 +840,30 @@ function formatFileSize(bytes) {
   if (bytes < 1024) return bytes + ' B'
   if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(1) + ' KB'
   return (bytes / (1024 * 1024)).toFixed(1) + ' MB'
+}
+async function rejectPatient(patientId) {
+  if (!confirm("Are you sure you want to reject this patient?")) return
+
+  try {
+    const res = await fetch(`${API_BASE}/admin/patients/${patientId}/reject`, {
+      method: "PUT"
+    })
+
+    if (!res.ok) throw new Error("Reject failed")
+
+    const updated = await res.json()
+    const normUpdated = normalisePatient(updated)
+
+    const idx = allPatients.findIndex(p => p.id === patientId)
+    if (idx !== -1) allPatients[idx] = normUpdated
+
+    renderConfirmationTable()
+    renderConfirmedTable()
+    updateStats()
+
+    showToast("Patient rejected successfully", "success")
+  } catch (err) {
+    console.error(err)
+    showToast("Error rejecting patient", "error")
+  }
 }

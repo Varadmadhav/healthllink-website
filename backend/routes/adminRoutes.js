@@ -55,6 +55,7 @@ router.put("/uploads/:id/reject", rejectUpload)
 // ─── Patients ────────────────────────────────────────────────────────────────
 router.get("/patients", getAllPatients)
 router.put("/patients/:patientId/assign", assignCenter)
+router.put("/patients/:patientId/reject", rejectPatient)
 router.post("/patients/:patientId/report", uploadReport.single("report"), uploadReportHandler)
 router.delete("/patients/:patientId/report", deleteReport)
 

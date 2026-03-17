@@ -122,8 +122,8 @@ exports.getUploads = async (req, res) => {
 
     const uploadsWithCounts = await Promise.all(
       uploads.map(async (u) => {
-        const pendingCount = await Patient.countDocuments({ uploadId: u._id, assignedCenterId: null })
-        const confirmedCount = await Patient.countDocuments({ uploadId: u._id, assignedCenterId: { $ne: null } })
+       const pendingCount = await Patient.countDocuments({ uploadId: u._id, status: "pending" })
+const confirmedCount = await Patient.countDocuments({ uploadId: u._id, status: "confirmed" })
         return { ...u.toObject(), pendingCount, confirmedCount }
       })
     )
@@ -186,9 +186,9 @@ exports.assignCenter = async (req, res) => {
     if (patient.uploadId) {
       const totalInUpload = await Patient.countDocuments({ uploadId: patient.uploadId })
       const confirmedInUpload = await Patient.countDocuments({
-        uploadId: patient.uploadId,
-        assignedCenterId: { $ne: null }
-      })
+  uploadId: patient.uploadId,
+  status: "confirmed"
+})
       if (totalInUpload > 0 && totalInUpload === confirmedInUpload) {
         await Upload.findByIdAndUpdate(patient.uploadId, { status: "confirmed" }, { new: true })
       }
@@ -526,6 +526,28 @@ exports.deleteReport = async (req, res) => {
     if (fs.existsSync(filePath)) fs.unlinkSync(filePath)
 
     res.json({ message: "Report deleted", patient })
+  } catch (error) {
+    res.status(500).json({ message: error.message })
+  }
+}
+exports.rejectPatient = async (req, res) => {
+  try {
+    const patientCheck = await Patient.findById(req.params.patientId)
+if (patientCheck.status !== "confirmed") {
+  return res.status(400).json({ message: "Cannot upload report for non-confirmed patient" })
+}
+    const patient = await Patient.findByIdAndUpdate(
+      req.params.patientId,
+      {
+        status: "rejected",
+        assignedCenterId: null
+      },
+      { new: true }
+    )
+
+    if (!patient) return res.status(404).json({ message: "Patient not found" })
+
+    res.json(patient)
   } catch (error) {
     res.status(500).json({ message: error.message })
   }
