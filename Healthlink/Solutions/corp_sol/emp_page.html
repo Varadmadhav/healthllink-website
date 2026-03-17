@@ -214,13 +214,23 @@
             const status = (apt.status || "requested").toLowerCase()
             const dcr = apt.dateChangeRequest
 
-            // ── Date change request in-app badge ──────────────────────────────
+            // Compute ONE correct date used everywhere in this card.
+            // If DCR approved → use dcr.requestedDate (the new approved date).
+            // Backend also writes this to appointmentDate on approve, but if the
+            // dashboard was loaded before approval, apt.appointmentDate is stale.
+            const displayDate = (dcr && dcr.status === "approved" && dcr.requestedDate)
+                ? dcr.requestedDate
+                : apt.appointmentDate
+
+            // ── Date change request badge ─────────────────────────────────────
             let dateChangeBadge = ""
             if (dcr && dcr.status === "pending") {
-                const reqDate = new Date(dcr.requestedDate).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })
+                const reqDate = new Date(dcr.requestedDate).toLocaleDateString('en-IN',
+                    { day: 'numeric', month: 'short', year: 'numeric' })
                 dateChangeBadge = `
-                    <div style="margin-top:10px;padding:10px 14px;background:#fff3cd;border:1px solid #ffc107;
-                                border-radius:8px;display:flex;align-items:center;gap:10px;flex-wrap:wrap;">
+                    <div style="margin-top:10px;padding:10px 14px;background:#fff3cd;
+                                border:1px solid #ffc107;border-radius:8px;
+                                display:flex;align-items:center;gap:10px;flex-wrap:wrap;">
                         <span style="font-size:1.1rem;">⏳</span>
                         <div>
                             <strong style="color:#856404;font-size:0.9rem;">Date Change Pending</strong>
@@ -230,21 +240,25 @@
                         </div>
                     </div>`
             } else if (dcr && dcr.status === "approved") {
+                const newDate = new Date(dcr.requestedDate).toLocaleDateString('en-IN',
+                    { day: 'numeric', month: 'short', year: 'numeric' })
                 dateChangeBadge = `
-                    <div style="margin-top:10px;padding:10px 14px;background:#d4edda;border:1px solid #c3e6cb;
-                                border-radius:8px;display:flex;align-items:center;gap:10px;">
+                    <div style="margin-top:10px;padding:10px 14px;background:#d4edda;
+                                border:1px solid #c3e6cb;border-radius:8px;
+                                display:flex;align-items:center;gap:10px;">
                         <span style="font-size:1.1rem;">✅</span>
                         <div>
                             <strong style="color:#155724;font-size:0.9rem;">Date Change Approved</strong>
                             <div style="font-size:0.82rem;color:#155724;margin-top:2px;">
-                                Your appointment date has been updated.
+                                Your appointment date has been updated to <strong>${newDate}</strong>.
                             </div>
                         </div>
                     </div>`
             } else if (dcr && dcr.status === "rejected") {
                 dateChangeBadge = `
-                    <div style="margin-top:10px;padding:10px 14px;background:#f8d7da;border:1px solid #f5c6cb;
-                                border-radius:8px;display:flex;align-items:center;gap:10px;">
+                    <div style="margin-top:10px;padding:10px 14px;background:#f8d7da;
+                                border:1px solid #f5c6cb;border-radius:8px;
+                                display:flex;align-items:center;gap:10px;">
                         <span style="font-size:1.1rem;">❌</span>
                         <div>
                             <strong style="color:#721c24;font-size:0.9rem;">Date Change Rejected</strong>
@@ -261,20 +275,18 @@
                 : "⏳ Pending"
 
             const statusClass =
-                status === "confirmed"  ? "status-confirmed"
-                : "status-changeable"
+                status === "confirmed" ? "status-confirmed" : "status-changeable"
 
             const bottomMessage =
-                status === "confirmed"  ? "Appointment confirmed by admin"
+                status === "confirmed" ? "Appointment confirmed by admin"
                 : "Waiting for admin approval and center assignment"
 
             const bottomMessageClass = status === "confirmed" ? "time-info" : "time-warning"
 
-            // ── 48hr check for date change button ─────────────────────────────
+            // 48hr check uses displayDate (the correct current/approved date)
             const now = new Date()
-            const apptDate = new Date(apt.appointmentDate)
+            const apptDate = new Date(displayDate)
             const hoursRemaining = (apptDate - now) / (1000 * 60 * 60)
-            // Only show button if confirmed and >48hrs away and no pending request
             const canRequestChange = status === "confirmed"
                 && hoursRemaining > 48
                 && !(dcr && dcr.status === "pending")
@@ -313,7 +325,7 @@
                   </div>
                   <div class="detail-item">
                     <span class="detail-label">Appointment Date</span>
-                    <span class="detail-value">${formatDate(apt.appointmentDate)}</span>
+                    <span class="detail-value">${formatDate(displayDate)}</span>
                   </div>
                   <div class="detail-item">
                     <span class="detail-label">Time</span>
@@ -427,19 +439,15 @@
         const today = new Date()
         const sixMonthsAgo = new Date()
         sixMonthsAgo.setMonth(today.getMonth() - 6)
-
         const fmt = d => `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`
         document.getElementById('reportFromDate').value = fmt(sixMonthsAgo)
         document.getElementById('reportToDate').value = fmt(today)
     }
 
-    // Open date change modal
     function openRescheduleModal(appointmentId) {
         currentAppointmentId = appointmentId
         const apt = appointments.find(a => a.id === appointmentId)
         if (apt) {
-            // Min date: 48hrs from now
-            // Min date: 48hrs from now in LOCAL time (not UTC — avoids IST timezone offset bugs)
             const minDate = new Date()
             minDate.setHours(minDate.getHours() + 49)
             const minY = minDate.getFullYear()
@@ -459,7 +467,6 @@
         currentAppointmentId = null
     }
 
-    // Unified date change request — calls new endpoint, writes to dateChangeRequest
     async function confirmDateChange() {
         const newDate = document.getElementById('newAppointmentDate').value
         const token = localStorage.getItem("employeeToken")
@@ -471,6 +478,7 @@
         }
 
         try {
+            // FIX: use the full correct URL — API_BASE is /api/employee
             const res = await fetch(`${API_BASE}/request-date-change`, {
                 method: "POST",
                 headers: {
@@ -537,7 +545,7 @@
         }
 
         try {
-            const res = await fetch("http://localhost:5000/api/employee/book-appointment", {
+            const res = await fetch(`${API_BASE}/book-appointment`, {
                 method: "POST",
                 headers: { "Content-Type": "application/json", "Authorization": `Bearer ${token}` },
                 body: JSON.stringify({ appointmentDate })
@@ -604,7 +612,7 @@
         }
 
         try {
-            const res = await fetch('http://localhost:5000/api/employee/change-password', {
+            const res = await fetch(`${API_BASE}/change-password`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
                 body: JSON.stringify({ currentPassword, newPassword })

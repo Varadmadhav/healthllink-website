@@ -276,7 +276,7 @@
       document.getElementById(tabId).classList.add('active')
     }
 
-    // ── Upload — no modal, dates come from Excel rows ─────────────────────────
+    // ── Upload ─────────────────────────────────────────────────────────────────
     async function handleDashboardUpload(event) {
       const file = event.target.files[0]
       if (!file) return
@@ -321,21 +321,34 @@
       tbody.innerHTML = ''
 
       data.forEach((p) => {
-        const appointmentDate = p.appointmentDate ? new Date(p.appointmentDate) : null
-        const displayDate = appointmentDate ? appointmentDate.toLocaleDateString('en-IN') : "-"
-        const hoursUntil = appointmentDate ? (appointmentDate - new Date()) / (1000 * 60 * 60) : 999
+        const dcr = p.dateChangeRequest
+
+        // DATE FIX: if DCR was approved, show dcr.requestedDate as the display
+        // date — this is the correct new date even if the page was loaded before
+        // admin approved and appointmentDate in memory is still the old value.
+        const resolvedDate = (dcr && dcr.status === "approved" && dcr.requestedDate)
+          ? new Date(dcr.requestedDate)
+          : (p.appointmentDate ? new Date(p.appointmentDate) : null)
+
+        const displayDate = resolvedDate ? resolvedDate.toLocaleDateString('en-IN') : "-"
+
+        // Use resolved date for 48hr edit check too
+        const hoursUntil = resolvedDate ? (resolvedDate - new Date()) / (1000 * 60 * 60) : 999
         const canEdit = hoursUntil > 48
 
         // Date change request status badge
-        const dcr = p.dateChangeRequest
         let dcrBadge = ""
         if (dcr && dcr.status === "pending") {
           const reqDate = new Date(dcr.requestedDate).toLocaleDateString('en-IN')
-          dcrBadge = `<span style="font-size:0.7rem;background:#fff3cd;color:#856404;padding:1px 6px;border-radius:8px;white-space:nowrap;">⏳ ${reqDate}</span>`
+          dcrBadge = `<span style="font-size:0.7rem;background:#fff3cd;color:#856404;
+            padding:1px 6px;border-radius:8px;white-space:nowrap;">⏳ ${reqDate}</span>`
         } else if (dcr && dcr.status === "approved") {
-          dcrBadge = `<span style="font-size:0.7rem;background:#d4edda;color:#155724;padding:1px 6px;border-radius:8px;">✅</span>`
+          const newDate = new Date(dcr.requestedDate).toLocaleDateString('en-IN')
+          dcrBadge = `<span style="font-size:0.7rem;background:#d4edda;color:#155724;
+            padding:1px 6px;border-radius:8px;">✅ Updated: ${newDate}</span>`
         } else if (dcr && dcr.status === "rejected") {
-          dcrBadge = `<span style="font-size:0.7rem;background:#f8d7da;color:#721c24;padding:1px 6px;border-radius:8px;">❌</span>`
+          dcrBadge = `<span style="font-size:0.7rem;background:#f8d7da;color:#721c24;
+            padding:1px 6px;border-radius:8px;">❌ Rejected</span>`
         }
 
         const editBtn = canEdit
@@ -394,7 +407,6 @@
         currentDate ? new Date(currentDate).toLocaleDateString('en-IN') : "Not set"
       document.getElementById("dateChangeInput").value = ""
       document.getElementById("dateChangeError").style.display = "none"
-      // Min date: 48hrs from now in LOCAL time (not UTC — avoids timezone offset bugs)
       const minDate = new Date()
       minDate.setHours(minDate.getHours() + 49)
       const minY = minDate.getFullYear()
@@ -413,36 +425,69 @@
       const newDate = document.getElementById("dateChangeInput").value
       const errorEl = document.getElementById("dateChangeError")
       errorEl.style.display = "none"
+
       if (!newDate) {
         errorEl.textContent = "Please select a new date."
         errorEl.style.display = "block"
         return
       }
+
       const token = localStorage.getItem("hrToken")
+      const currentPatientId = dateChangePatientId
+
+      const backBtn = document.getElementById("backToAllPatientsBtn")
+      const isInUploadView = backBtn && backBtn.style.display !== "none"
+
       try {
-        const res = await fetch(`${ADMIN_API}/patients/${dateChangePatientId}/request-date`, {
+        const res = await fetch(`${ADMIN_API}/patients/${currentPatientId}/request-date`, {
           method: "POST",
           headers: { "Content-Type": "application/json", "Authorization": `Bearer ${token}` },
           body: JSON.stringify({ requestedDate: newDate, requestedBy: "hr", requestedByName: user.name })
         })
         const data = await res.json()
+
         if (res.ok) {
           closeDateChangeModal()
-          // Optimistically update the patient record in memory so badge
-          // shows immediately without waiting for reload
-          const idx = patientRecords.findIndex(p => p._id === dateChangePatientId || p.id === dateChangePatientId)
+
+          const idx = patientRecords.findIndex(p =>
+            String(p._id) === String(currentPatientId) ||
+            String(p.id) === String(currentPatientId)
+          )
           if (idx !== -1) {
-            patientRecords[idx].dateChangeRequest = {
-              requestedDate: newDate,
-              requestedBy: "hr",
-              requestedByName: user.name,
-              status: "pending",
-              requestedAt: new Date().toISOString()
+            patientRecords[idx] = {
+              ...patientRecords[idx],
+              dateChangeRequest: {
+                requestedDate: newDate,
+                requestedBy: "hr",
+                requestedByName: user.name,
+                status: "pending",
+                requestedAt: new Date().toISOString()
+              }
             }
-            renderPatientTable(patientRecords)
           }
-          // Then reload from server to confirm
-          await loadPatients()
+
+          renderPatientTable(patientRecords)
+
+          if (isInUploadView) {
+            try {
+              const freshRes = await fetch(`${API_BASE}/patients`, {
+                headers: { "Authorization": `Bearer ${token}` }
+              })
+              if (freshRes.ok) {
+                const allFresh = await freshRes.json()
+                const prevIds = new Set(patientRecords.map(p => String(p._id || p.id)))
+                const refreshed = allFresh.filter(p => prevIds.has(String(p._id)))
+                patientRecords = refreshed
+                renderPatientTable(patientRecords)
+              }
+            } catch (e) {
+              console.warn("Background refresh failed:", e)
+            }
+            backBtn.style.display = "inline-block"
+          } else {
+            await loadPatients()
+          }
+
           alert("Date change request submitted! Admin will review it.")
         } else {
           errorEl.textContent = data.message || "Failed to submit request."
