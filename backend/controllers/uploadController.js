@@ -42,90 +42,35 @@ exports.uploadExcel = async (req, res) => {
     await uploadHistory.save()
 
     const companyId = req.user?.companyId || null
-    let newCount = 0
-    let updatedCount = 0
-    const now = new Date()
 
-    for (const row of data) {
+    // Every upload always creates fresh independent patient records.
+    // No duplicate checking on email — each upload is its own batch.
+    // User account sharing is handled separately in sendConfirmationEmailForPatient.
+    const patients = data.map(row => {
       const rawDate = row["Date"] || row["date"] || row["DATE"] ||
                       row["Appointment Date"] || row["appointment date"]
       const appointmentDate = parseExcelDate(rawDate)
-      const email = row.Email || row.email
-      const name = row.Name || row.name || row["Patient Name"]
 
-      // BUG 4 FIX: Check if this employee already exists for this company
-      const existingPatient = email
-        ? await Patient.findOne({ email, companyId })
-        : null
-
-      if (existingPatient) {
-        // Employee already exists — archive old appointment if it hasn't passed yet
-        const oldDate = existingPatient.appointmentDate
-        const oldAppointmentIsFuture = oldDate && new Date(oldDate) > now
-
-        if (oldAppointmentIsFuture) {
-          // Push the current appointment into pastAppointments before overwriting
-          await Patient.findByIdAndUpdate(existingPatient._id, {
-            $push: {
-              pastAppointments: {
-                appointmentDate: oldDate,
-                assignedCenterId: existingPatient.assignedCenterId || null,
-                status: existingPatient.status,
-                uploadId: existingPatient.uploadId || null,
-                archivedAt: now
-              }
-            }
-          })
-        }
-
-        // Update existing record with new appointment details, reset to pending
-        await Patient.findByIdAndUpdate(existingPatient._id, {
-          $set: {
-            uploadId: uploadHistory._id,
-            name: name || existingPatient.name,
-            gender: row.Gender || row.gender || existingPatient.gender,
-            age: row.Age || row.age || existingPatient.age,
-            phone: row.Mobile || row.mobile || row.Phone || row.phone ||
-                   row["Phone Number"] || existingPatient.phone,
-            address: row.Address || row.address || existingPatient.address,
-            pincode: row.Pincode || row.pincode || existingPatient.pincode,
-            appointmentDate: appointmentDate || existingPatient.appointmentDate,
-            status: "pending",
-            assignedCenterId: null,
-            // Clear stale date change request from previous cycle
-            "dateChangeRequest.status": null,
-            "dateChangeRequest.requestedDate": null,
-            "dateChangeRequest.requestedBy": null,
-            "dateChangeRequest.requestedByName": null,
-            "dateChangeRequest.requestedAt": null
-          }
-        })
-
-        updatedCount++
-      } else {
-        // Brand new employee — create fresh record
-        await Patient.create({
-          uploadId: uploadHistory._id,
-          companyId,
-          name,
-          gender: row.Gender || row.gender,
-          age: row.Age || row.age,
-          phone: row.Mobile || row.mobile || row.Phone || row.phone || row["Phone Number"],
-          email,
-          address: row.Address || row.address,
-          pincode: row.Pincode || row.pincode,
-          appointmentDate,
-          status: "pending"
-        })
-        newCount++
+      return {
+        uploadId: uploadHistory._id,
+        companyId,
+        name: row.Name || row.name || row["Patient Name"],
+        gender: row.Gender || row.gender,
+        age: row.Age || row.age,
+        phone: row.Mobile || row.mobile || row.Phone || row.phone || row["Phone Number"],
+        email: row.Email || row.email,
+        address: row.Address || row.address,
+        pincode: row.Pincode || row.pincode,
+        appointmentDate,
+        status: "pending"
       }
-    }
+    })
+
+    await Patient.insertMany(patients)
 
     res.json({
       message: "Upload successful",
-      records: data.length,
-      newEmployees: newCount,
-      updatedEmployees: updatedCount
+      records: patients.length
     })
   } catch (error) {
     console.error("Upload Controller Error:", error)
