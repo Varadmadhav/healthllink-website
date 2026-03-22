@@ -1,13 +1,11 @@
 require("dotenv").config()
-const nodemailer = require("nodemailer")
+const SibApiV3Sdk = require("sib-api-v3-sdk")
 
-const transporter = nodemailer.createTransport({
-  service: "gmail",
-  auth: {
-    user: process.env.EMAIL_USER,
-    pass: process.env.EMAIL_PASS,
-  },
-})
+const client = SibApiV3Sdk.ApiClient.instance
+const apiKey = client.authentications["api-key"]
+apiKey.apiKey = process.env.BREVO_API_KEY
+
+const tranEmailApi = new SibApiV3Sdk.TransactionalEmailsApi()
 
 exports.sendConfirmationEmail = async ({
   toEmail,
@@ -68,12 +66,15 @@ exports.sendConfirmationEmail = async ({
       </div>
     `
 
-    await transporter.sendMail({
-      from: `"Health Checkup System" <${process.env.EMAIL_USER}>`,
-      to: toEmail,
-      subject,
-      html,
-    })
+   await tranEmailApi.sendTransacEmail({
+  sender: {
+    email: "info@healthlinkdiagnostics.in",
+    name: "HealthLink Diagnostics"
+  },
+  to: [{ email: toEmail }],
+  subject: subject,
+  htmlContent: html
+})
     return
   }
 
@@ -142,12 +143,15 @@ exports.sendConfirmationEmail = async ({
     </div>
   `
 
-  await transporter.sendMail({
-    from: `"Health Checkup System" <${process.env.EMAIL_USER}>`,
-    to: toEmail,
-    subject: `✅ Appointment Confirmed — ${companyName} Health Checkup`,
-    html,
-  })
+  await tranEmailApi.sendTransacEmail({
+  sender: {
+    email: "info@healthlinkdiagnostics.in",
+    name: "HealthLink Diagnostics"
+  },
+  to: [{ email: toEmail }],
+  subject: `✅ Appointment Confirmed — ${companyName} Health Checkup`,
+  htmlContent: html
+})
 }
 
 // ── Date Change Notification
@@ -230,12 +234,18 @@ exports.sendDateChangeNotification = async ({
     </div>
   `
 
-  await transporter.sendMail({
-    from: `"Health Checkup System" <${process.env.EMAIL_USER}>`,
-    to: toEmail,
-    subject,
-    html,
-  })
+ await tranEmailApi.sendTransacEmail({
+  sender: {
+    email: "info@healthlinkdiagnostics.in", // MUST be your verified Brevo sender
+    name: "Health Checkup System"
+  },
+  to: [
+    { email: toEmail }
+  ],
+  subject: subject,
+  htmlContent: html
+})
+  
 }
 
 exports.sendPasswordResetEmail = async ({ toEmail, userName, resetToken, role }) => {
@@ -271,12 +281,15 @@ exports.sendPasswordResetEmail = async ({ toEmail, userName, resetToken, role })
     </div>
   `
 
-  await transporter.sendMail({
-    from: `"Health Checkup System" <${process.env.EMAIL_USER}>`,
-    to: toEmail,
-    subject: "🔐 Password Reset — HealthLink System",
-    html,
-  })
+  await tranEmailApi.sendTransacEmail({
+  sender: {
+    email: "info@healthlinkdiagnostics.in",
+    name: "HealthLink Diagnostics"
+  },
+  to: [{ email: toEmail }],
+  subject: "🔐 Password Reset — HealthLink System",
+  htmlContent: html
+})
 }
 exports.sendRejectionEmail = async ({ toEmail, employeeName, companyName }) => {
   const html = `
@@ -313,12 +326,15 @@ exports.sendRejectionEmail = async ({ toEmail, employeeName, companyName }) => {
     </div>
   `
 
-  await transporter.sendMail({
-    from: `"Health Checkup System" <${process.env.EMAIL_USER}>`,
-    to: toEmail,
-    subject: `❌ Appointment Rejected — ${companyName}`,
-    html,
-  })
+  await tranEmailApi.sendTransacEmail({
+  sender: {
+    email: "info@healthlinkdiagnostics.in",
+    name: "HealthLink Diagnostics"
+  },
+  to: [{ email: toEmail }],
+  subject: `❌ Appointment Rejected — ${companyName}`,
+  htmlContent: html
+})
 }
 exports.sendReportUploadEmail = async ({
   toEmail,
@@ -341,10 +357,13 @@ exports.sendReportUploadEmail = async ({
     </div>
   `
 
-  await transporter.sendMail({
-    from: process.env.EMAIL_USER,
-    to: toEmail,
-    subject: `Report Ready - ${companyName}`,
-    html,
-  })
+  await tranEmailApi.sendTransacEmail({
+  sender: {
+    email: "info@healthlinkdiagnostics.in",
+    name: "HealthLink Diagnostics"
+  },
+  to: [{ email: toEmail }],
+  subject: `Report Ready - ${companyName}`,
+  htmlContent: html
+})
 }
