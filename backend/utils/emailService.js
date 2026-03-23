@@ -52,7 +52,7 @@ exports.sendConfirmationEmail = async ({
             <p style="margin:5px 0;"><strong>Appointment Date:</strong> ${appointmentDate}</p>
           </div>
           <p style="margin:12px 0 0;">
-            <a href="http://127.0.0.1:5501/Solutions/corp_sol/corp_solsignup.html"
+            <a href="https://healthlink-diagnostics.netlify.app/Solutions/corp_sol/corp_solsignup.html"
                style="background:#667eea;color:white;padding:10px 20px;
                       border-radius:4px;text-decoration:none;font-size:14px;">
               View Dashboard →
@@ -124,7 +124,7 @@ exports.sendConfirmationEmail = async ({
           <h3 style="margin:0 0 12px;color:#276749;">🔐 Your Login Details</h3>
           ${loginSection}
           <p style="margin:12px 0 0;">
-            <a href="http://127.0.0.1:5501/Solutions/corp_sol/corp_solsignup.html"
+            <a href="https://healthlink-diagnostics.netlify.app/Solutions/corp_sol/corp_solsignup.html"
                style="background:#667eea;color:white;padding:10px 20px;
                       border-radius:4px;text-decoration:none;font-size:14px;">
               Login to Dashboard →
@@ -220,7 +220,7 @@ exports.sendDateChangeNotification = async ({
           <p style="margin:5px 0;"><strong>Requested Date:</strong> ${formattedRequested}</p>
         </div>
         <p style="margin:12px 0 0;">
-          <a href="http://127.0.0.1:5501/Solutions/corp_sol/corp_solsignup.html"
+          <a href="https://healthlink-diagnostics.netlify.app/Solutions/corp_sol/corp_solsignup.html"
              style="background:#667eea;color:white;padding:10px 20px;
                     border-radius:4px;text-decoration:none;font-size:14px;">
             View Dashboard →
@@ -249,7 +249,7 @@ exports.sendDateChangeNotification = async ({
 }
 
 exports.sendPasswordResetEmail = async ({ toEmail, userName, resetToken, role }) => {
-  const resetUrl = `http://127.0.0.1:5501/Solutions/corp_sol/reset_password.html?token=${resetToken}&role=${role}`
+  const resetUrl = `https://healthlink-diagnostics.netlify.app/Solutions/corp_sol/reset_password.html?token=${resetToken}&role=${role}`
 
   const html = `
     <div style="font-family:Arial,sans-serif;max-width:600px;margin:auto;
