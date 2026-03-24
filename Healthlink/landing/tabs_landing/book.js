@@ -578,7 +578,7 @@ document.addEventListener('DOMContentLoaded', function() {
             }
             
             // Redirect to bookingpg.html with parameters
-            window.location.href = '/Healthlink/Diagnostics/Patient/tabs/bookingpg.html?' + urlParams.toString();
+            window.location.href = '/Diagnostics/Patient/tabs/bookingpg.html?' + urlParams.toString();
         });
     }
     
@@ -616,7 +616,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
 // Function to go back to home/booking page
 function goToHome() {
-    window.location.href = '/Healthlink/Diagnostics/Patient/tabs/book.html'; // Adjust the filename as needed
+    window.location.href = '/Diagnostics/Patient/tabs/book.html'; // Adjust the filename as needed
 }
 
 // Function to simulate progress updates (for demo purposes)
@@ -661,7 +661,7 @@ function storeFormData() {
     };
 
     localStorage.setItem("bookingData", JSON.stringify(formData));
-    window.location.href = "/Healthlink/Diagnostics/Patient/tabs/bookingpg.html";
+    window.location.href = "/Diagnostics/Patient/tabs/bookingpg.html";
     
     window.onload = function () {
     const data = JSON.parse(localStorage.getItem("bookingData"));

@@ -151,7 +151,7 @@
     </div>
 
    <script>
-    const API_BASE = "http://localhost:5000/api/employee"
+    const API_BASE = "https://healthllink-website-1.onrender.com/api/employee"
 
     let appointments = []
     let reports = []
@@ -169,7 +169,7 @@
         const user = JSON.parse(localStorage.getItem("employeeUser"))
 
         if (!token || !user) {
-            window.location.href = "/Healthlink/Solutions/corp_sol/corp_solsignup.html"
+            window.location.href = "/Solutions/corp_sol/corp_solsignup.html"
             return
         }
 
@@ -567,7 +567,7 @@
     function logout() {
         localStorage.removeItem("employeeUser")
         localStorage.removeItem("employeeToken")
-        window.location.href = "/Healthlink/Solutions/corp_sol/corp_solsignup.html"
+        window.location.href = "/Solutions/corp_sol/corp_solsignup.html"
     }
 
     function checkTemporaryPassword(data) {
