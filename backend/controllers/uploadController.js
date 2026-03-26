@@ -43,13 +43,11 @@ exports.uploadExcel = async (req, res) => {
 
     const companyId = req.user?.companyId || null
 
-    // Every upload always creates fresh independent patient records.
-    // No duplicate checking on email — each upload is its own batch.
-    // User account sharing is handled separately in sendConfirmationEmailForPatient.
     const patients = data.map(row => {
+      // The "Date" column is now the joining date — stored internally only
       const rawDate = row["Date"] || row["date"] || row["DATE"] ||
-                      row["Appointment Date"] || row["appointment date"]
-      const appointmentDate = parseExcelDate(rawDate)
+                      row["Joining Date"] || row["joining date"]
+      const joiningDate = parseExcelDate(rawDate)
 
       return {
         uploadId: uploadHistory._id,
@@ -61,17 +59,15 @@ exports.uploadExcel = async (req, res) => {
         email: row.Email || row.email,
         address: row.Address || row.address,
         pincode: row.Pincode || row.pincode,
-        appointmentDate,
+        joiningDate,          // stored internally
+        appointmentDate: null, // null until admin assigns during confirmation
         status: "pending"
       }
     })
 
     await Patient.insertMany(patients)
 
-    res.json({
-      message: "Upload successful",
-      records: patients.length
-    })
+    res.json({ message: "Upload successful", records: patients.length })
   } catch (error) {
     console.error("Upload Controller Error:", error)
     res.status(500).json({ message: error.message })

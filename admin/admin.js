@@ -1,5 +1,5 @@
 // ===== API Base =====
-const API_BASE = "https://healthllink-website-1.onrender.com/api"
+const API_BASE = "http://localhost:5000/api"
 
 // ===== Global State =====
 let uploadedFiles = []
@@ -9,7 +9,7 @@ let selectedFileId = null
 let allPatients = []
 let confirmedPatientsForReports = []
 let preselectedCenterMap = {}
-let dateChangeRequests = []   // patients with pending date change requests
+let dateChangeRequests = []
 
 // ===== Init =====
 document.addEventListener('DOMContentLoaded', function () {
@@ -132,7 +132,6 @@ async function openFileView(fileId) {
   }
   renderExcelFilesGrid()
 
-  // Auto-scroll to data table so admin sees the records immediately
   setTimeout(() => {
     const card = document.getElementById('selected-file-card')
     if (card) card.scrollIntoView({ behavior: 'smooth', block: 'start' })
@@ -148,7 +147,6 @@ function closeFileView() {
 
 function normalisePatient(p) {
   const rawStatus = (p.status || "pending").toLowerCase()
-  const finalStatus = rawStatus
   return {
     id: p._id,
     employeeName: p.name || "",
@@ -162,7 +160,7 @@ function normalisePatient(p) {
     pincode: p.pincode || "",
     appointmentDate: p.appointmentDate || null,
     appointmentTime: p.appointmentTime || "10:00",
-    status: finalStatus,
+    status: rawStatus,
     dateChangeRequest: p.dateChangeRequest || null,
     assignedCenter: p.assignedCenterId ? {
       id: p.assignedCenterId._id || p.assignedCenterId,
@@ -181,12 +179,10 @@ function renderEmployeesTable(file) {
   const tbody = document.getElementById('review-table-body')
   tbody.innerHTML = file.employees.map(emp => {
     const dcr = emp.dateChangeRequest
- 
-    // Show updated date if DCR was approved, otherwise show appointmentDate
     const displayDate = (dcr && dcr.status === 'approved' && dcr.requestedDate)
       ? new Date(dcr.requestedDate).toLocaleDateString()
-      : (emp.appointmentDate ? new Date(emp.appointmentDate).toLocaleDateString() : '-')
- 
+      : (emp.appointmentDate ? new Date(emp.appointmentDate).toLocaleDateString() : 'Not assigned yet')
+
     return `
     <tr>
       <td><input type="checkbox" class="employee-checkbox" data-id="${emp.id}" ${emp.status === 'confirmed' ? 'disabled' : ''}></td>
@@ -199,7 +195,10 @@ function renderEmployeesTable(file) {
       <td>${emp.company || '-'}</td>
       <td>${emp.address || '-'}</td>
       <td><span class="badge badge-warning">${emp.pincode || '-'}</span></td>
-      <td>${displayDate}</td>
+      <td>
+  ${displayDate}<br>
+  <span style="font-size:12px;color:#555;">${emp.appointmentTime || "10:00"}</span>
+</td>
       <td>
         <span class="badge ${
           emp.status === 'confirmed' ? 'badge-success'
@@ -222,7 +221,7 @@ function renderEmployeesTable(file) {
 async function renderCenterMatchingForFile(file) {
   const card = document.getElementById('center-matching-card')
   const tbody = document.getElementById('center-matching-body')
- const pendingEmployees = file.employees.filter(emp => emp.status === 'pending')
+  const pendingEmployees = file.employees.filter(emp => emp.status === 'pending')
   if (pendingEmployees.length === 0) { card.style.display = 'none'; return }
   card.style.display = 'block'
   tbody.innerHTML = `<tr><td colspan="7" style="text-align:center;padding:20px;color:var(--text-tertiary);">🔍 Finding nearby centres...</td></tr>`
@@ -233,7 +232,7 @@ async function renderCenterMatchingForFile(file) {
   tbody.innerHTML = rows.map(({ emp, nearby }) => `
     <tr>
       <td><strong>${emp.employeeName}</strong></td>
-      <td>${emp.appointmentDate ? new Date(emp.appointmentDate).toLocaleDateString() : '-'}</td>
+      <td><span style="color:#999;font-size:0.85rem;">Not assigned yet</span></td>
       <td><span class="badge badge-warning">${emp.pincode || '-'}</span></td>
       <td>${renderCenterCell(nearby[0])}</td>
       <td>${renderCenterCell(nearby[1])}</td>
@@ -299,9 +298,9 @@ async function fetchAllPatientsForConfirmation() {
 async function renderConfirmationTable() {
   const tbody = document.getElementById('confirmation-table-body')
   const emptyState = document.getElementById('confirmation-empty')
- 
+
   const pending = allPatients.filter(emp => emp.status === 'pending')
- 
+
   if (pending.length === 0) {
     tbody.innerHTML = ''
     emptyState.style.display = 'flex'
@@ -310,19 +309,22 @@ async function renderConfirmationTable() {
   emptyState.style.display = 'none'
   tbody.innerHTML = `<tr><td colspan="7" style="text-align:center;padding:20px;
     color:var(--text-tertiary);">🔍 Loading centres...</td></tr>`
- 
+
   const rows = await Promise.all(pending.map(async (emp) => {
     const nearby = await fetchNearbyCenters(emp.pincode, 3)
     return { emp, nearby }
   }))
- 
+
+  // Min date for appointment picker — tomorrow
+  const tomorrow = new Date()
+  tomorrow.setDate(tomorrow.getDate() + 1)
+  const minDateStr = `${tomorrow.getFullYear()}-${String(tomorrow.getMonth()+1).padStart(2,'0')}-${String(tomorrow.getDate()).padStart(2,'0')}`
+
   tbody.innerHTML = rows.map(({ emp, nearby }) => {
     const nearbyIds = new Set(nearby.map(c => String(c._id)))
     const otherCenters = centersData.filter(c => !nearbyIds.has(String(c.id)))
     const autoSelectId = preselectedCenterMap[emp.id] || (nearby.length > 0 ? String(nearby[0]._id) : '')
-    const appointmentDate = emp.appointmentDate ? new Date(emp.appointmentDate) : null
- 
-    // Show yellow badge if this pending patient came from a date change request
+
     const dcr = emp.dateChangeRequest
     let dcrBadge = ''
     if (dcr && dcr.status === 'pending') {
@@ -331,32 +333,48 @@ async function renderConfirmationTable() {
         ⏳ Req: ${new Date(dcr.requestedDate).toLocaleDateString()}
       </span>`
     }
- 
+
+    // Pre-fill date picker with DCR requested date if present
+    const preFillDate = (dcr && dcr.requestedDate)
+      ? new Date(dcr.requestedDate).toISOString().split('T')[0]
+      : ''
+
     return `
       <tr>
         <td><strong>${emp.employeeName}</strong></td>
         <td>${emp.phone || '-'}</td>
         <td>${emp.company || '-'}</td>
         <td>${emp.pincode || '-'}</td>
-        <td style="white-space:nowrap;">
-          ${appointmentDate ? appointmentDate.toLocaleDateString() : '-'}${dcrBadge}
-        </td>
-        <td>
-          <select class="center-select" id="select-${emp.id}">
-            <option value="">Select a center...</option>
-            ${nearby.map(c =>
-              `<option value="${c._id}" ${String(c._id) === autoSelectId ? 'selected' : ''}>
-                ${c.name} (${c.pincode})
-              </option>`
-            ).join('')}
-            ${otherCenters.length > 0
-              ? `<option disabled>──── Other centres ────</option>` : ''}
-            ${otherCenters.map(c =>
-              `<option value="${c.id}" ${String(c.id) === autoSelectId ? 'selected' : ''}>
-                ${c.name} (${c.pincode})
-              </option>`
-            ).join('')}
-          </select>
+     <td style="white-space:nowrap;">
+  <div style="display:flex;flex-direction:column;gap:6px;">
+    
+    <input type="date" 
+      id="date-${emp.id}" 
+      min="${minDateStr}" 
+      value="${preFillDate}"
+      style="width:150px;padding:6px;border:1px solid #ccc;border-radius:6px;">
+    
+    <input type="time"
+      id="time-${emp.id}"
+      value="${emp.appointmentTime || '10:00'}"
+      style="width:150px;padding:6px;border:1px solid #ccc;border-radius:6px;">
+  
+  </div>
+
+  ${dcrBadge}
+</td>
+
+<td>
+ <select class="center-select" id="select-${emp.id}"
+  style="width:220px;padding:6px;border-radius:6px;border:1px solid #ccc;">
+
+  ${nearby.map(c =>
+    `<option value="${c._id}" ${String(c._id) === autoSelectId ? 'selected' : ''}>
+      ${c.name} (${c.pincode})
+    </option>`
+  ).join('')}
+
+</select>
         </td>
         <td>
           <button class="btn btn-success btn-sm"
@@ -367,12 +385,12 @@ async function renderConfirmationTable() {
       </tr>
     `
   }).join('')
- 
+
   updateStats()
 }
- 
+
 // =====================================================================
-// DATE CHANGE REQUESTS (shown in make-confirmation tab)
+// DATE CHANGE REQUESTS
 // =====================================================================
 
 async function fetchDateChangeRequests() {
@@ -389,12 +407,12 @@ async function fetchDateChangeRequests() {
 function renderDateChangeRequestsTable() {
   const container = document.getElementById('date-change-requests-section')
   if (!container) return
- 
+
   if (dateChangeRequests.length === 0) {
     container.innerHTML = ''
     return
   }
- 
+
   container.innerHTML = `
     <div class="card">
       <div class="card-header">
@@ -406,7 +424,6 @@ function renderDateChangeRequestsTable() {
           <thead>
             <tr>
               <th>Employee</th>
-              <th>Company</th>
               <th>Current Date</th>
               <th>Requested Date</th>
               <th>Requested By</th>
@@ -417,54 +434,38 @@ function renderDateChangeRequestsTable() {
           <tbody>
             ${dateChangeRequests.map(p => {
               const dcr = p.dateChangeRequest
-              const currentDate = p.appointmentDate
-                ? new Date(p.appointmentDate).toLocaleDateString('en-IN') : '-'
+             const currentDate = p.appointmentDate
+  ? `${new Date(p.appointmentDate).toLocaleDateString('en-IN')} (${p.appointmentTime || "10:00"})`
+  : 'Not assigned yet'
               const requestedDate = dcr?.requestedDate
                 ? new Date(dcr.requestedDate).toLocaleDateString('en-IN') : '-'
               const requestedBy = dcr ? (dcr.requestedByName || dcr.requestedBy) : '-'
               const requestedAt = dcr?.requestedAt
                 ? new Date(dcr.requestedAt).toLocaleDateString('en-IN') : ''
- 
+
               const reqDateObj = dcr?.requestedDate ? new Date(dcr.requestedDate) : null
               const hoursUntilReq = reqDateObj ? (reqDateObj - new Date()) / (1000 * 60 * 60) : 999
               const canApprove = hoursUntilReq > 48
- 
-              // Build center dropdown — same as pending table
-              // We need nearby centers for this patient's pincode
               const centerId = `dcr-center-${p.id}`
- 
+
               return `
                 <tr>
-                  <td><strong>${p.employeeName}</strong></td>
-                  <td>${p.company || '-'}</td>
+                  <td><strong>${p.employeeName}</strong><br><span style="font-size:12px;color:var(--text-tertiary);">${p.company || '-'}</span></td>
                   <td>${currentDate}</td>
+                  <td><span style="color:var(--primary-color);font-weight:600;">${requestedDate}</span><br><span style="font-size:11px;color:var(--text-tertiary);">requested ${requestedAt}</span></td>
+                  <td><span class="badge badge-info" style="text-transform:capitalize;">${requestedBy}</span></td>
                   <td>
-                    <span style="color:var(--primary-color);font-weight:600;">${requestedDate}</span>
-                    <br><span style="font-size:12px;color:var(--text-tertiary);">on ${requestedAt}</span>
-                  </td>
-                  <td><span class="badge badge-info">${requestedBy}</span></td>
-                  <td>
-                    <select class="center-select" id="${centerId}" style="min-width:180px;">
-                      <option value="">Loading centers...</option>
+                    <select class="center-select" id="${centerId}" style="min-width:160px;max-width:200px;">
+                      <option value="">Loading...</option>
                     </select>
                   </td>
                   <td>
                     <div class="action-btns">
                       ${canApprove
-                        ? `<button class="btn btn-success btn-sm"
-                               onclick="reviewDateRequest('${p.id}', 'approve', '${centerId}')">
-                               ✓ Approve
-                           </button>`
-                        : `<button class="btn btn-secondary btn-sm" disabled
-                               style="opacity:0.4;cursor:not-allowed;"
-                               title="Requested date is less than 48 hours away">
-                               ✓ Approve
-                           </button>`
+                        ? `<button class="btn btn-success btn-sm" onclick="reviewDateRequest('${p.id}', 'approve', '${centerId}')">✓ Approve</button>`
+                        : `<button class="btn btn-secondary btn-sm" disabled style="opacity:0.4;cursor:not-allowed;" title="Requested date is less than 48 hours away">✓ Approve</button>`
                       }
-                      <button class="btn btn-danger btn-sm"
-                          onclick="reviewDateRequest('${p.id}', 'reject', null)">
-                          ✗ Reject
-                      </button>
+                      <button class="btn btn-danger btn-sm" onclick="reviewDateRequest('${p.id}', 'reject', null)">✗ Reject</button>
                     </div>
                   </td>
                 </tr>
@@ -475,17 +476,14 @@ function renderDateChangeRequestsTable() {
       </div>
     </div>
   `
- 
-  // Populate center dropdowns for each patient asynchronously
+
   dateChangeRequests.forEach(async (p) => {
     const selectEl = document.getElementById(`dcr-center-${p.id}`)
     if (!selectEl) return
- 
     const nearby = await fetchNearbyCenters(p.pincode, 3)
     const nearbyIds = new Set(nearby.map(c => String(c._id)))
     const otherCenters = centersData.filter(c => !nearbyIds.has(String(c.id)))
     const autoSelectId = nearby.length > 0 ? String(nearby[0]._id) : ''
- 
     selectEl.innerHTML = `
       <option value="">Select a center...</option>
       ${nearby.map(c =>
@@ -500,11 +498,10 @@ function renderDateChangeRequestsTable() {
     `
   })
 }
- 
+
 async function reviewDateRequest(patientId, action, centerSelectId) {
   try {
     let centerId = null
- 
     if (action === 'approve') {
       if (centerSelectId) {
         const selectEl = document.getElementById(centerSelectId)
@@ -515,27 +512,24 @@ async function reviewDateRequest(patientId, action, centerSelectId) {
         return
       }
     }
- 
+
     const res = await fetch(`${API_BASE}/admin/patients/${patientId}/review-date`, {
       method: "PUT",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ action, centerId })
     })
- 
+
     if (!res.ok) {
       const d = await res.json()
       showToast(d.message || "Failed to review request", "error")
       return
     }
- 
+
     showToast(
-      action === 'approve'
-        ? 'Date change approved & patient confirmed!'
-        : 'Date change request rejected.',
+      action === 'approve' ? 'Date change approved & patient confirmed!' : 'Date change request rejected.',
       action === 'approve' ? 'success' : 'warning'
     )
- 
-    // Refresh both sections
+
     fetchAllPatientsForConfirmation()
     fetchDateChangeRequests()
   } catch (err) {
@@ -543,29 +537,38 @@ async function reviewDateRequest(patientId, action, centerSelectId) {
     showToast("Server error", "error")
   }
 }
- 
 
 async function confirmAssignment(patientId) {
   const selectEl = document.getElementById(`select-${patientId}`)
+  const dateEl = document.getElementById(`date-${patientId}`)
   const centerId = selectEl ? selectEl.value : ''
+  const timeEl = document.getElementById(`time-${patientId}`)
+const time = timeEl ? timeEl.value : "10:00"
+
+const appointmentDate = dateEl ? dateEl.value : ''
+const appointmentTime = time
+
   if (!centerId) { showToast('Please select a center first!', 'warning'); return }
- 
+  if (!appointmentDate) { showToast('Please select an appointment date!', 'warning'); return }
+
   try {
     const res = await fetch(`${API_BASE}/admin/patients/${patientId}/assign`, {
       method: "PUT",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ centerId })
+     body: JSON.stringify({ 
+  centerId, 
+  appointmentDate,
+  appointmentTime   // ✅ ADD THIS
+})
     })
     if (!res.ok) throw new Error("Assignment failed")
- 
+
     const updated = await res.json()
     const normUpdated = normalisePatient(updated)
- 
-    // Update local allPatients array
+
     const idx = allPatients.findIndex(p => p.id === patientId)
     if (idx !== -1) allPatients[idx] = normUpdated
- 
-    // Update review tab file data if open
+
     if (selectedFileId) {
       const file = uploadedFiles.find(f => f.id === selectedFileId)
       if (file) {
@@ -575,19 +578,15 @@ async function confirmAssignment(patientId) {
         renderCenterMatchingForFile(file)
       }
     }
- 
+
     delete preselectedCenterMap[patientId]
- 
-    // Re-render all three sections so everything stays in sync
+
     renderConfirmationTable()
     renderConfirmedTable()
     updateStats()
- 
-    // ISSUE 3 FIX: Also refresh date change requests section — patient just
-    // confirmed from pending table should disappear from DCR section too
     fetchDateChangeRequests()
- 
-    showToast(`${normUpdated.employeeName} assigned to ${normUpdated.assignedCenter?.name || 'centre'}!`, 'success')
+
+    showToast(`${normUpdated.employeeName} confirmed — appointment set for ${new Date(appointmentDate).toLocaleDateString()}!`, 'success')
   } catch (err) {
     console.error("confirmAssignment:", err)
     showToast("Error assigning center", "error")
@@ -597,29 +596,33 @@ async function confirmAssignment(patientId) {
 function renderConfirmedTable() {
   const tbody = document.getElementById('confirmed-table-body')
   const countBadge = document.getElementById('confirmed-count')
- 
+
   const confirmed = allPatients.filter(emp => emp.status === 'confirmed')
- 
   countBadge.textContent = `${confirmed.length} Confirmed`
- 
+
   if (confirmed.length === 0) {
-    tbody.innerHTML = `<tr><td colspan="5" style="text-align:center;padding:40px;
+    tbody.innerHTML = `<tr><td colspan="6" style="text-align:center;padding:40px;
       color:var(--text-tertiary);">No confirmed assignments yet</td></tr>`
     return
   }
- 
+
   tbody.innerHTML = confirmed.map(emp => `
     <tr>
       <td><strong>${emp.employeeName}</strong></td>
       <td><span class="badge badge-info">${emp.id.toString().slice(-6)}</span></td>
       <td>${emp.assignedCenter ? emp.assignedCenter.name : 'N/A'}</td>
       <td>${emp.assignedCenter ? emp.assignedCenter.phone : 'N/A'}</td>
+      <td>
+  ${emp.appointmentDate 
+    ? `${new Date(emp.appointmentDate).toLocaleDateString('en-IN')}<br>
+       <span style="font-size:12px;color:#555;">${emp.appointmentTime || "10:00"}</span>`
+    : '<span style="color:#999;">Not assigned yet</span>'}
+</td>
       <td><span class="badge badge-success">✓ Confirmed</span></td>
     </tr>
   `).join('')
 }
- 
-// ── STATS
+
 function updateStats() {
   const confirmed = allPatients.filter(e => e.status === 'confirmed').length
   const pending = allPatients.filter(e => e.status === 'pending').length
@@ -627,6 +630,7 @@ function updateStats() {
   document.getElementById('confirmed-count-stat').textContent = confirmed
   document.getElementById('total-count').textContent = allPatients.length
 }
+
 // =====================================================================
 // REPORTS
 // =====================================================================
@@ -635,7 +639,7 @@ async function fetchConfirmedPatientsForReports() {
   try {
     const res = await fetch(`${API_BASE}/admin/patients`)
     const data = await res.json()
-  confirmedPatientsForReports = data.filter(p => p.status === "confirmed").map(normalisePatient)
+    confirmedPatientsForReports = data.filter(p => p.status === "confirmed").map(normalisePatient)
     renderReportsTable()
   } catch (err) {
     console.error("fetchConfirmedPatientsForReports:", err)
@@ -695,7 +699,7 @@ async function handleReportUpload(patientId, inputEl) {
 function viewSelectedReport(patientId) {
   const select = document.getElementById(`report-select-${patientId}`)
   if (!select || !select.value) return
-  window.open(`https://healthllink-website-1.onrender.com${select.value}`, '_blank')
+  window.open(`http://localhost:5000${select.value}`, '_blank')
 }
 
 async function removeSelectedReport(patientId) {
@@ -733,7 +737,7 @@ async function fetchCenters() {
 function renderCentersTable() {
   const tbody = document.getElementById('centers-table-body')
   if (centersData.length === 0) {
-    tbody.innerHTML = `<tr><td colspan="6" style="text-align:center;padding:40px;color:var(--text-tertiary);">No centers added yet. Click "+ Add Center" to get started.</td></tr>`
+    tbody.innerHTML = `<tr><td colspan="6" style="text-align:center;padding:40px;color:var(--text-tertiary);">No centers added yet.</td></tr>`
     return
   }
   tbody.innerHTML = centersData.map(center => `
@@ -796,7 +800,7 @@ async function fetchCompanies() {
 function renderCompaniesTable() {
   const tbody = document.getElementById('companies-table-body')
   if (companiesData.length === 0) {
-    tbody.innerHTML = `<tr><td colspan="6" style="text-align:center;padding:40px;color:var(--text-tertiary);">No companies added yet. Click "+ Add Company" to get started.</td></tr>`
+    tbody.innerHTML = `<tr><td colspan="6" style="text-align:center;padding:40px;color:var(--text-tertiary);">No companies added yet.</td></tr>`
     return
   }
   tbody.innerHTML = companiesData.map(company => `
@@ -936,29 +940,27 @@ function formatFileSize(bytes) {
   if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(1) + ' KB'
   return (bytes / (1024 * 1024)).toFixed(1) + ' MB'
 }
+
 async function rejectPatient(patientId) {
   if (!confirm("Are you sure you want to reject this patient?")) return
- 
+
   try {
     const res = await fetch(`${API_BASE}/admin/patients/${patientId}/reject`, {
       method: "PUT"
     })
     if (!res.ok) throw new Error("Reject failed")
- 
+
     const updated = await res.json()
     const normUpdated = normalisePatient(updated)
- 
+
     const idx = allPatients.findIndex(p => p.id === patientId)
     if (idx !== -1) allPatients[idx] = normUpdated
- 
+
     renderConfirmationTable()
     renderConfirmedTable()
     updateStats()
- 
-    // ISSUE 3 FIX: Also refresh date change requests section — rejected patient
-    // should disappear from DCR section immediately
     fetchDateChangeRequests()
- 
+
     showToast("Patient rejected successfully", "success")
   } catch (err) {
     console.error(err)

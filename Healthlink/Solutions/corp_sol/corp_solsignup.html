@@ -116,10 +116,10 @@ Cancel
 
 <script>
 
-const API_BASE = "https://healthllink-website-1.onrender.com/api"
+const API_BASE = "http://localhost:5000/api"
 
-const HR_DASHBOARD_PAGE = "/Solutions/corp_sol/hr_page.html"
-const EMPLOYEE_DASHBOARD_PAGE = "/Solutions/corp_sol/emp_page.html"
+const HR_DASHBOARD_PAGE = "hr_page.html"
+const EMPLOYEE_DASHBOARD_PAGE = "emp_page.html"
 
 let currentOrg=""
 let currentRole=""
@@ -232,7 +232,7 @@ document.getElementById("authForm").addEventListener("submit", async function(e)
         const loginUrl =
             currentRole === "hr"
                 ? API_BASE + "/hr/login"
-                : "https://healthllink-website-1.onrender.com/api/employee/login";
+                : "http://localhost:5000/api/employee/login";
 
         const res = await fetch(loginUrl, {
             method: "POST",
@@ -334,7 +334,7 @@ async function sendResetLink() {
   btn.disabled = true
 
   try {
-    const res = await fetch("https://healthllink-website-1.onrender.com/api/employee/forgot-password", {
+    const res = await fetch("http://localhost:5000/api/employee/forgot-password", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({

@@ -25,9 +25,7 @@
         <!-- Change Password Modal -->
         <div id="changePasswordModal" class="modal">
           <div class="modal-content" style="max-width:400px;">
-            <div class="modal-header">
-              <h2>🔐 Change Password</h2>
-            </div>
+            <div class="modal-header"><h2>🔐 Change Password</h2></div>
             <div class="modal-body" style="padding:20px;">
               <div class="form-group" style="margin-bottom:14px;">
                 <label style="display:block;margin-bottom:6px;font-weight:500;">Current Password</label>
@@ -48,14 +46,9 @@
             </div>
             <div class="modal-footer" style="padding:16px 20px;display:flex;gap:10px;justify-content:flex-end;">
               <button onclick="closeChangePasswordModal()"
-                style="padding:10px 18px;border:1px solid #ccc;background:white;border-radius:6px;cursor:pointer;">
-                Cancel
-              </button>
+                style="padding:10px 18px;border:1px solid #ccc;background:white;border-radius:6px;cursor:pointer;">Cancel</button>
               <button onclick="submitChangePassword()"
-                style="padding:10px 18px;background:#2c7be5;color:white;border:none;border-radius:6px;
-                       cursor:pointer;font-weight:600;">
-                Save Password
-              </button>
+                style="padding:10px 18px;background:#2c7be5;color:white;border:none;border-radius:6px;cursor:pointer;font-weight:600;">Save Password</button>
             </div>
           </div>
         </div>
@@ -66,9 +59,7 @@
                 <h1>Employee Dashboard</h1>
                 <p>Welcome back, <span id="employeeName">John Doe</span></p>
             </div>
-            <button onclick="logout()" style="padding:10px 18px; background:#ff0000; color:white; border:none; border-radius:8px; cursor:pointer; font-weight:600;">
-                Logout
-            </button>
+            <button onclick="logout()" style="padding:10px 18px; background:#ff0000; color:white; border:none; border-radius:8px; cursor:pointer; font-weight:600;">Logout</button>
         </div>
 
         <div class="dashboard-card">
@@ -85,13 +76,11 @@
             <div id="bookAppointmentMessage" style="margin-top:12px; font-weight:500;"></div>
         </div>
 
-        <!-- Upcoming Appointments Section -->
         <div class="section">
             <h2 class="section-title">📅 Upcoming Appointments</h2>
             <div id="appointmentsContainer"></div>
         </div>
 
-        <!-- Reports Section -->
         <div class="section">
             <h2 class="section-title">📄 My Reports</h2>
             <div class="filter-section">
@@ -115,9 +104,7 @@
     <!-- Change Appointment Modal -->
     <div id="changeAppointmentModal" class="modal">
         <div class="modal-content">
-            <div class="modal-header">
-                <h2>📅 Request Date Change</h2>
-            </div>
+            <div class="modal-header"><h2>📅 Request Date Change</h2></div>
             <div class="modal-body">
                 <p style="font-size:0.9rem;color:#666;margin-bottom:12px;">
                     ⚠️ Only allowed if appointment is more than 48 hours away.<br>
@@ -139,25 +126,26 @@
     <!-- PDF Viewer Modal -->
     <div id="pdfViewerModal" class="modal pdf-viewer-modal">
         <div class="modal-content">
-            <div class="modal-header">
-                <h2 id="pdfViewerTitle">View Report</h2>
-            </div>
+            <div class="modal-header"><h2 id="pdfViewerTitle">View Report</h2></div>
             <div class="pdf-viewer-container" id="pdfViewerContainer"></div>
-            <div class="modal-footer" style="margin-top: 15px;">
+            <div class="modal-footer" style="margin-top:15px;">
                 <button class="btn btn-secondary" onclick="closePdfViewer()">Close</button>
                 <button class="btn btn-success" id="downloadFromViewer" onclick="downloadCurrentPdf()">⬇ Download</button>
             </div>
         </div>
     </div>
 
-   <script>
-    const API_BASE = "https://healthllink-website-1.onrender.com/api/employee"
+    <script>
+    const API_BASE = "http://localhost:5000/api/employee"
 
     let appointments = []
     let reports = []
     let currentAppointmentId = null
     let currentPdfUrl = null
     let currentPdfName = null
+
+    // ── Use relative path for redirects so Live Server root doesn't matter
+    const LOGIN_PAGE = "corp_solsignup.html"
 
     document.addEventListener('DOMContentLoaded', function () {
         loadEmployeeDashboard()
@@ -169,7 +157,7 @@
         const user = JSON.parse(localStorage.getItem("employeeUser"))
 
         if (!token || !user) {
-            window.location.href = "/Solutions/corp_sol/corp_solsignup.html"
+            window.location.href = LOGIN_PAGE
             return
         }
 
@@ -177,8 +165,14 @@
             const res = await fetch(`${API_BASE}/dashboard`, {
                 headers: { "Authorization": `Bearer ${token}` }
             })
-            const data = await res.json()
 
+            // If token is invalid/expired — clear and redirect to login
+            if (res.status === 401 || res.status === 403) {
+                logout()
+                return
+            }
+
+            const data = await res.json()
             if (!res.ok) {
                 alert(data.message || "Failed to load dashboard")
                 return
@@ -214,15 +208,10 @@
             const status = (apt.status || "requested").toLowerCase()
             const dcr = apt.dateChangeRequest
 
-            // Compute ONE correct date used everywhere in this card.
-            // If DCR approved → use dcr.requestedDate (the new approved date).
-            // Backend also writes this to appointmentDate on approve, but if the
-            // dashboard was loaded before approval, apt.appointmentDate is stale.
             const displayDate = (dcr && dcr.status === "approved" && dcr.requestedDate)
                 ? dcr.requestedDate
                 : apt.appointmentDate
 
-            // ── Date change request badge ─────────────────────────────────────
             let dateChangeBadge = ""
             if (dcr && dcr.status === "pending") {
                 const reqDate = new Date(dcr.requestedDate).toLocaleDateString('en-IN',
@@ -274,19 +263,15 @@
                 : status === "requested" ? "⏳ Request Sent"
                 : "⏳ Pending"
 
-            const statusClass =
-                status === "confirmed" ? "status-confirmed" : "status-changeable"
-
-            const bottomMessage =
-                status === "confirmed" ? "Appointment confirmed by admin"
+            const statusClass = status === "confirmed" ? "status-confirmed" : "status-changeable"
+            const bottomMessage = status === "confirmed"
+                ? "Appointment confirmed by admin"
                 : "Waiting for admin approval and center assignment"
-
             const bottomMessageClass = status === "confirmed" ? "time-info" : "time-warning"
 
-            // 48hr check uses displayDate (the correct current/approved date)
             const now = new Date()
-            const apptDate = new Date(displayDate)
-            const hoursRemaining = (apptDate - now) / (1000 * 60 * 60)
+            const apptDate = displayDate ? new Date(displayDate) : null
+            const hoursRemaining = apptDate ? (apptDate - now) / (1000 * 60 * 60) : 0
             const canRequestChange = status === "confirmed"
                 && hoursRemaining > 48
                 && !(dcr && dcr.status === "pending")
@@ -298,7 +283,7 @@
                        onclick="openRescheduleModal('${apt.id}')">
                        📅 Request Date Change
                    </button>`
-                : status === "confirmed" && hoursRemaining <= 48
+                : status === "confirmed" && hoursRemaining <= 48 && apptDate
                     ? `<span style="font-size:12px;color:#e53e3e;margin-left:8px;">
                            ⚠️ Date change not allowed (less than 48hrs remaining)
                        </span>`
@@ -356,7 +341,6 @@
     function loadReports(filteredReports = null) {
         const container = document.getElementById('reportsContainer')
         const reportsToShow = filteredReports || reports
-
         if (reportsToShow.length === 0) {
             container.innerHTML = `
                 <div class="no-data">
@@ -366,7 +350,6 @@
             `
             return
         }
-
         container.innerHTML = reportsToShow.map(report => `
             <div class="pdf-card">
                 <div class="pdf-icon"></div>
@@ -389,10 +372,7 @@
         loadReports(filtered)
     }
 
-    function resetFilter() {
-        setDefaultDateRange()
-        loadReports()
-    }
+    function resetFilter() { setDefaultDateRange(); loadReports() }
 
     function viewPdf(reportId) {
         const report = reports.find(r => r.id === reportId)
@@ -408,30 +388,23 @@
 
     function closePdfViewer() {
         document.getElementById('pdfViewerModal').classList.remove('active')
-        currentPdfUrl = null
-        currentPdfName = null
+        currentPdfUrl = null; currentPdfName = null
     }
 
     function downloadPdf(reportId) {
         const report = reports.find(r => r.id === reportId)
         if (report) {
             const link = document.createElement('a')
-            link.href = report.fileUrl
-            link.download = report.fileName
-            document.body.appendChild(link)
-            link.click()
-            document.body.removeChild(link)
+            link.href = report.fileUrl; link.download = report.fileName
+            document.body.appendChild(link); link.click(); document.body.removeChild(link)
         }
     }
 
     function downloadCurrentPdf() {
         if (currentPdfUrl && currentPdfName) {
             const link = document.createElement('a')
-            link.href = currentPdfUrl
-            link.download = currentPdfName
-            document.body.appendChild(link)
-            link.click()
-            document.body.removeChild(link)
+            link.href = currentPdfUrl; link.download = currentPdfName
+            document.body.appendChild(link); link.click(); document.body.removeChild(link)
         }
     }
 
@@ -478,7 +451,6 @@
         }
 
         try {
-            // FIX: use the full correct URL — API_BASE is /api/employee
             const res = await fetch(`${API_BASE}/request-date-change`, {
                 method: "POST",
                 headers: {
@@ -488,15 +460,18 @@
                 body: JSON.stringify({ newDate })
             })
 
-            const data = await res.json()
+            // Handle expired/invalid token gracefully
+            if (res.status === 401 || res.status === 403) {
+                alert("Your session has expired. Please log in again.")
+                logout()
+                return
+            }
 
+            const data = await res.json()
             if (res.ok) {
                 document.getElementById('modalAlert').innerHTML =
                     '<div style="color:green;margin-top:8px;">✅ Date change request submitted! Awaiting admin approval.</div>'
-                setTimeout(() => {
-                    closeModal()
-                    loadEmployeeDashboard()
-                }, 1500)
+                setTimeout(() => { closeModal(); loadEmployeeDashboard() }, 1500)
             } else {
                 document.getElementById('modalAlert').innerHTML =
                     `<div style="color:red;margin-top:8px;">${data.message || "Request failed"}</div>`
@@ -508,7 +483,7 @@
     }
 
     function formatDate(dateString) {
-        if (!dateString) return "-"
+        if (!dateString) return "Not assigned yet"
         return new Date(dateString).toLocaleDateString('en-IN', { year: 'numeric', month: 'short', day: 'numeric' })
     }
 
@@ -523,27 +498,21 @@
     }
 
     window.onclick = function(event) {
-        if (event.target.classList.contains('modal')) {
-            event.target.classList.remove('active')
-        }
+        if (event.target.classList.contains('modal')) event.target.classList.remove('active')
     }
 
     document.addEventListener('keydown', function(e) {
-        if (e.key === 'Escape') {
-            document.querySelectorAll('.modal.active').forEach(m => m.classList.remove('active'))
-        }
+        if (e.key === 'Escape') document.querySelectorAll('.modal.active').forEach(m => m.classList.remove('active'))
     })
 
     async function bookAppointment() {
         const token = localStorage.getItem("employeeToken")
         const appointmentDate = document.getElementById("bookAppointmentDate").value
         const messageBox = document.getElementById("bookAppointmentMessage")
-
         if (!appointmentDate) {
             messageBox.innerHTML = `<span style="color:red;">Please select appointment date</span>`
             return
         }
-
         try {
             const res = await fetch(`${API_BASE}/book-appointment`, {
                 method: "POST",
@@ -559,7 +528,6 @@
                 messageBox.innerHTML = `<span style="color:red;">${data.message || "Booking failed"}</span>`
             }
         } catch (error) {
-            console.error("Book appointment error:", error)
             messageBox.innerHTML = `<span style="color:red;">Server error</span>`
         }
     }
@@ -567,7 +535,8 @@
     function logout() {
         localStorage.removeItem("employeeUser")
         localStorage.removeItem("employeeToken")
-        window.location.href = "/Solutions/corp_sol/corp_solsignup.html"
+        // Use relative path — works regardless of Live Server root
+        window.location.href = LOGIN_PAGE
     }
 
     function checkTemporaryPassword(data) {
@@ -595,20 +564,16 @@
         const token = localStorage.getItem('employeeToken')
 
         if (!currentPassword || !newPassword || !confirmNewPassword) {
-            msgBox.innerHTML = '<span style="color:red;">All fields are required</span>'
-            return
+            msgBox.innerHTML = '<span style="color:red;">All fields are required</span>'; return
         }
         if (newPassword.length < 6) {
-            msgBox.innerHTML = '<span style="color:red;">New password must be at least 6 characters</span>'
-            return
+            msgBox.innerHTML = '<span style="color:red;">New password must be at least 6 characters</span>'; return
         }
         if (newPassword !== confirmNewPassword) {
-            msgBox.innerHTML = '<span style="color:red;">New passwords do not match</span>'
-            return
+            msgBox.innerHTML = '<span style="color:red;">New passwords do not match</span>'; return
         }
         if (newPassword === currentPassword) {
-            msgBox.innerHTML = '<span style="color:red;">New password must be different from current password</span>'
-            return
+            msgBox.innerHTML = '<span style="color:red;">New password must be different from current password</span>'; return
         }
 
         try {

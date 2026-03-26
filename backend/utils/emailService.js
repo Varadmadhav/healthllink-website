@@ -6,6 +6,7 @@ const apiKey = client.authentications["api-key"]
 apiKey.apiKey = process.env.BREVO_API_KEY
 
 const tranEmailApi = new SibApiV3Sdk.TransactionalEmailsApi()
+client.basePath = "https://api.brevo.com/v3"
 
 exports.sendConfirmationEmail = async ({
   toEmail,
@@ -14,6 +15,7 @@ exports.sendConfirmationEmail = async ({
   centerName,
   centerAddress,
   appointmentDate,
+  appointmentTime,
   loginId,
   tempPassword,
   isExistingUser,
@@ -50,6 +52,7 @@ exports.sendConfirmationEmail = async ({
             <p style="margin:5px 0;"><strong>Center Name:</strong> ${centerName}</p>
             <p style="margin:5px 0;"><strong>Center Address:</strong> ${centerAddress}</p>
             <p style="margin:5px 0;"><strong>Appointment Date:</strong> ${appointmentDate}</p>
+            <p style="margin:5px 0;"><strong>Time:</strong> ${appointmentTime || "10:00 AM"}</p>
           </div>
           <p style="margin:12px 0 0;">
             <a href="https://healthlink-diagnostics.netlify.app/Solutions/corp_sol/corp_solsignup.html"
@@ -118,6 +121,7 @@ exports.sendConfirmationEmail = async ({
           <p style="margin:5px 0;"><strong>Center Name:</strong> ${centerName}</p>
           <p style="margin:5px 0;"><strong>Center Address:</strong> ${centerAddress}</p>
           <p style="margin:5px 0;"><strong>Appointment Date:</strong> ${appointmentDate}</p>
+          <p style="margin:5px 0;"><strong>Time:</strong> ${appointmentTime || "10:00 AM"}</p>
         </div>
         <div style="background:#f0fff4;border-left:4px solid #38a169;
                     padding:16px;margin:16px 0;border-radius:4px;">
@@ -343,7 +347,7 @@ exports.sendReportUploadEmail = async ({
   reportUrl
 }) => {
 
-  const fullUrl = `https://healthllink-website-1.onrender.com${reportUrl}`
+  const fullUrl = `http://localhost:5000${reportUrl}`
 
   const html = `
     <div style="font-family:Arial,sans-serif;">

@@ -15,7 +15,12 @@ connectDB()
 // ✅ CORS FIX
 const allowedOrigins = [
   "https://admin-healthlink.netlify.app",
-  "https://healthlink-diagnostics.netlify.app"
+  "https://healthlink-diagnostics.netlify.app",
+  "http://localhost:5500",
+  "http://localhost:5501",
+  "http://127.0.0.1:5500",
+  "http://127.0.0.1:5501",
+  "null"
 ];
 
 app.use(cors({
@@ -40,6 +45,10 @@ app.use("/uploads", express.static(path.join(__dirname, "uploads")))
 app.use("/api/admin", adminRoutes)
 app.use("/api/hr", hrRoutes)
 app.use("/api/employee", employeeRoutes)
+app.use(
+  "/diagnostics",
+  express.static(path.join(__dirname, "../Diagnostics"))
+)
 
 app.get("/", (req, res) => {
   res.send("HealthLink API running")

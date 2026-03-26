@@ -70,7 +70,7 @@ exports.getMyDashboard = async (req, res) => {
   try {
     const user = req.user
     if (!user) return res.status(401).json({ message: "Unauthorized" })
-
+ 
     let patientQuery
     try {
       if (user.patientId) {
@@ -87,16 +87,24 @@ exports.getMyDashboard = async (req, res) => {
     } catch (idErr) {
       patientQuery = { email: user.email }
     }
-
+ 
     const patients = await Patient.find(patientQuery)
       .populate("assignedCenterId", "name address pincode phone")
-      .sort({ appointmentDate: 1, createdAt: -1 })
-
+      .sort({ createdAt: -1 })
+ 
     const now = new Date()
     now.setHours(0, 0, 0, 0)
-
+ 
     const appointments = patients
-      .filter(p => p.appointmentDate && new Date(p.appointmentDate) >= now)
+      // BUG 2 FIX: Show ALL active patients — include confirmed ones with no
+      // appointment date yet (date is null until admin assigns it).
+      // Only exclude patients whose appointment date has already passed.
+      .filter(p => {
+        // Always show if no date yet (pending assignment)
+        if (!p.appointmentDate) return p.status !== "rejected"
+        // Show if appointment date is today or in the future
+        return new Date(p.appointmentDate) >= now && p.status !== "rejected"
+      })
       .map(p => ({
         id: p._id,
         employeeName: p.name || user.name,
@@ -106,13 +114,12 @@ exports.getMyDashboard = async (req, res) => {
         centerAddress: p.assignedCenterId
           ? `${p.assignedCenterId.address || ""} - ${p.assignedCenterId.pincode || ""}`
           : "Center not assigned yet",
-        appointmentDate: p.appointmentDate,
-        appointmentTime: "10:00",
+        appointmentDate: p.appointmentDate || null,   // null = "Not assigned yet"
+        appointmentTime: p.appointmentTime || "10:00",
         status: p.status || "requested",
-        // Unified date change request — used by both HR and employee
         dateChangeRequest: p.dateChangeRequest || null
       }))
-
+ 
     const reports = patients.flatMap((p) => {
       const multiReports = (p.reportUrls || []).map((report, index) => ({
         id: `${p._id}_${index}`,
@@ -120,9 +127,9 @@ exports.getMyDashboard = async (req, res) => {
         date: report.uploadedAt || p.updatedAt || p.createdAt,
         fileUrl: report.url.startsWith("http")
           ? report.url
-          : `https://healthllink-website-1.onrender.com${report.url}`
+          : `http://localhost:5000${report.url}`
       }))
-
+ 
       const singleReport = p.reportUrl
         ? [{
             id: `${p._id}_single`,
@@ -130,13 +137,13 @@ exports.getMyDashboard = async (req, res) => {
             date: p.updatedAt || p.createdAt,
             fileUrl: p.reportUrl.startsWith("http")
               ? p.reportUrl
-              : `https://healthllink-website-1.onrender.com${p.reportUrl}`
+              : `http://localhost:5000${p.reportUrl}`
           }]
         : []
-
+ 
       return [...multiReports, ...singleReport]
     })
-
+ 
     res.json({
       employee: {
         name: user.name, email: user.email,
@@ -152,7 +159,6 @@ exports.getMyDashboard = async (req, res) => {
     res.status(500).json({ message: error.message })
   }
 }
-
 exports.bookAppointment = async (req, res) => {
   try {
     const user = req.user

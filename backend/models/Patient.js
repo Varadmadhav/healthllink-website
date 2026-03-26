@@ -13,7 +13,12 @@ const patientSchema = new mongoose.Schema({
   address: String,
   pincode: String,
 
+  // Joining date from Excel — internal only, never shown on frontend
+  joiningDate: { type: Date, default: null },
+
+  // Appointment date — null until admin assigns it during confirmation
   appointmentDate: { type: Date, default: null },
+  appointmentTime: { type: String, default: "10:00" },
 
   rescheduleRequestDate: { type: Date, default: null },
   rescheduleStatus: {
@@ -39,7 +44,7 @@ const patientSchema = new mongoose.Schema({
     requestedAt:     { type: Date,   default: null }
   },
 
-  // BUG 4 FIX: Archive of previous appointments when employee is re-uploaded
+  // Archive of previous appointments
   pastAppointments: {
     type: [
       {
@@ -53,7 +58,6 @@ const patientSchema = new mongoose.Schema({
     default: []
   },
 
-  // Multiple reports per patient
   reportUrls: {
     type: [
       {
@@ -65,7 +69,6 @@ const patientSchema = new mongoose.Schema({
     default: []
   },
 
-  // Legacy field — kept for backward compatibility
   reportUrl: { type: String, default: null }
 
 }, { timestamps: true })

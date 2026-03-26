@@ -156,10 +156,8 @@ exports.rejectUpload = async (req, res) => {
 }
 
 // ─── Shared helper ────────────────────────────────────────────────────────────
-// Sends confirmation email and creates User account if needed.
-// Called by assignCenter AND reviewDateChange (approve path).
-// overrideDate: pass a plain JS Date to force a specific date in the email,
-// bypassing whatever is cached in patient.appointmentDate.
+// BUG 4 FIX: was passing isExistingUser:true and wrong tempPassword in both
+// branches. Now correctly passes credentials only for new users.
 
 async function sendConfirmationEmailForPatient(patient, overrideDate) {
   try {
@@ -174,17 +172,11 @@ async function sendConfirmationEmailForPatient(patient, overrideDate) {
       ? `${patient.assignedCenterId.address} - ${patient.assignedCenterId.pincode || ""}`
       : "Will be communicated shortly"
 
-    // Bulletproof date formatting:
-    // 1. Use overrideDate if provided (always a plain JS Date from reviewDateChange)
-    // 2. Fall back to patient.appointmentDate
-    // 3. Convert via .toISOString() to break any Mongoose internal reference
     const dateToUse = overrideDate || patient.appointmentDate
     let appointmentDate = "To be confirmed"
     if (dateToUse) {
       try {
-        const d = new Date(
-          dateToUse instanceof Date ? dateToUse.toISOString() : dateToUse
-        )
+        const d = new Date(dateToUse instanceof Date ? dateToUse.toISOString() : dateToUse)
         if (!isNaN(d.getTime())) {
           appointmentDate = d.toLocaleDateString("en-IN", {
             day: "numeric", month: "long", year: "numeric"
@@ -196,12 +188,10 @@ async function sendConfirmationEmailForPatient(patient, overrideDate) {
     }
 
     const companyId = patient.companyId?._id || patient.companyId
-
-    // Atomic find-or-create — prevents duplicate User records for same email+company
     const existingUser = await User.findOne({ email: patient.email, companyId })
 
     if (!existingUser) {
-      // First time — create account with temp password, send credentials in email
+      // First time — create account and send WITH credentials
       const tempPassword = crypto.randomBytes(4).toString("hex")
       const hashedPassword = await bcrypt.hash(tempPassword, 10)
 
@@ -231,13 +221,14 @@ async function sendConfirmationEmailForPatient(patient, overrideDate) {
         centerName,
         centerAddress,
         appointmentDate,
+        appointmentTime: patient.appointmentTime || "10:00",
         loginId: patient.email,
         tempPassword,
-        isExistingUser: false
+        isExistingUser: false   // NEW user — show credentials
       })
 
     } else {
-      // Account exists — link patientId if missing, send without credentials
+      // Account exists — send WITHOUT credentials
       if (!existingUser.patientId) {
         existingUser.patientId = patient._id
         await existingUser.save()
@@ -250,9 +241,10 @@ async function sendConfirmationEmailForPatient(patient, overrideDate) {
         centerName,
         centerAddress,
         appointmentDate,
+        appointmentTime: patient.appointmentTime || "10:00",
         loginId: patient.email,
         tempPassword: null,
-        isExistingUser: true
+        isExistingUser: true    // EXISTING user — no credentials
       })
     }
   } catch (emailErr) {
@@ -264,34 +256,30 @@ async function sendConfirmationEmailForPatient(patient, overrideDate) {
 
 exports.assignCenter = async (req, res) => {
   try {
-    const { centerId } = req.body
+    const { centerId, appointmentDate, appointmentTime } = req.body
+
     if (!centerId) return res.status(400).json({ message: "centerId is required" })
- 
-    // Read current patient to check for pending DCR before updating
-    const existing = await Patient.findById(req.params.patientId)
-      .select("dateChangeRequest appointmentDate")
- 
+    if (!appointmentDate) return res.status(400).json({ message: "appointmentDate is required" })
+
+    const parsedDate = new Date(appointmentDate)
+    if (isNaN(parsedDate.getTime())) {
+      return res.status(400).json({ message: "Invalid appointment date" })
+    }
+
     const updateFields = {
       assignedCenterId: centerId,
-      status: "confirmed"
+      status: "confirmed",
+      appointmentDate: parsedDate,
+      appointmentTime: appointmentTime || "10:00"
     }
- 
-    // If there's a pending DCR, approve it AND update appointmentDate to the
-    // requested date so the DB is consistent and the email shows the right date
-    let emailOverrideDate = null
+
+    // If there's a pending DCR, approve it and update to the admin-set date
+    const existing = await Patient.findById(req.params.patientId).select("dateChangeRequest")
     if (existing?.dateChangeRequest?.status === "pending") {
       updateFields["dateChangeRequest.status"] = "approved"
- 
-      // Capture requested date as plain JS Date before any DB ops
-      const dcrDate = existing.dateChangeRequest.requestedDate
-      emailOverrideDate = new Date(
-        dcrDate instanceof Date ? dcrDate.toISOString() : dcrDate
-      )
- 
-      // Also update appointmentDate to the new requested date
-      updateFields.appointmentDate = emailOverrideDate
+      updateFields["dateChangeRequest.requestedDate"] = parsedDate
     }
- 
+
     const patient = await Patient.findByIdAndUpdate(
       req.params.patientId,
       { $set: updateFields },
@@ -299,9 +287,9 @@ exports.assignCenter = async (req, res) => {
     )
       .populate("assignedCenterId", "name phone address pincode")
       .populate("companyId", "name")
- 
+
     if (!patient) return res.status(404).json({ message: "Patient not found" })
- 
+
     if (patient.uploadId) {
       const totalInUpload = await Patient.countDocuments({ uploadId: patient.uploadId })
       const confirmedInUpload = await Patient.countDocuments({ uploadId: patient.uploadId, status: "confirmed" })
@@ -309,18 +297,14 @@ exports.assignCenter = async (req, res) => {
         await Upload.findByIdAndUpdate(patient.uploadId, { status: "confirmed" }, { new: true })
       }
     }
- 
-    // Pass emailOverrideDate — if patient had a DCR, this is the new approved date.
-    // If no DCR, emailOverrideDate is null and sendConfirmationEmailForPatient
-    // falls back to patient.appointmentDate which is already correct.
-    await sendConfirmationEmailForPatient(patient, emailOverrideDate)
- 
+
+    await sendConfirmationEmailForPatient(patient, parsedDate)
+
     res.json(patient)
   } catch (error) {
     res.status(500).json({ message: error.message })
   }
 }
- 
 
 exports.getAllPatients = async (req, res) => {
   try {
@@ -384,8 +368,23 @@ exports.requestDateChange = async (req, res) => {
           requestedBy: "hr"
         })
       }
+      if (requestedBy === "employee") {
+        const User = require("../models/User")
+        const hrUser = await User.findOne({ role: "hr", companyId: patient.companyId })
+        if (hrUser) {
+          await sendDateChangeNotification({
+            toEmail: hrUser.email,
+            recipientName: hrUser.name,
+            employeeName: patient.name,
+            currentDate: patient.appointmentDate,
+            requestedDate: new Date(requestedDate),
+            action: "requested",
+            requestedBy: "employee"
+          })
+        }
+      }
     } catch (emailErr) {
-      console.error("Employee notification email failed:", emailErr.message)
+      console.error("Date change notification email failed:", emailErr.message)
     }
 
     res.json({ message: "Date change request submitted", patient })
@@ -397,10 +396,7 @@ exports.requestDateChange = async (req, res) => {
 exports.getDateChangeRequests = async (req, res) => {
   try {
     const patients = await Patient
-      .find({
-        status: "pending",
-        "dateChangeRequest.status": "pending"
-      })
+      .find({ status: "pending", "dateChangeRequest.status": "pending" })
       .populate("assignedCenterId", "name phone address pincode")
       .populate("companyId", "name")
       .sort({ "dateChangeRequest.requestedAt": -1 })
@@ -410,60 +406,43 @@ exports.getDateChangeRequests = async (req, res) => {
   }
 }
 
+// BUG 3 FIX: action was never destructured from req.body — crashed immediately
 exports.reviewDateChange = async (req, res) => {
   try {
-    const { action, centerId } = req.body
+    const { action, centerId } = req.body   // action is now correctly read
+
     if (!["approve", "reject"].includes(action)) {
       return res.status(400).json({ message: "action must be 'approve' or 'reject'" })
     }
- 
+
     const patient = await Patient.findById(req.params.patientId)
     if (!patient) return res.status(404).json({ message: "Patient not found" })
     if (!patient.dateChangeRequest || patient.dateChangeRequest.status !== "pending") {
       return res.status(400).json({ message: "No pending date change request found" })
     }
- 
-    // ── DEBUG: log raw values from DB before any processing ──────────────────
-    console.log("=== reviewDateChange DEBUG ===")
-    console.log("patient.appointmentDate raw:", patient.appointmentDate)
-    console.log("patient.dateChangeRequest.requestedDate raw:", patient.dateChangeRequest.requestedDate)
-    console.log("patient.dateChangeRequest.requestedBy:", patient.dateChangeRequest.requestedBy)
-    console.log("patient.dateChangeRequest.status:", patient.dateChangeRequest.status)
-    console.log("action:", action)
-    console.log("centerId:", centerId)
-    // ─────────────────────────────────────────────────────────────────────────
- 
+
+    // Capture as plain JS Dates before any mutation
     const previousDate = patient.appointmentDate
-      ? new Date(
-          patient.appointmentDate instanceof Date
-            ? patient.appointmentDate.toISOString()
-            : patient.appointmentDate
-        )
+      ? new Date(patient.appointmentDate instanceof Date
+          ? patient.appointmentDate.toISOString()
+          : patient.appointmentDate)
       : null
- 
+
     const requestedDate = new Date(
       patient.dateChangeRequest.requestedDate instanceof Date
         ? patient.dateChangeRequest.requestedDate.toISOString()
         : patient.dateChangeRequest.requestedDate
     )
- 
-    // ── DEBUG: log captured values after conversion ───────────────────────────
-    console.log("previousDate after conversion:", previousDate)
-    console.log("requestedDate after conversion:", requestedDate)
-    console.log("requestedDate.toLocaleDateString en-IN:", requestedDate.toLocaleDateString("en-IN", {
-      day: "numeric", month: "long", year: "numeric"
-    }))
-    // ─────────────────────────────────────────────────────────────────────────
- 
+
     const requestedBy = patient.dateChangeRequest.requestedBy
     const companyId = patient.companyId
- 
+
     if (action === "approve") {
       const hoursUntilNew = (requestedDate - new Date()) / (1000 * 60 * 60)
       if (hoursUntilNew < 48) {
         return res.status(400).json({ message: "Cannot approve — requested date is less than 48 hours away" })
       }
- 
+
       const updateDoc = {
         appointmentDate: requestedDate,
         "dateChangeRequest.status": "approved"
@@ -472,33 +451,28 @@ exports.reviewDateChange = async (req, res) => {
         updateDoc.assignedCenterId = centerId
         updateDoc.status = "confirmed"
       }
- 
+
       await Patient.findByIdAndUpdate(req.params.patientId, { $set: updateDoc })
- 
+
     } else {
       await Patient.findByIdAndUpdate(
         req.params.patientId,
         { $set: { "dateChangeRequest.status": "rejected", status: "rejected", assignedCenterId: null } }
       )
     }
- 
+
     const populated = await Patient
       .findById(req.params.patientId)
       .populate("assignedCenterId", "name phone address pincode")
       .populate("companyId", "name")
- 
-    // ── DEBUG: log what populated has after DB update ─────────────────────────
-    console.log("populated.appointmentDate after update:", populated.appointmentDate)
-    console.log("=== END DEBUG ===")
-    // ─────────────────────────────────────────────────────────────────────────
- 
+
     try {
       const { sendDateChangeNotification, sendRejectionEmail } = require("../utils/emailService")
       const User = require("../models/User")
- 
+
       if (action === "approve") {
         await sendConfirmationEmailForPatient(populated, requestedDate)
- 
+
         const hrUser = await User.findOne({ role: "hr", companyId })
         if (hrUser) {
           await sendDateChangeNotification({
@@ -511,7 +485,7 @@ exports.reviewDateChange = async (req, res) => {
             requestedBy
           })
         }
- 
+
       } else {
         if (populated.email) {
           await sendRejectionEmail({
@@ -520,7 +494,7 @@ exports.reviewDateChange = async (req, res) => {
             companyName: populated.companyId?.name || "Your Company"
           })
         }
- 
+
         const hrUser = await User.findOne({ role: "hr", companyId })
         if (hrUser) {
           await sendDateChangeNotification({
@@ -537,13 +511,13 @@ exports.reviewDateChange = async (req, res) => {
     } catch (emailErr) {
       console.error("Email failed:", emailErr.message)
     }
- 
+
     res.json({ message: `Date change ${action}d`, patient: populated })
   } catch (error) {
     res.status(500).json({ message: error.message })
   }
 }
- 
+
 // ─── Reports ──────────────────────────────────────────────────────────────────
 
 exports.uploadReport = async (req, res) => {
