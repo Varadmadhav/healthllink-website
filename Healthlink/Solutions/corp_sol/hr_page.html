@@ -187,8 +187,8 @@
   </div>
 
   <script>
-    const API_BASE = "http://localhost:5000/api/hr"
-    const ADMIN_API = "http://localhost:5000/api/admin"
+    const API_BASE = "https://healthllink-website-1.onrender.com/api/hr"
+    const ADMIN_API = "https://healthllink-website-1.onrender.com/api/admin"
 
     const user = JSON.parse(localStorage.getItem("hrUser"))
     if (!user) window.location.href = "corp_solsignup.html"
@@ -529,13 +529,13 @@
     function viewReport(patientId) {
       const select = document.getElementById(`hr-report-select-${patientId}`)
       if (!select || !select.value) return
-      window.open(`http://localhost:5000${select.value}`, '_blank')
+      window.open(`https://healthllink-website-1.onrender.com${select.value}`, '_blank')
     }
 
     function downloadReport(patientId) {
       const select = document.getElementById(`hr-report-select-${patientId}`)
       if (!select || !select.value) return
-      const url = `http://localhost:5000${select.value}`
+      const url = `https://healthllink-website-1.onrender.com${select.value}`
       const fileName = select.options[select.selectedIndex].text
       fetch(url).then(res => res.blob()).then(blob => {
         const blobUrl = window.URL.createObjectURL(blob)
@@ -579,7 +579,7 @@
       }
       const companyId = user && user.companyId ? user.companyId : null
       try {
-        const res = await fetch("http://localhost:5000/api/employee/create", {
+        const res = await fetch("https://healthllink-website-1.onrender.com/api/employee/create", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ name, employeeId, email, password, companyId, phone, address, pincode })

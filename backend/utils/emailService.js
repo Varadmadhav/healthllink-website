@@ -347,7 +347,7 @@ exports.sendReportUploadEmail = async ({
   reportUrl
 }) => {
 
-  const fullUrl = `http://localhost:5000${reportUrl}`
+  const fullUrl = `https://healthllink-website-1.onrender.com${reportUrl}`
 
   const html = `
     <div style="font-family:Arial,sans-serif;">
