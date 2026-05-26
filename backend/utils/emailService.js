@@ -14,6 +14,7 @@ exports.sendConfirmationEmail = async ({
   companyName,
   centerName,
   centerAddress,
+  centerEmail,
   appointmentDate,
   appointmentTime,
   loginId,
@@ -156,6 +157,47 @@ exports.sendConfirmationEmail = async ({
   subject: `✅ Appointment Confirmed — ${companyName} Health Checkup`,
   htmlContent: html
 })
+
+  if (centerEmail) {
+    const centerHtml = `
+      <div style="font-family:Arial,sans-serif;max-width:600px;margin:auto;
+                  border:1px solid #e2e8f0;border-radius:8px;overflow:hidden;">
+        <div style="background:linear-gradient(135deg,#667eea,#764ba2);
+                    padding:24px;color:white;">
+          <h2 style="margin:0;">📋 New Appointment Confirmed</h2>
+          <p style="margin:6px 0 0;opacity:0.9;">${companyName} — Health Checkup Program</p>
+        </div>
+        <div style="padding:24px;">
+          <p>Dear <strong>${centerName}</strong>,</p>
+          <p>A new health checkup appointment has been confirmed at your center.</p>
+          <div style="background:#f7fafc;border-left:4px solid #667eea;
+                      padding:16px;margin:16px 0;border-radius:4px;">
+            <h3 style="margin:0 0 12px;color:#4a5568;">📅 Appointment Details</h3>
+            <p style="margin:5px 0;"><strong>Patient Name:</strong> ${employeeName}</p>
+            <p style="margin:5px 0;"><strong>Company:</strong> ${companyName}</p>
+            <p style="margin:5px 0;"><strong>Date:</strong> ${appointmentDate}</p>
+            <p style="margin:5px 0;"><strong>Time:</strong> ${appointmentTime || "10:00 AM"}</p>
+          </div>
+          <p style="color:#718096;font-size:13px;margin-top:20px;">
+            Please ensure the patient is attended to at the scheduled time.
+          </p>
+        </div>
+        <div style="background:#f7fafc;padding:12px 24px;
+                    font-size:12px;color:#a0aec0;text-align:center;">
+          This is an automated email — please do not reply.
+        </div>
+      </div>
+    `
+    await tranEmailApi.sendTransacEmail({
+      sender: {
+        email: "info@healthlinkdiagnostics.in",
+        name: "HealthLink Diagnostics"
+      },
+      to: [{ email: centerEmail }],
+      subject: `📋 New Appointment — ${employeeName} on ${appointmentDate}`,
+      htmlContent: centerHtml
+    })
+  }
 }
 
 // ── Date Change Notification

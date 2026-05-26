@@ -171,6 +171,7 @@ async function sendConfirmationEmailForPatient(patient, overrideDate) {
     const centerAddress = patient.assignedCenterId?.address
       ? `${patient.assignedCenterId.address} - ${patient.assignedCenterId.pincode || ""}`
       : "Will be communicated shortly"
+    const centerEmail = patient.assignedCenterId?.email || null  
 
     const dateToUse = overrideDate || patient.appointmentDate
     let appointmentDate = "To be confirmed"
@@ -220,11 +221,12 @@ async function sendConfirmationEmailForPatient(patient, overrideDate) {
         companyName,
         centerName,
         centerAddress,
+        centerEmail,
         appointmentDate,
         appointmentTime: patient.appointmentTime || "10:00",
         loginId: patient.email,
         tempPassword,
-        isExistingUser: false   // NEW user — show credentials
+        isExistingUser: false
       })
 
     } else {
@@ -240,11 +242,12 @@ async function sendConfirmationEmailForPatient(patient, overrideDate) {
         companyName,
         centerName,
         centerAddress,
+        centerEmail,
         appointmentDate,
         appointmentTime: patient.appointmentTime || "10:00",
         loginId: patient.email,
         tempPassword: null,
-        isExistingUser: true    // EXISTING user — no credentials
+        isExistingUser: true
       })
     }
   } catch (emailErr) {
@@ -285,7 +288,7 @@ exports.assignCenter = async (req, res) => {
       { $set: updateFields },
       { new: true }
     )
-      .populate("assignedCenterId", "name phone address pincode")
+      .populate("assignedCenterId", "name phone address pincode email")
       .populate("companyId", "name")
 
     if (!patient) return res.status(404).json({ message: "Patient not found" })
@@ -463,7 +466,7 @@ exports.reviewDateChange = async (req, res) => {
 
     const populated = await Patient
       .findById(req.params.patientId)
-      .populate("assignedCenterId", "name phone address pincode")
+      .populate("assignedCenterId", "name phone address pincode email")
       .populate("companyId", "name")
 
     try {
