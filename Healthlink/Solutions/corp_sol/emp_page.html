@@ -136,7 +136,9 @@
     </div>
 
     <script>
-    const API_BASE = "https://healthllink-website-1.onrender.com/api/employee"
+    const API_BASE = window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1"
+      ? "http://localhost:5000/api/employee"
+      : "https://healthllink-website-1.onrender.com/api/employee"
 
     let appointments = []
     let reports = []
@@ -297,6 +299,14 @@
                 </div>
                 <div class="appointment-details">
                   <div class="detail-item">
+                    <span class="detail-label">Patient ID</span>
+                    <span class="detail-value" style="color:#007bff;font-weight:600;">${apt.patientIdString || "-"}</span>
+                  </div>
+                  <div class="detail-item">
+                    <span class="detail-label">Employee ID</span>
+                    <span class="detail-value">${apt.employeeId || "-"}</span>
+                  </div>
+                  <div class="detail-item">
                     <span class="detail-label">Employee Name</span>
                     <span class="detail-value">${apt.employeeName || "-"}</span>
                   </div>
@@ -307,6 +317,14 @@
                   <div class="detail-item">
                     <span class="detail-label">Gender</span>
                     <span class="detail-value">${apt.gender || "-"}</span>
+                  </div>
+                  <div class="detail-item">
+                    <span class="detail-label">Test Profile</span>
+                    <span class="detail-value" style="color:#ed8936;font-weight:600;">${apt.testProfile || "-"}</span>
+                  </div>
+                  <div class="detail-item">
+                    <span class="detail-label">Fasting Req.</span>
+                    <span class="detail-value" style="font-weight:600;">${apt.fastingRequired ? "⚠️ Fasting Required" : "🟢 Non-Fasting"}</span>
                   </div>
                   <div class="detail-item">
                     <span class="detail-label">Appointment Date</span>

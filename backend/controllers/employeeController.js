@@ -117,7 +117,12 @@ exports.getMyDashboard = async (req, res) => {
         appointmentDate: p.appointmentDate || null,   // null = "Not assigned yet"
         appointmentTime: p.appointmentTime || "10:00",
         status: p.status || "requested",
-        dateChangeRequest: p.dateChangeRequest || null
+        dateChangeRequest: p.dateChangeRequest || null,
+        patientIdString: p.patientIdString || "-",
+        employeeId: p.employeeId || user.employeeId || "-",
+        testProfile: p.testProfile || "-",
+        tests: p.tests || [],
+        fastingRequired: p.fastingRequired || false
       }))
  
     const reports = patients.flatMap((p) => {

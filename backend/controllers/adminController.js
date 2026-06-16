@@ -196,21 +196,26 @@ async function sendConfirmationEmailForPatient(patient, overrideDate) {
       const tempPassword = crypto.randomBytes(4).toString("hex")
       const hashedPassword = await bcrypt.hash(tempPassword, 10)
 
+      const setOnInsertObj = {
+        name: patient.name,
+        email: patient.email,
+        password: hashedPassword,
+        role: "employee",
+        companyId,
+        phone: patient.phone || "",
+        address: patient.address || "",
+        pincode: patient.pincode || "",
+        patientId: patient._id,
+        isTemporaryPassword: true
+      }
+      if (patient.employeeId && patient.employeeId.trim()) {
+        setOnInsertObj.employeeId = patient.employeeId.trim()
+      }
+
       await User.findOneAndUpdate(
         { email: patient.email, companyId },
         {
-          $setOnInsert: {
-            name: patient.name,
-            email: patient.email,
-            password: hashedPassword,
-            role: "employee",
-            companyId,
-            phone: patient.phone || "",
-            address: patient.address || "",
-            pincode: patient.pincode || "",
-            patientId: patient._id,
-            isTemporaryPassword: true
-          }
+          $setOnInsert: setOnInsertObj
         },
         { upsert: true, new: true }
       )
@@ -226,15 +231,23 @@ async function sendConfirmationEmailForPatient(patient, overrideDate) {
         appointmentTime: patient.appointmentTime || "10:00",
         loginId: patient.email,
         tempPassword,
-        isExistingUser: false
+        isExistingUser: false,
+        employeeId: patient.employeeId || "",
+        patientIdString: patient.patientIdString || "",
+        testProfile: patient.testProfile || "",
+        tests: patient.tests || [],
+        fastingRequired: patient.fastingRequired
       })
 
     } else {
       // Account exists — send WITHOUT credentials
       if (!existingUser.patientId) {
         existingUser.patientId = patient._id
-        await existingUser.save()
       }
+      if (patient.employeeId && patient.employeeId.trim() && !existingUser.employeeId) {
+        existingUser.employeeId = patient.employeeId.trim()
+      }
+      await existingUser.save()
 
       await sendConfirmationEmail({
         toEmail: patient.email,
@@ -247,7 +260,12 @@ async function sendConfirmationEmailForPatient(patient, overrideDate) {
         appointmentTime: patient.appointmentTime || "10:00",
         loginId: patient.email,
         tempPassword: null,
-        isExistingUser: true
+        isExistingUser: true,
+        employeeId: patient.employeeId || "",
+        patientIdString: patient.patientIdString || "",
+        testProfile: patient.testProfile || "",
+        tests: patient.tests || [],
+        fastingRequired: patient.fastingRequired
       })
     }
   } catch (emailErr) {
@@ -259,7 +277,7 @@ async function sendConfirmationEmailForPatient(patient, overrideDate) {
 
 exports.assignCenter = async (req, res) => {
   try {
-    const { centerId, appointmentDate, appointmentTime } = req.body
+    const { centerId, appointmentDate, appointmentTime, tests, fastingRequired } = req.body
 
     if (!centerId) return res.status(400).json({ message: "centerId is required" })
     if (!appointmentDate) return res.status(400).json({ message: "appointmentDate is required" })
@@ -274,6 +292,14 @@ exports.assignCenter = async (req, res) => {
       status: "confirmed",
       appointmentDate: parsedDate,
       appointmentTime: appointmentTime || "10:00"
+    }
+
+    if (tests !== undefined) {
+      updateFields.tests = Array.isArray(tests) ? tests : String(tests).split(",").map(t => t.trim()).filter(Boolean)
+    }
+
+    if (fastingRequired !== undefined) {
+      updateFields.fastingRequired = (fastingRequired === true || fastingRequired === "true")
     }
 
     // If there's a pending DCR, approve it and update to the admin-set date

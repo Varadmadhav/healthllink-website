@@ -12,6 +12,12 @@ const patientSchema = new mongoose.Schema({
   email: String,
   address: String,
   pincode: String,
+  
+  employeeId: { type: String, default: "" },
+  patientIdString: { type: String, unique: true, sparse: true },
+  testProfile: { type: String, default: "" },
+  tests: { type: [String], default: [] },
+  fastingRequired: { type: Boolean, default: false },
 
   // Joining date from Excel — internal only, never shown on frontend
   joiningDate: { type: Date, default: null },

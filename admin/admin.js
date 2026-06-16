@@ -1,5 +1,7 @@
 // ===== API Base =====
-const API_BASE = "https://healthllink-website-1.onrender.com/api"
+const API_BASE = window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1"
+  ? "http://localhost:5000/api"
+  : "https://healthllink-website-1.onrender.com/api"
 
 // ===== Global State =====
 let uploadedFiles = []
@@ -150,7 +152,11 @@ function normalisePatient(p) {
   return {
     id: p._id,
     employeeName: p.name || "",
-    employeeId: p._id,
+    employeeId: p.employeeId || "",
+    patientIdString: p.patientIdString || "",
+    testProfile: p.testProfile || "",
+    tests: p.tests || [],
+    fastingRequired: p.fastingRequired || false,
     age: p.age || "",
     gender: p.gender || "",
     phone: p.phone || "",
@@ -186,8 +192,12 @@ function renderEmployeesTable(file) {
     return `
     <tr>
       <td><input type="checkbox" class="employee-checkbox" data-id="${emp.id}" ${emp.status === 'confirmed' ? 'disabled' : ''}></td>
-      <td><strong>${emp.employeeName}</strong></td>
-      <td><span class="badge badge-info">${emp.employeeId.toString().slice(-6)}</span></td>
+      <td>
+        <strong>${emp.employeeName}</strong><br>
+        <span style="font-size:11px;color:#007bff;font-weight:600;">Pt ID: ${emp.patientIdString || '-'}</span><br>
+        ${emp.testProfile ? `<span style="font-size:11px;background:#e2e8f0;padding:2px 6px;border-radius:4px;color:#4a5568;">${emp.testProfile}</span>` : ''}
+      </td>
+      <td><span class="badge badge-info">${emp.employeeId || '-'}</span></td>
       <td>${emp.age || '-'}</td>
       <td>${emp.gender || '-'}</td>
       <td>${emp.phone || '-'}</td>
@@ -319,10 +329,7 @@ async function renderConfirmationTable() {
   const tomorrow = new Date()
   tomorrow.setDate(tomorrow.getDate() + 1)
   const minDateStr = `${tomorrow.getFullYear()}-${String(tomorrow.getMonth()+1).padStart(2,'0')}-${String(tomorrow.getDate()).padStart(2,'0')}`
-
   tbody.innerHTML = rows.map(({ emp, nearby }) => {
-    const nearbyIds = new Set(nearby.map(c => String(c._id)))
-    const otherCenters = centersData.filter(c => !nearbyIds.has(String(c.id)))
     const autoSelectId = preselectedCenterMap[emp.id] || (nearby.length > 0 ? String(nearby[0]._id) : '')
 
     const dcr = emp.dateChangeRequest
@@ -334,14 +341,17 @@ async function renderConfirmationTable() {
       </span>`
     }
 
-    // Pre-fill date picker with DCR requested date if present
     const preFillDate = (dcr && dcr.requestedDate)
       ? new Date(dcr.requestedDate).toISOString().split('T')[0]
       : ''
 
     return `
       <tr>
-        <td><strong>${emp.employeeName}</strong></td>
+        <td>
+          <strong>${emp.employeeName}</strong><br>
+          <span style="font-size:11px;color:#007bff;font-weight:600;">Pt ID: ${emp.patientIdString || '-'}</span><br>
+          ${emp.testProfile ? `<span style="font-size:11px;background:#e2e8f0;padding:2px 6px;border-radius:4px;color:#4a5568;">${emp.testProfile}</span>` : ''}
+        </td>
         <td>${emp.phone || '-'}</td>
         <td>${emp.company || '-'}</td>
         <td>${emp.pincode || '-'}</td>
@@ -365,17 +375,29 @@ async function renderConfirmationTable() {
 </td>
 
 <td>
- <select class="center-select" id="select-${emp.id}"
-  style="width:220px;padding:6px;border-radius:6px;border:1px solid #ccc;">
+  <div style="display:flex;flex-direction:column;gap:4px;">
+    <select class="center-select" id="select-${emp.id}"
+      style="width:220px;padding:6px;border-radius:6px;border:1px solid #ccc;box-sizing:border-box;">
+      ${nearby.map(c =>
+        `<option value="${c._id}" ${String(c._id) === autoSelectId ? 'selected' : ''}>
+          ${c.name} (${c.pincode})
+        </option>`
+      ).join('')}
+    </select>
+    
+    <input type="text" id="tests-${emp.id}" 
+      value="${(emp.tests || []).join(', ')}" 
+      placeholder="Tests (comma separated)" 
+      style="width:220px;padding:6px;border-radius:6px;border:1px solid #ccc;box-sizing:border-box;"
+      title="Finalized list of tests">
 
-  ${nearby.map(c =>
-    `<option value="${c._id}" ${String(c._id) === autoSelectId ? 'selected' : ''}>
-      ${c.name} (${c.pincode})
-    </option>`
-  ).join('')}
-
-</select>
-        </td>
+    <select id="fasting-${emp.id}" 
+      style="width:220px;padding:6px;border-radius:6px;border:1px solid #ccc;box-sizing:border-box;">
+      <option value="true" ${emp.fastingRequired ? 'selected' : ''}>Fasting Required (12 hours)</option>
+      <option value="false" ${!emp.fastingRequired ? 'selected' : ''}>Non-Fasting (No Fasting)</option>
+    </select>
+  </div>
+</td>
         <td>
           <button class="btn btn-success btn-sm"
               onclick="confirmAssignment('${emp.id}')">✓ Confirm</button>
@@ -543,10 +565,16 @@ async function confirmAssignment(patientId) {
   const dateEl = document.getElementById(`date-${patientId}`)
   const centerId = selectEl ? selectEl.value : ''
   const timeEl = document.getElementById(`time-${patientId}`)
-const time = timeEl ? timeEl.value : "10:00"
+  const time = timeEl ? timeEl.value : "10:00"
 
-const appointmentDate = dateEl ? dateEl.value : ''
-const appointmentTime = time
+  const appointmentDate = dateEl ? dateEl.value : ''
+  const appointmentTime = time
+
+  const testsEl = document.getElementById(`tests-${patientId}`)
+  const fastingEl = document.getElementById(`fasting-${patientId}`)
+
+  const tests = testsEl ? testsEl.value : ""
+  const fastingRequired = fastingEl ? (fastingEl.value === "true") : false
 
   if (!centerId) { showToast('Please select a center first!', 'warning'); return }
   if (!appointmentDate) { showToast('Please select an appointment date!', 'warning'); return }
@@ -555,11 +583,13 @@ const appointmentTime = time
     const res = await fetch(`${API_BASE}/admin/patients/${patientId}/assign`, {
       method: "PUT",
       headers: { "Content-Type": "application/json" },
-     body: JSON.stringify({ 
-  centerId, 
-  appointmentDate,
-  appointmentTime   // ✅ ADD THIS
-})
+      body: JSON.stringify({ 
+        centerId, 
+        appointmentDate,
+        appointmentTime,
+        tests,
+        fastingRequired
+      })
     })
     if (!res.ok) throw new Error("Assignment failed")
 

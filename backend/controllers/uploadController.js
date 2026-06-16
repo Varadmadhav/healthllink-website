@@ -22,6 +22,58 @@ function parseExcelDate(value) {
   return null
 }
 
+const TEST_PROFILES = {
+  "Pre employment Profile-1": {
+    tests: ["Complete Blood Count (CBC)", "Urine Routine", "Blood Sugar Fasting", "ECG"],
+    fastingRequired: true
+  },
+  "Pre employment Profile-2": {
+    tests: ["Lipid Profile", "Liver Function Test (LFT)", "Kidney Function Test (KFT)", "Thyroid Profile (T3, T4, TSH)"],
+    fastingRequired: true
+  },
+  "Pre employment Profile-3": {
+    tests: ["Blood Group & Rh typing", "Chest X-Ray", "Eye Test"],
+    fastingRequired: false
+  }
+}
+
+function getProfileData(profileName) {
+  if (!profileName) {
+    return {
+      name: "General Health Checkup",
+      tests: ["Standard Physical Exam"],
+      fastingRequired: false
+    }
+  }
+
+  const normalized = String(profileName).trim().replace(/\s+/g, " ")
+  
+  if (/profile-?1/i.test(normalized)) {
+    return {
+      name: "Pre employment Profile-1",
+      ...TEST_PROFILES["Pre employment Profile-1"]
+    }
+  }
+  if (/profile-?2/i.test(normalized)) {
+    return {
+      name: "Pre employment Profile-2",
+      ...TEST_PROFILES["Pre employment Profile-2"]
+    }
+  }
+  if (/profile-?3/i.test(normalized)) {
+    return {
+      name: "Pre employment Profile-3",
+      ...TEST_PROFILES["Pre employment Profile-3"]
+    }
+  }
+
+  return {
+    name: normalized,
+    tests: ["General Medical Evaluation"],
+    fastingRequired: false
+  }
+}
+
 exports.uploadExcel = async (req, res) => {
   try {
     if (!req.file) return res.status(400).json({ message: "No file uploaded" })
@@ -41,13 +93,37 @@ exports.uploadExcel = async (req, res) => {
     })
     await uploadHistory.save()
 
+    const now = new Date()
+    const yy = String(now.getFullYear()).substring(2, 4)
+    const mm = String(now.getMonth() + 1).padStart(2, "0")
+    const prefix = `${yy}${mm}00P`
+
+    const lastPatient = await Patient.findOne({
+      patientIdString: { $regex: new RegExp(`^${prefix}`) }
+    }).sort({ patientIdString: -1 })
+
+    let startSeq = 1
+    if (lastPatient && lastPatient.patientIdString) {
+      const seqStr = lastPatient.patientIdString.replace(prefix, "")
+      const seqNum = parseInt(seqStr, 10)
+      if (!isNaN(seqNum)) {
+        startSeq = seqNum + 1
+      }
+    }
+
     const companyId = req.user?.companyId || null
 
-    const patients = data.map(row => {
-      // The "Date" column is now the joining date — stored internally only
+    const patients = data.map((row, index) => {
       const rawDate = row["Date"] || row["date"] || row["DATE"] ||
                       row["Joining Date"] || row["joining date"]
       const joiningDate = parseExcelDate(rawDate)
+
+      const employeeId = String(row["Employee ID"] || row["employee id"] || row["EmployeeId"] || row["employeeId"] || "").trim()
+      const rawProfile = row["Test Profile"] || row["test profile"] || row["TestProfile"] || row["testProfile"] || ""
+      const profileData = getProfileData(rawProfile)
+
+      const currentSeq = startSeq + index
+      const patientIdString = `${prefix}${String(currentSeq).padStart(2, "0")}`
 
       return {
         uploadId: uploadHistory._id,
@@ -59,9 +135,14 @@ exports.uploadExcel = async (req, res) => {
         email: row.Email || row.email,
         address: row.Address || row.address,
         pincode: row.Pincode || row.pincode,
-        joiningDate,          // stored internally
-        appointmentDate: null, // null until admin assigns during confirmation
-        status: "pending"
+        joiningDate,
+        appointmentDate: null,
+        status: "pending",
+        employeeId,
+        patientIdString,
+        testProfile: profileData.name,
+        tests: profileData.tests,
+        fastingRequired: profileData.fastingRequired
       }
     })
 

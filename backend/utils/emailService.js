@@ -22,7 +22,27 @@ exports.sendConfirmationEmail = async ({
   isExistingUser,
   isReschedule = false,
   rescheduleApproved = false,
+  employeeId = "",
+  patientIdString = "",
+  testProfile = "",
+  tests = [],
+  fastingRequired = false,
+  patientPhone = ""
 }) => {
+
+  const testsListHtml = tests && tests.length > 0
+    ? `<ul style="margin:6px 0;padding-left:20px;color:#2d3748;">` + 
+      tests.map(t => `<li style="margin:4px 0;">${t}</li>`).join("") + 
+      `</ul>`
+    : `<span style="color:#718096;">General Evaluation</span>`
+
+  const fastingText = fastingRequired
+    ? `<div style="background:#fff3cd;border-left:4px solid #ffc107;padding:12px;margin:12px 0;border-radius:4px;color:#856404;font-size:14px;">
+         ⚠️ <strong>Fasting Instruction:</strong> Need 12 hrs. fasting prior to test
+       </div>`
+    : `<div style="background:#d4edda;border-left:4px solid #28a745;padding:12px;margin:12px 0;border-radius:4px;color:#155724;font-size:14px;">
+         🟢 <strong>Fasting Instruction:</strong> No Need of fasting
+       </div>`
 
   if (isReschedule) {
     const subject = rescheduleApproved
@@ -50,10 +70,18 @@ exports.sendConfirmationEmail = async ({
           <div style="background:#f7fafc;border-left:4px solid #667eea;
                       padding:16px;margin:16px 0;border-radius:4px;">
             <h3 style="margin:0 0 12px;color:#4a5568;">📅 Appointment Details</h3>
+            <p style="margin:5px 0;"><strong>Patient ID:</strong> ${patientIdString || "N/A"}</p>
+            ${employeeId ? `<p style="margin:5px 0;"><strong>Employee ID:</strong> ${employeeId}</p>` : ''}
             <p style="margin:5px 0;"><strong>Center Name:</strong> ${centerName}</p>
             <p style="margin:5px 0;"><strong>Center Address:</strong> ${centerAddress}</p>
             <p style="margin:5px 0;"><strong>Appointment Date:</strong> ${appointmentDate}</p>
             <p style="margin:5px 0;"><strong>Time:</strong> ${appointmentTime || "10:00 AM"}</p>
+            <p style="margin:5px 0;"><strong>Test Profile:</strong> ${testProfile || "N/A"}</p>
+            <div style="margin-top:10px;">
+              <strong>Included Tests:</strong>
+              ${testsListHtml}
+            </div>
+            ${fastingText}
           </div>
           <p style="margin:12px 0 0;">
             <a href="https://healthlink-diagnostics.netlify.app/Solutions/corp_sol/corp_solsignup.html"
@@ -70,15 +98,15 @@ exports.sendConfirmationEmail = async ({
       </div>
     `
 
-   await tranEmailApi.sendTransacEmail({
-  sender: {
-    email: "info@healthlinkdiagnostics.in",
-    name: "HealthLink Diagnostics"
-  },
-  to: [{ email: toEmail }],
-  subject: subject,
-  htmlContent: html
-})
+    await tranEmailApi.sendTransacEmail({
+      sender: {
+        email: "info@healthlinkdiagnostics.in",
+        name: "HealthLink Diagnostics"
+      },
+      to: [{ email: toEmail }],
+      subject: subject,
+      htmlContent: html
+    })
     return
   }
 
@@ -119,10 +147,18 @@ exports.sendConfirmationEmail = async ({
         <div style="background:#f7fafc;border-left:4px solid #667eea;
                     padding:16px;margin:16px 0;border-radius:4px;">
           <h3 style="margin:0 0 12px;color:#4a5568;">📅 Appointment Details</h3>
+          <p style="margin:5px 0;"><strong>Patient ID:</strong> ${patientIdString || "N/A"}</p>
+          ${employeeId ? `<p style="margin:5px 0;"><strong>Employee ID:</strong> ${employeeId}</p>` : ''}
           <p style="margin:5px 0;"><strong>Center Name:</strong> ${centerName}</p>
           <p style="margin:5px 0;"><strong>Center Address:</strong> ${centerAddress}</p>
           <p style="margin:5px 0;"><strong>Appointment Date:</strong> ${appointmentDate}</p>
           <p style="margin:5px 0;"><strong>Time:</strong> ${appointmentTime || "10:00 AM"}</p>
+          <p style="margin:5px 0;"><strong>Test Profile:</strong> ${testProfile || "N/A"}</p>
+          <div style="margin-top:10px;">
+            <strong>Included Tests:</strong>
+            ${testsListHtml}
+          </div>
+          ${fastingText}
         </div>
         <div style="background:#f0fff4;border-left:4px solid #38a169;
                     padding:16px;margin:16px 0;border-radius:4px;">
@@ -149,14 +185,14 @@ exports.sendConfirmationEmail = async ({
   `
 
   await tranEmailApi.sendTransacEmail({
-  sender: {
-    email: "info@healthlinkdiagnostics.in",
-    name: "HealthLink Diagnostics"
-  },
-  to: [{ email: toEmail }],
-  subject: `✅ Appointment Confirmed — ${companyName} Health Checkup`,
-  htmlContent: html
-})
+    sender: {
+      email: "info@healthlinkdiagnostics.in",
+      name: "HealthLink Diagnostics"
+    },
+    to: [{ email: toEmail }],
+    subject: `✅ Appointment Confirmed — ${companyName} Health Checkup`,
+    htmlContent: html
+  })
 
   if (centerEmail) {
     const centerHtml = `
@@ -174,9 +210,18 @@ exports.sendConfirmationEmail = async ({
                       padding:16px;margin:16px 0;border-radius:4px;">
             <h3 style="margin:0 0 12px;color:#4a5568;">📅 Appointment Details</h3>
             <p style="margin:5px 0;"><strong>Patient Name:</strong> ${employeeName}</p>
+            <p style="margin:5px 0;"><strong>Patient ID:</strong> ${patientIdString || "N/A"}</p>
+            ${employeeId ? `<p style="margin:5px 0;"><strong>Employee ID:</strong> ${employeeId}</p>` : ''}
+            <p style="margin:5px 0;"><strong>Mobile No:</strong> ${patientPhone || "N/A"}</p>
             <p style="margin:5px 0;"><strong>Company:</strong> ${companyName}</p>
             <p style="margin:5px 0;"><strong>Date:</strong> ${appointmentDate}</p>
             <p style="margin:5px 0;"><strong>Time:</strong> ${appointmentTime || "10:00 AM"}</p>
+            <p style="margin:5px 0;"><strong>Test Profile:</strong> ${testProfile || "N/A"}</p>
+            <div style="margin-top:10px;">
+              <strong>Included Tests:</strong>
+              ${testsListHtml}
+            </div>
+            ${fastingText}
           </div>
           <p style="color:#718096;font-size:13px;margin-top:20px;">
             Please ensure the patient is attended to at the scheduled time.

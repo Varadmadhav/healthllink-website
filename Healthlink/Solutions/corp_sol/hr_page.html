@@ -97,13 +97,14 @@
             <thead>
               <tr>
                 <th>Name</th>
+                <th>Patient ID</th>
+                <th>Emp ID</th>
                 <th>Gender</th>
                 <th>Age</th>
                 <th>Date</th>
-                <th>Address</th>
-                <th>Pincode</th>
                 <th>Mobile</th>
                 <th>Email</th>
+                <th>Test Profile</th>
                 <th>Assigned Centre</th>
                 <th>Status</th>
                 <th>Report</th>
@@ -187,8 +188,11 @@
   </div>
 
   <script>
-    const API_BASE = "https://healthllink-website-1.onrender.com/api/hr"
-    const ADMIN_API = "https://healthllink-website-1.onrender.com/api/admin"
+    const backendHost = window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1"
+      ? "http://localhost:5000"
+      : "https://healthllink-website-1.onrender.com"
+    const API_BASE = `${backendHost}/api/hr`
+    const ADMIN_API = `${backendHost}/api/admin`
 
     const user = JSON.parse(localStorage.getItem("hrUser"))
     if (!user) window.location.href = "corp_solsignup.html"
@@ -385,13 +389,14 @@
         const row = tbody.insertRow()
         row.innerHTML = `
           <td><strong>${p.name || "-"}</strong></td>
+          <td><strong>${p.patientIdString || "-"}</strong></td>
+          <td><span class="badge badge-info">${p.employeeId || "-"}</span></td>
           <td>${p.gender || "-"}</td>
           <td>${p.age || "-"}</td>
           <td style="white-space:nowrap;">${displayDate} ${editBtn} ${dcrBadge}</td>
-          <td>${p.address || "-"}</td>
-          <td>${p.pincode || "-"}</td>
           <td>${p.mobile || p.phone || "-"}</td>
           <td>${p.email || "-"}</td>
+          <td><span class="badge badge-warning">${p.testProfile || "-"}</span></td>
           <td>${centreName}</td>
           <td><span class="status-badge ${statusClass}">${statusLabel}</span></td>
           <td>${reportCell}</td>
@@ -529,13 +534,13 @@
     function viewReport(patientId) {
       const select = document.getElementById(`hr-report-select-${patientId}`)
       if (!select || !select.value) return
-      window.open(`https://healthllink-website-1.onrender.com${select.value}`, '_blank')
+      window.open(`${backendHost}${select.value}`, '_blank')
     }
 
     function downloadReport(patientId) {
       const select = document.getElementById(`hr-report-select-${patientId}`)
       if (!select || !select.value) return
-      const url = `https://healthllink-website-1.onrender.com${select.value}`
+      const url = `${backendHost}${select.value}`
       const fileName = select.options[select.selectedIndex].text
       fetch(url).then(res => res.blob()).then(blob => {
         const blobUrl = window.URL.createObjectURL(blob)
@@ -579,7 +584,7 @@
       }
       const companyId = user && user.companyId ? user.companyId : null
       try {
-        const res = await fetch("https://healthllink-website-1.onrender.com/api/employee/create", {
+        const res = await fetch(`${backendHost}/api/employee/create`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ name, employeeId, email, password, companyId, phone, address, pincode })
