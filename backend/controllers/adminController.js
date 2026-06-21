@@ -2,6 +2,7 @@ const Company = require("../models/Company")
 const Center = require("../models/Center")
 const Upload = require("../models/Upload")
 const Patient = require("../models/Patient")
+const Profile = require("../models/Profile")
 const { getCoordinatesForPincode, haversineDistance } = require("../utils/pincodeUtils")
 const fs = require("fs")
 const path = require("path")
@@ -241,10 +242,8 @@ async function sendConfirmationEmailForPatient(patient, overrideDate) {
 
     } else {
       // Account exists — send WITHOUT credentials
-      if (!existingUser.patientId) {
-        existingUser.patientId = patient._id
-      }
-      if (patient.employeeId && patient.employeeId.trim() && !existingUser.employeeId) {
+      existingUser.patientId = patient._id
+      if (patient.employeeId && patient.employeeId.trim()) {
         existingUser.employeeId = patient.employeeId.trim()
       }
       await existingUser.save()
@@ -634,6 +633,97 @@ exports.rejectPatient = async (req, res) => {
     res.json(patient)
   } catch (error) {
     console.error("Reject error:", error)
+    res.status(500).json({ message: error.message })
+  }
+}
+
+// ─── Profile Management ───────────────────────────────────────────────────────
+
+exports.getProfiles = async (req, res) => {
+  try {
+    const profiles = await Profile.find().sort({ name: 1 })
+    res.json(profiles)
+  } catch (error) {
+    res.status(500).json({ message: error.message })
+  }
+}
+
+exports.addProfile = async (req, res) => {
+  try {
+    const { name, tests, fastingRequired } = req.body
+    if (!name) return res.status(400).json({ message: "Profile name is required" })
+    
+    const existing = await Profile.findOne({ name: name.trim() })
+    if (existing) {
+      return res.status(400).json({ message: "Profile with this name already exists" })
+    }
+
+    let testsArray = []
+    if (Array.isArray(tests)) {
+      testsArray = tests.map(t => String(t).trim()).filter(Boolean)
+    } else if (typeof tests === "string") {
+      testsArray = tests.split(",").map(t => t.trim()).filter(Boolean)
+    }
+
+    const newProfile = new Profile({
+      name: name.trim(),
+      tests: testsArray,
+      fastingRequired: fastingRequired === true || fastingRequired === "true"
+    })
+    await newProfile.save()
+    res.status(201).json(newProfile)
+  } catch (error) {
+    res.status(500).json({ message: error.message })
+  }
+}
+
+exports.updateProfile = async (req, res) => {
+  try {
+    const { name, tests, fastingRequired } = req.body
+    const { id } = req.params
+
+    const profile = await Profile.findById(id)
+    if (!profile) return res.status(404).json({ message: "Profile not found" })
+
+    if (name) {
+      const trimmedName = name.trim()
+      if (trimmedName.toLowerCase() !== profile.name.toLowerCase()) {
+        const existing = await Profile.findOne({ name: trimmedName })
+        if (existing) {
+          return res.status(400).json({ message: "Another profile with this name already exists" })
+        }
+      }
+      profile.name = trimmedName
+    }
+
+    if (tests !== undefined) {
+      let testsArray = []
+      if (Array.isArray(tests)) {
+        testsArray = tests.map(t => String(t).trim()).filter(Boolean)
+      } else if (typeof tests === "string") {
+        testsArray = tests.split(",").map(t => t.trim()).filter(Boolean)
+      }
+      profile.tests = testsArray
+    }
+
+    if (fastingRequired !== undefined) {
+      profile.fastingRequired = fastingRequired === true || fastingRequired === "true"
+    }
+
+    await profile.save()
+    res.json(profile)
+  } catch (error) {
+    res.status(500).json({ message: error.message })
+  }
+}
+
+exports.deleteProfile = async (req, res) => {
+  try {
+    const { id } = req.params
+    const deleted = await Profile.findByIdAndDelete(id)
+    if (!deleted) return res.status(404).json({ message: "Profile not found" })
+    res.json({ message: "Profile deleted successfully", id })
+  } catch (error) {
     res.status(500).json({ message: error.message })
   }
 }

@@ -38,6 +38,10 @@
                 <span class="tab-icon">🏢</span>
                 <span class="tab-text">Add Companies</span>
             </button>
+            <button class="nav-tab" data-tab="manage-profiles">
+                <span class="tab-icon">🧪</span>
+                <span class="tab-text">Manage Profiles</span>
+            </button>
         </div>
         <div class="nav-user">
             <span class="user-avatar">👤</span>
@@ -451,6 +455,45 @@
                 </div>
             </div>
         </section>
+
+        <!-- Manage Profiles Section -->
+        <section id="manage-profiles" class="tab-content">
+            <div class="section-header">
+                <h1>Manage Profiles</h1>
+                <p>Create and manage test profiles and their associated tests</p>
+            </div>
+
+            <div class="card">
+                <div class="card-header">
+                    <h2>🧪 Test Profiles</h2>
+                    <div class="card-actions">
+                        <div class="search-box">
+                            <input type="text" id="profiles-search" placeholder="Search profiles..."
+                                onkeyup="searchTable('profiles-table', this.value)">
+                            <span class="search-icon">🔍</span>
+                        </div>
+                        <button class="btn btn-primary" onclick="openProfileAddModal()">
+                            <span>+</span> Add Profile
+                        </button>
+                    </div>
+                </div>
+                <div class="table-container">
+                    <table id="profiles-table" class="data-table">
+                        <thead>
+                            <tr>
+                                <th onclick="sortTable('profiles-table', 0)">Profile Name <span class="sort-icon">↕</span></th>
+                                <th>Tests</th>
+                                <th onclick="sortTable('profiles-table', 2)">Fasting Required <span class="sort-icon">↕</span></th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="profiles-table-body">
+                            <!-- Data will be populated dynamically -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </section>
     </main>
 
     <!-- Add Center Modal -->
@@ -577,6 +620,38 @@
             <div class="modal-actions">
                 <button type="button" class="btn btn-secondary" onclick="closeModal('reports-modal')">Close</button>
             </div>
+        </div>
+    </div>
+
+    <!-- Add/Edit Profile Modal -->
+    <div id="profile-modal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 id="profile-modal-title">Add New Profile</h2>
+                <button class="modal-close" onclick="closeModal('profile-modal')">&times;</button>
+            </div>
+            <form id="profile-form" onsubmit="saveProfile(event)">
+                <input type="hidden" id="profile-id">
+                <div class="form-group">
+                    <label for="profile-name">Profile Name *</label>
+                    <input type="text" id="profile-name" required placeholder="e.g. Pre employment Profile-1">
+                </div>
+                <div class="form-group">
+                    <label for="profile-tests">Tests (comma separated) *</label>
+                    <textarea id="profile-tests" required placeholder="e.g. Complete Blood Count (CBC), Urine Routine, Blood Sugar Fasting, ECG" rows="4"></textarea>
+                </div>
+                <div class="form-group">
+                    <label for="profile-fasting">Fasting Required *</label>
+                    <select id="profile-fasting" required>
+                        <option value="true">Fasting Required (12 hours)</option>
+                        <option value="false">Non-Fasting (No Fasting)</option>
+                    </select>
+                </div>
+                <div class="modal-actions">
+                    <button type="button" class="btn btn-secondary" onclick="closeModal('profile-modal')">Cancel</button>
+                    <button type="submit" class="btn btn-primary">Save Profile</button>
+                </div>
+            </form>
         </div>
     </div>
 

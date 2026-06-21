@@ -35,8 +35,18 @@ const {
   requestDateChange,
   getDateChangeRequests,
   reviewDateChange,
-  rejectPatient
+  rejectPatient,
+  getProfiles,
+  addProfile,
+  updateProfile,
+  deleteProfile
 } = require("../controllers/adminController")
+
+// ─── Profiles ────────────────────────────────────────────────────────────────
+router.get("/profiles", getProfiles)
+router.post("/profiles", addProfile)
+router.put("/profiles/:id", updateProfile)
+router.delete("/profiles/:id", deleteProfile)
 
 // ─── Companies ───────────────────────────────────────────────────────────────
 router.post("/companies", addCompany)

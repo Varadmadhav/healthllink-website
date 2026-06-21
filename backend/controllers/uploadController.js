@@ -1,5 +1,6 @@
 const Upload = require("../models/Upload")
 const Patient = require("../models/Patient")
+const Profile = require("../models/Profile")
 const XLSX = require("xlsx")
 
 function parseExcelDate(value) {
@@ -22,56 +23,8 @@ function parseExcelDate(value) {
   return null
 }
 
-const TEST_PROFILES = {
-  "Pre employment Profile-1": {
-    tests: ["Complete Blood Count (CBC)", "Urine Routine", "Blood Sugar Fasting", "ECG"],
-    fastingRequired: true
-  },
-  "Pre employment Profile-2": {
-    tests: ["Lipid Profile", "Liver Function Test (LFT)", "Kidney Function Test (KFT)", "Thyroid Profile (T3, T4, TSH)"],
-    fastingRequired: true
-  },
-  "Pre employment Profile-3": {
-    tests: ["Blood Group & Rh typing", "Chest X-Ray", "Eye Test"],
-    fastingRequired: false
-  }
-}
-
-function getProfileData(profileName) {
-  if (!profileName) {
-    return {
-      name: "General Health Checkup",
-      tests: ["Standard Physical Exam"],
-      fastingRequired: false
-    }
-  }
-
-  const normalized = String(profileName).trim().replace(/\s+/g, " ")
-  
-  if (/profile-?1/i.test(normalized)) {
-    return {
-      name: "Pre employment Profile-1",
-      ...TEST_PROFILES["Pre employment Profile-1"]
-    }
-  }
-  if (/profile-?2/i.test(normalized)) {
-    return {
-      name: "Pre employment Profile-2",
-      ...TEST_PROFILES["Pre employment Profile-2"]
-    }
-  }
-  if (/profile-?3/i.test(normalized)) {
-    return {
-      name: "Pre employment Profile-3",
-      ...TEST_PROFILES["Pre employment Profile-3"]
-    }
-  }
-
-  return {
-    name: normalized,
-    tests: ["General Medical Evaluation"],
-    fastingRequired: false
-  }
+function normalizeProfileName(name) {
+  return String(name || "").toLowerCase().replace(/[^a-z0-9]/g, "")
 }
 
 exports.uploadExcel = async (req, res) => {
@@ -113,6 +66,9 @@ exports.uploadExcel = async (req, res) => {
 
     const companyId = req.user?.companyId || null
 
+    // Fetch all dynamic profiles from MongoDB Atlas
+    const dbProfiles = await Profile.find()
+
     const patients = data.map((row, index) => {
       const rawDate = row["Date"] || row["date"] || row["DATE"] ||
                       row["Joining Date"] || row["joining date"]
@@ -120,7 +76,50 @@ exports.uploadExcel = async (req, res) => {
 
       const employeeId = String(row["Employee ID"] || row["employee id"] || row["EmployeeId"] || row["employeeId"] || "").trim()
       const rawProfile = row["Test Profile"] || row["test profile"] || row["TestProfile"] || row["testProfile"] || ""
-      const profileData = getProfileData(rawProfile)
+      
+      const normalizedRaw = normalizeProfileName(rawProfile)
+      let matchedProfile = dbProfiles.find(p => normalizeProfileName(p.name) === normalizedRaw)
+
+      let testProfileName = ""
+      let tests = []
+      let fastingRequired = false
+
+      if (rawProfile.trim()) {
+        if (matchedProfile) {
+          testProfileName = matchedProfile.name
+          tests = matchedProfile.tests
+          fastingRequired = matchedProfile.fastingRequired
+        } else {
+          // Fallback regex check for backward compatibility (e.g. "Profile 1" -> "Pre employment Profile-1")
+          const normalized = String(rawProfile).trim().replace(/\s+/g, " ")
+          let fallbackKey = null
+          if (/profile-?1/i.test(normalized)) {
+            fallbackKey = "preemploymentprofile1"
+          } else if (/profile-?2/i.test(normalized)) {
+            fallbackKey = "preemploymentprofile2"
+          } else if (/profile-?3/i.test(normalized)) {
+            fallbackKey = "preemploymentprofile3"
+          }
+
+          if (fallbackKey) {
+            matchedProfile = dbProfiles.find(p => normalizeProfileName(p.name) === fallbackKey)
+          }
+
+          if (matchedProfile) {
+            testProfileName = matchedProfile.name
+            tests = matchedProfile.tests
+            fastingRequired = matchedProfile.fastingRequired
+          } else {
+            testProfileName = String(rawProfile).trim()
+            tests = []
+            fastingRequired = false
+          }
+        }
+      } else {
+        testProfileName = "General Health Checkup"
+        tests = ["Standard Physical Exam"]
+        fastingRequired = false
+      }
 
       const currentSeq = startSeq + index
       const patientIdString = `${prefix}${String(currentSeq).padStart(2, "0")}`
@@ -140,9 +139,9 @@ exports.uploadExcel = async (req, res) => {
         status: "pending",
         employeeId,
         patientIdString,
-        testProfile: profileData.name,
-        tests: profileData.tests,
-        fastingRequired: profileData.fastingRequired
+        testProfile: testProfileName,
+        tests: tests,
+        fastingRequired: fastingRequired
       }
     })
 

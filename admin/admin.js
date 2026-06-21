@@ -12,6 +12,7 @@ let allPatients = []
 let confirmedPatientsForReports = []
 let preselectedCenterMap = {}
 let dateChangeRequests = []
+let profilesData = []
 
 // ===== Init =====
 document.addEventListener('DOMContentLoaded', function () {
@@ -20,6 +21,7 @@ document.addEventListener('DOMContentLoaded', function () {
   fetchCenters()
   fetchUploads()
   fetchDateChangeRequests()
+  fetchProfiles()
 })
 
 // ===== Tabs =====
@@ -47,6 +49,7 @@ function refreshTabData(tabId) {
     case 'reports':           fetchConfirmedPatientsForReports(); break
     case 'add-centers':       renderCentersTable(); break
     case 'add-companies':     renderCompaniesTable(); break
+    case 'manage-profiles':   fetchProfiles(); break
   }
 }
 
@@ -896,6 +899,128 @@ async function createHR(event) {
     await fetch(API_BASE + "/hr/create", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(hr) })
     closeModal("hr-modal"); showToast("HR account created successfully", "success")
   } catch (err) { showToast("Error creating HR", "error") }
+}
+
+// =====================================================================
+// PROFILES
+// =====================================================================
+
+async function fetchProfiles() {
+  try {
+    const res = await fetch(API_BASE + "/admin/profiles")
+    if (!res.ok) throw new Error("Failed to fetch profiles")
+    const data = await res.json()
+    profilesData = data.map(p => ({
+      id: p._id,
+      name: p.name,
+      tests: p.tests || [],
+      fastingRequired: p.fastingRequired
+    }))
+    renderProfilesTable()
+  } catch (err) {
+    console.error("fetchProfiles:", err)
+    showToast("Error loading profiles", "error")
+  }
+}
+
+function renderProfilesTable() {
+  const tbody = document.getElementById('profiles-table-body')
+  if (!tbody) return
+  if (profilesData.length === 0) {
+    tbody.innerHTML = `<tr><td colspan="4" style="text-align:center;padding:40px;color:var(--text-tertiary);">No profiles added yet.</td></tr>`
+    return
+  }
+  tbody.innerHTML = profilesData.map(profile => `
+    <tr>
+      <td><strong>${profile.name}</strong></td>
+      <td>${profile.tests.join(', ')}</td>
+      <td>
+        <span class="badge ${profile.fastingRequired ? 'badge-warning' : 'badge-success'}">
+          ${profile.fastingRequired ? '⚠️ Fasting (12 hrs)' : '🟢 Non-Fasting'}
+        </span>
+      </td>
+      <td>
+        <div class="action-btns">
+          <button class="btn btn-sm btn-secondary" onclick="editProfile('${profile.id}')">✏️</button>
+          <button class="btn btn-sm btn-danger" onclick="deleteProfile('${profile.id}')">🗑️</button>
+        </div>
+      </td>
+    </tr>
+  `).join('')
+}
+
+function openProfileAddModal() {
+  document.getElementById('profile-id').value = ''
+  document.getElementById('profile-modal-title').textContent = 'Add New Profile'
+  document.getElementById('profile-form').reset()
+  openModal('profile-modal')
+}
+
+async function saveProfile(event) {
+  event.preventDefault()
+  const id = document.getElementById('profile-id').value
+  const name = document.getElementById('profile-name').value
+  const testsRaw = document.getElementById('profile-tests').value
+  const fastingRequired = document.getElementById('profile-fasting').value === "true"
+
+  const payload = { name, tests: testsRaw, fastingRequired }
+
+  try {
+    let res
+    if (id) {
+      res = await fetch(`${API_BASE}/admin/profiles/${id}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload)
+      })
+    } else {
+      res = await fetch(`${API_BASE}/admin/profiles`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload)
+      })
+    }
+
+    if (!res.ok) {
+      const errData = await res.json()
+      throw new Error(errData.message || "Failed to save profile")
+    }
+
+    showToast(id ? "Profile updated successfully!" : "Profile added successfully!", "success")
+    closeModal('profile-modal')
+    fetchProfiles()
+  } catch (err) {
+    console.error("saveProfile:", err)
+    showToast(err.message || "Error saving profile", "error")
+  }
+}
+
+function editProfile(id) {
+  const p = profilesData.find(x => x.id === id)
+  if (p) {
+    document.getElementById('profile-id').value = p.id
+    document.getElementById('profile-modal-title').textContent = 'Edit Profile'
+    document.getElementById('profile-name').value = p.name
+    document.getElementById('profile-tests').value = p.tests.join(', ')
+    document.getElementById('profile-fasting').value = String(p.fastingRequired)
+    openModal('profile-modal')
+  }
+}
+
+async function deleteProfile(id) {
+  if (confirm('Are you sure you want to delete this profile?')) {
+    try {
+      const res = await fetch(`${API_BASE}/admin/profiles/${id}`, {
+        method: "DELETE"
+      })
+      if (!res.ok) throw new Error("Delete failed")
+      showToast('Profile deleted successfully!', 'success')
+      fetchProfiles()
+    } catch (err) {
+      console.error("deleteProfile:", err)
+      showToast("Error deleting profile", "error")
+    }
+  }
 }
 
 // =====================================================================
