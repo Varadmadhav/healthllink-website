@@ -1,23 +1,64 @@
 require("dotenv").config()
+const path = require("path")
 const express = require("express")
 const cors = require("cors")
 const connectDB = require("./config/db")
+
 const adminRoutes = require("./routes/adminRoutes")
 const hrRoutes = require("./routes/hrRoutes")
-const uploadRoutes = require("./routes/uploadRoutes")
-const patientRoutes = require("./routes/patientRoutes")
+const employeeRoutes = require("./routes/employeeRoutes")
 
 const app = express()
 
 connectDB()
 
-app.use(cors())
+// ✅ CORS FIX
+const allowedOrigins = [
+  "https://admin-healthlink.netlify.app",
+  "https://healthlink-diagnostics.netlify.app",
+  "http://localhost:5500",
+  "http://localhost:5501",
+  "http://localhost:5502",
+  "http://localhost:5503",
+  "http://localhost:5504",
+  "http://localhost:5505",
+  "http://127.0.0.1:5500",
+  "http://127.0.0.1:5501",
+  "http://127.0.0.1:5502",
+  "http://127.0.0.1:5503",
+  "http://127.0.0.1:5504",
+  "http://127.0.0.1:5505",
+  "http://localhost:3000",
+  "http://localhost:5173",
+  "null"
+];
+
+app.use(cors({
+  origin: function (origin, callback) {
+    if (!origin) return callback(null, true);
+
+    if (allowedOrigins.includes(origin)) {
+      callback(null, true);
+    } else {
+      callback(new Error("Not allowed by CORS"));
+    }
+  },
+  credentials: true
+}));
+
 app.use(express.json())
 
+// Serve uploads
+app.use("/uploads", express.static(path.join(__dirname, "uploads")))
+
+// Routes
 app.use("/api/admin", adminRoutes)
 app.use("/api/hr", hrRoutes)
-app.use("/api/upload", uploadRoutes)
-app.use("/api/patients", patientRoutes)
+app.use("/api/employee", employeeRoutes)
+app.use(
+  "/diagnostics",
+  express.static(path.join(__dirname, "../Diagnostics"))
+)
 
 app.get("/", (req, res) => {
   res.send("HealthLink API running")

@@ -1,287 +1,367 @@
 <!DOCTYPE html>
+
 <html lang="en">
 
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>HealthLink - Organization Access</title>
-    <link rel="stylesheet" href="corp_solsignup.css">
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>HealthLink - Organization Access</title>
+<link rel="stylesheet" href="corp_solsignup.css">
 </head>
 
 <body>
 
-    <div class="container">
-        <!-- Header is always visible -->
-        <div class="header">
-            <!-- Using placeholder since local path might not work in your preview, keeping logic same -->
-            <img src="/Healthlink/Diagnostics/Patient/pictures/logo.png" alt="Logo"
-                onerror="this.src='https://via.placeholder.com/150x50?text=HEALTHLINK'">
-        </div>
+<div class="container">
 
-        <div class="content-area">
+<div class="header">
+<img src="/Diagnostics/Patient/pictures/logo.png"
+onerror="this.src='https://via.placeholder.com/150x50?text=HEALTHLINK'">
+</div>
 
-            <!-- STEP 1: SELECT ORGANIZATION -->
-            <div id="step-org" class="step active">
-                <h2>Select Organization</h2>
-                <p class="subtitle">Please select your company to continue.</p>
+<div class="content-area">
 
-                <div class="form-group">
-                    <select id="organizationSelect" class="form-input-lg">
-                        <option value="" disabled selected>-- Choose Company --</option>
-                        <option value="Acme Corp">Acme Corporation</option>
-                        <option value="TechGlobal">TechGlobal Inc.</option>
-                        <option value="MediCare Plus">MediCare Plus</option>
-                        <option value="Logistics Ltd">Global Logistics Ltd</option>
-                    </select>
-                </div>
+<div id="step-org" class="step active">
+<h2>Select Organization</h2>
+<p class="subtitle">Please select your company to continue.</p>
 
-                <button class="btn-primary" onclick="goToStep('step-role')">Continue</button>
-            </div>
+<div class="form-group">
+<select id="organizationSelect" class="form-input-lg">
+<option value="" disabled selected>-- Choose Company --</option>
+</select>
+</div>
 
-            <!-- STEP 2: CHOOSE LOGIN TYPE -->
-            <div id="step-role" class="step">
-                <h2>Welcome, <span id="selectedOrgDisplay"></span></h2>
-                <p class="subtitle">Choose how you want to access the system.</p>
+<button class="btn-primary" onclick="goToStep('step-role')">Continue</button>
 
-                <div class="role-grid">
-                    <div class="role-btn" onclick="setRole('hr')">
-                        <div class="role-icon">👨‍💼</div>
-                        <strong>HR / Admin Login</strong>
-                        <small>For Human Resources Staff</small>
-                    </div>
+</div>
 
-                    <div class="role-btn" onclick="setRole('employee')">
-                        <div class="role-icon">👤</div>
-                        <strong>Employee Login</strong>
-                        <small>For General Staff</small>
-                    </div>
-                </div>
+<div id="step-role" class="step">
+<h2>Welcome, <span id="selectedOrgDisplay"></span></h2>
+<p class="subtitle">Choose how you want to access the system.</p>
 
-                <a class="back-link" onclick="goToStep('step-org')">← Back to Organizations</a>
-            </div>
+<div class="role-grid">
 
-            <!-- STEP 3: LOGIN FORM -->
-            <div id="step-login" class="step">
-                <h2><span id="loginRoleTitle"></span> Login</h2>
-                <p class="subtitle">Access <span id="loginOrgDisplay"></span> System</p>
+<div class="role-btn" onclick="setRole('hr')">
+<div class="role-icon">👨‍💼</div>
+<strong>HR / Admin Login</strong>
+<small>For Human Resources Staff</small>
+</div>
 
-                <div id="loginMessage" class="message-box"></div>
+<div class="role-btn" onclick="setRole('employee')">
+<div class="role-icon">👤</div>
+<strong>Employee Login</strong>
+<small>For General Staff</small>
+</div>
 
-                <form id="authForm">
-                    <div class="form-group">
-                        <label for="userId">Employee ID / Email</label>
-                        <input type="text" id="userId" required placeholder="Ex: EMP123 or john@corp.com">
-                    </div>
+</div>
 
-                    <div class="form-group">
-                        <label for="password">Password</label>
-                        <input type="password" id="password" required placeholder="Enter your password">
-                    </div>
+<a class="back-link" onclick="goToStep('step-org')">← Back to Organizations</a>
 
-                    <div class="forgot-password">
-                        <a href="#" onclick="openResetModal()">Forgot Password?</a>
-                    </div>
+</div>
 
-                    <button type="submit" class="btn-primary">Secure Sign In</button>
-                </form>
+<div id="step-login" class="step">
 
-                <a class="back-link" onclick="goToStep('step-role')">← Back to Options</a>
-            </div>
+<h2><span id="loginRoleTitle"></span> Login</h2>
+<p class="subtitle">Access <span id="loginOrgDisplay"></span> System</p>
 
-        </div>
-    </div>
+<div id="loginMessage" class="message-box"></div>
 
-    <!-- RESET PASSWORD MODAL -->
-    <div class="modal-overlay" id="resetModal">
-        <div class="modal">
-            <h3>Password Reset</h3>
-            <p style="margin: 15px 0; color: #666;">Enter your registered email address below. We will send you a link
-                to reset your password.</p>
+<form id="authForm">
 
-            <div class="form-group">
-                <input type="email" id="resetEmailInput" placeholder="name@example.com">
-            </div>
+<div class="form-group">
+<label for="userId">Employee ID / Email</label>
+<input type="text" id="userId" required placeholder="Ex: EMP123 or john@corp.com">
+</div>
 
-            <button class="btn-primary" onclick="sendResetLink()">Send Link</button>
-            <a href="#" class="back-link" onclick="closeResetModal()" style="margin-top:10px; display:block;">Cancel</a>
-        </div>
-    </div>
+<div class="form-group">
+<label for="password">Password</label>
+<input type="password" id="password" required placeholder="Enter your password">
+</div>
 
-    <script>
+<div class="forgot-password">
+<a href="#" onclick="openResetModal()">Forgot Password?</a>
+</div>
 
-        // =============================
-        // CONFIGURE DASHBOARD LINKS
-        // =============================
+<button type="submit" class="btn-primary">Secure Sign In</button>
 
-        const HR_DASHBOARD_PAGE = "/Healthlink/Solutions/corp_sol/hr_page.html";
-const EMPLOYEE_DASHBOARD_PAGE = "/Healthlink/Solutions/corp_sol/emp_page.html";
+</form>
 
+<a class="back-link" onclick="goToStep('step-role')">← Back to Options</a>
 
-        // =============================
-        // State Management
-        // =============================
+</div>
 
-        let currentOrg = "";
-        let currentRole = "";
+</div>
+</div>
 
+<div class="modal-overlay" id="resetModal">
+<div class="modal">
+<h3>Password Reset</h3>
 
-        // =============================
-        // Navigation Logic
-        // =============================
+<p style="margin: 15px 0; color: #666;">
+Enter your registered email address below. We will send you a link to reset your password.
+</p>
 
-        function goToStep(stepId) {
+<div class="form-group">
+<input type="email" id="resetEmailInput" placeholder="name@example.com">
+</div>
 
-            if (stepId === 'step-role') {
-                const select = document.getElementById('organizationSelect');
+<div id="resetMessage" style="font-size:13px;margin-bottom:10px;min-height:18px;"></div>
+<button class="btn-primary" onclick="sendResetLink()">Send Link</button>
 
-                if (!select.value) {
-                    select.style.borderColor = 'red';
-                    return;
-                }
-                else {
-                    select.style.borderColor = '#ddd';
-                    currentOrg = select.value;
-                    document.getElementById('selectedOrgDisplay').textContent = currentOrg;
-                }
-            }
+<a href="#" class="back-link" onclick="closeResetModal()" style="margin-top:10px; display:block;">
+Cancel
+</a>
 
-            document.querySelectorAll('.step').forEach(el => el.classList.remove('active'));
-            document.getElementById(stepId).classList.add('active');
+</div>
+</div>
 
-            clearMessages();
-        }
+<script>
 
+const API_BASE = window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1"
+  ? "http://localhost:5000/api"
+  : "https://healthllink-website-1.onrender.com/api"
 
-        // =============================
-        // Role Selection
-        // =============================
+const HR_DASHBOARD_PAGE = "hr_page.html"
+const EMPLOYEE_DASHBOARD_PAGE = "emp_page.html"
 
-        function setRole(role) {
+let currentOrg=""
+let currentRole=""
+let currentCompanyId=""
 
-            currentRole = role;
+async function loadCompanies(){
 
-            const titleSpan = document.getElementById('loginRoleTitle');
-            const orgSpan = document.getElementById('loginOrgDisplay');
+try{
 
-            if (role === 'hr') {
-                titleSpan.textContent = "Admin";
-            }
-            else {
-                titleSpan.textContent = "Employee";
-            }
+const res = await fetch(API_BASE + "/admin/companies")
+const companies = await res.json()
 
-            orgSpan.textContent = currentOrg;
+const select = document.getElementById("organizationSelect")
 
-            goToStep('step-login');
-        }
+select.innerHTML = `<option value="" disabled selected>-- Choose Company --</option>`
 
+companies.forEach(company=>{
 
-        // =============================
-        // Login Form Handling
-        // =============================
+const option=document.createElement("option")
 
-       /*
+option.value=company._id
+option.textContent=company.name
 
-document.getElementById('authForm').addEventListener('submit', function (e) {
+select.appendChild(option)
 
+})
+
+}catch(err){
+
+console.error("Error loading companies",err)
+
+}
+
+}
+
+document.addEventListener("DOMContentLoaded",loadCompanies)
+
+function goToStep(stepId){
+
+if(stepId==="step-role"){
+
+const select=document.getElementById("organizationSelect")
+
+if(!select.value){
+
+select.style.borderColor="red"
+return
+
+}else{
+
+select.style.borderColor="#ddd"
+currentCompanyId = select.value
+currentOrg = select.options[select.selectedIndex].text
+document.getElementById("selectedOrgDisplay").textContent = currentOrg
+
+}
+
+}
+document.querySelectorAll(".step").forEach(el=>el.classList.remove("active"))
+
+document.getElementById(stepId).classList.add("active")
+
+clearMessages()
+
+}
+
+function setRole(role){
+
+currentRole=role
+
+const titleSpan=document.getElementById("loginRoleTitle")
+const orgSpan=document.getElementById("loginOrgDisplay")
+
+if(role==="hr"){
+
+titleSpan.textContent="Admin"
+
+}else{
+
+titleSpan.textContent="Employee"
+
+}
+
+orgSpan.textContent=currentOrg
+
+goToStep("step-login")
+
+}
+
+document.getElementById("authForm").addEventListener("submit", async function(e) {
     e.preventDefault();
 
-    const userId = document.getElementById('userId').value;
-    const pass = document.getElementById('password').value;
+    const userId = document.getElementById("userId").value.trim();
+    const password = document.getElementById("password").value.trim();
+    const msgBox = document.getElementById("loginMessage");
 
-    const msgBox = document.getElementById('loginMessage');
+    if (!currentCompanyId) {
+        msgBox.className = "message-box error";
+        msgBox.innerText = "Please select company first";
+        return;
+    }
 
-    if (userId.length > 0 && pass.length >= 6) {
+    if (!userId || !password) {
+        msgBox.className = "message-box error";
+        msgBox.innerText = "Email/Employee ID and password are required";
+        return;
+    }
 
-        msgBox.className = "message-box success";
-        msgBox.innerHTML = `Success! Logging in to ${currentOrg} as ${currentRole}.`;
+    try {
+        const loginUrl =
+            currentRole === "hr"
+                ? API_BASE + "/hr/login"
+                : `${API_BASE}/employee/login`;
 
-        setTimeout(() => {
+        const res = await fetch(loginUrl, {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json"
+            },
+            body: JSON.stringify({
+                email: userId,
+                password: password,
+                companyId: currentCompanyId
+            })
+        });
 
-            redirectUser();
+        const data = await res.json();
 
-        }, 1000);
+       if (res.ok) {
+    msgBox.className = "message-box success";
+    msgBox.innerText = "Login successful";
 
+    if (currentRole === "hr") {
+        localStorage.setItem("hrToken", data.token);
+        localStorage.setItem("hrUser", JSON.stringify(data.user));
+        localStorage.removeItem("employeeToken");
+        localStorage.removeItem("employeeUser");
+    } else if (currentRole === "employee") {
+        localStorage.setItem("employeeToken", data.token);
+        localStorage.setItem("employeeUser", JSON.stringify(data.user));
+        localStorage.removeItem("hrToken");
+        localStorage.removeItem("hrUser");
+    }
+
+    setTimeout(() => {
+        redirectUser();
+    }, 1000);
+}
+ else {
+            msgBox.className = "message-box error";
+            msgBox.innerText = data.message || "Login failed";
+        }
+
+    } catch (err) {
+        console.error("Login error:", err);
+        msgBox.className = "message-box error";
+        msgBox.innerText = "Server error";
     }
 });
 
-*/  /*commented by varad */
+function redirectUser(){
 
+if(currentRole==="hr"){
 
-        // =============================
-        // Role Based Redirect
-        // =============================
+window.location.href=HR_DASHBOARD_PAGE
 
-        function redirectUser() {
+}
 
-            if (currentRole === "hr") {
+else if(currentRole==="employee"){
 
-                window.location.href = HR_DASHBOARD_PAGE;
+window.location.href=EMPLOYEE_DASHBOARD_PAGE
 
-            }
+}
 
-            else if (currentRole === "employee") {
+}
 
-                window.location.href = EMPLOYEE_DASHBOARD_PAGE;
+function clearMessages(){
 
-            }
+const msgBox=document.getElementById("loginMessage")
 
-        }
+msgBox.className="message-box"
+msgBox.innerText=""
 
+document.getElementById("authForm").reset()
 
-        // =============================
-        // Utility
-        // =============================
+}
 
-        function clearMessages() {
+function openResetModal(){
+  document.getElementById("resetModal").style.display="flex"
+  document.getElementById("resetMessage").textContent = ""
+  document.getElementById("resetEmailInput").value = ""
+}
 
-            const msgBox = document.getElementById('loginMessage');
+function closeResetModal() {
+  document.getElementById("resetModal").style.display = "none"
+  document.getElementById("resetEmailInput").value = ""
+  document.getElementById("resetMessage").textContent = ""  // ← ADD
+}
+// REPLACE existing sendResetLink:
+async function sendResetLink() {
+  const email = document.getElementById("resetEmailInput").value.trim()
+  const msgEl = document.getElementById("resetMessage")
 
-            msgBox.className = "message-box";
-            msgBox.innerText = "";
+  if (!email || !email.includes("@")) {
+    msgEl.style.color = "red"
+    msgEl.textContent = "Please enter a valid email address"
+    return
+  }
 
-            document.getElementById('authForm').reset();
+  const btn = document.querySelector("#resetModal .btn-primary")
+  btn.textContent = "Sending..."
+  btn.disabled = true
 
-        }
+  try {
+    const res = await fetch(`${API_BASE}/employee/forgot-password`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        email,
+        companyId: currentCompanyId || undefined
+      })
+    })
 
+    const data = await res.json()
+    msgEl.style.color = "green"
+    msgEl.textContent = "✅ If this email exists, a reset link has been sent. Check your inbox."
+    document.getElementById("resetEmailInput").value = ""
 
-        // =============================
-        // Password Reset Modal
-        // =============================
+    setTimeout(() => closeResetModal(), 3000)
 
-        function openResetModal() {
+  } catch (err) {
+    msgEl.style.color = "red"
+    msgEl.textContent = "Server error. Please try again."
+  } finally {
+    btn.textContent = "Send Link"
+    btn.disabled = false
+  }
+}
 
-            document.getElementById('resetModal').style.display = 'flex';
+</script>
 
-        }
-
-        function closeResetModal() {
-
-            document.getElementById('resetModal').style.display = 'none';
-            document.getElementById('resetEmailInput').value = '';
-
-        }
-
-        function sendResetLink() {
-
-            const email = document.getElementById('resetEmailInput').value;
-
-            if (email && email.includes('@')) {
-
-                alert(`Reset link sent to ${email}!`);
-                closeResetModal();
-
-            }
-            else {
-
-                alert('Please enter a valid email.');
-
-            }
-
-        }
-
-    </script>
-<script src="sol_auth.js"></script>
 </body>
-
 </html>

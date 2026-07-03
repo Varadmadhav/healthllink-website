@@ -57,7 +57,7 @@ function handleLogin(type) {
             // window.location.href = '/doctor-login';
         } else {
             alert('Redirecting to Pharma Portal...');
-            window.location.href = '/Healthlink/Solutions/sollanding.html';
+            window.location.href = '/Solutions/sollanding.html';
         }
         
         

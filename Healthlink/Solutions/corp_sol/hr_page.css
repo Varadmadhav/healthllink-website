@@ -377,3 +377,36 @@
     border-radius:6px;
     cursor:pointer;
 }
+/* ── Add these to the bottom of hr_page.css ── */
+
+/* Upload history badge colours */
+.badge-warning {
+  background: #fff3cd;
+  color: #856404;
+}
+
+.badge-success {
+  background: #d4edda;
+  color: #155724;
+}
+
+.badge-danger {
+  background: #f8d7da;
+  color: #721c24;
+}
+
+/* Patient record status colours */
+.status-confirmed {
+  background: #d4edda;
+  color: #155724;
+}
+
+.status-approved {
+  background: #fff3cd;
+  color: #856404;
+}
+
+.status-rejected {
+  background: #f8d7da;
+  color: #721c24;
+}

@@ -1,8 +1,22 @@
 const express = require("express")
 const router = express.Router()
 
-const { getPatientsByUpload } = require("../controllers/patientController")
+const Patient = require("../models/Patient")
 
-router.get("/upload/:uploadId", getPatientsByUpload)
+router.get("/", async (req, res) => {
+
+  try {
+
+    const patients = await Patient.find()
+
+    res.json(patients)
+
+  } catch (error) {
+
+    res.status(500).json({ message: error.message })
+
+  }
+
+})
 
 module.exports = router

@@ -1573,7 +1573,7 @@ function formatCurrency(amount) {
 
         function closeModal() {
             // Redirect to main page
-            window.location.href = '/Healthlink/landing/landing.html';
+            window.location.href = '/landing/landing.html';
         }
 
         // Close modal when clicking outside of it

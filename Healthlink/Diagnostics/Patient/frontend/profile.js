@@ -149,7 +149,7 @@ function logout() {
 function showBookings() {
     showMessage('Redirecting to My Bookings...', 'info');
     // IMPORTANT: Replace 'your_booking_page_url_here.html' with the actual path to your booking page
-    window.location.href = '/Healthlink/Diagnostics/Patient/frontend/booking.html'; // Example path, adjust as needed
+    window.location.href = '/Diagnostics/Patient/frontend/booking.html'; // Example path, adjust as needed
 }
 function resetPassword() { showMessage('Redirecting to reset password page...', 'info'); }
 function showNotifications() { showMessage('Showing notifications settings...', 'info'); }

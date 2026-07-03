@@ -8,6 +8,17 @@ const uploadSchema = new mongoose.Schema({
     required: true
   },
 
+  fileName: String,
+
+  recordsCount: Number,
+
+  status: {
+    type: String,
+    // "confirmed" = all patients have been assigned a centre by admin
+    enum: ["pending", "approved", "rejected", "confirmed"],
+    default: "pending"
+  },
+
   uploadedBy: {
     type: mongoose.Schema.Types.ObjectId,
     ref: "User",

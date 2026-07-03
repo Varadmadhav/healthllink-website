@@ -1,158 +1,191 @@
-const xlsx = require("xlsx");
-const Upload = require("../models/Upload");
-const Patient = require("../models/Patient");
-const mongoose = require("mongoose");
+const Upload = require("../models/Upload")
+const Patient = require("../models/Patient")
+const Profile = require("../models/Profile")
+const XLSX = require("xlsx")
 
-// ================================
-// Upload Excel and create patients
-// ================================
+function parseExcelDate(value) {
+  if (!value) return null
+  if (value instanceof Date) return value
+  if (typeof value === "number") {
+    const date = XLSX.SSF.parse_date_code(value)
+    if (date) return new Date(date.y, date.m - 1, date.d)
+  }
+  if (typeof value === "string") {
+    const parsed = new Date(value)
+    if (!isNaN(parsed.getTime())) return parsed
+    const parts = value.split("/")
+    if (parts.length === 3) {
+      const [d, m, y] = parts
+      const parsed2 = new Date(`${y}-${m.padStart(2, "0")}-${d.padStart(2, "0")}`)
+      if (!isNaN(parsed2.getTime())) return parsed2
+    }
+  }
+  return null
+}
+
+function normalizeProfileName(name) {
+  return String(name || "").toLowerCase().replace(/[^a-z0-9]/g, "")
+}
+
 exports.uploadExcel = async (req, res) => {
-
   try {
+    if (!req.file) return res.status(400).json({ message: "No file uploaded" })
 
-    if (!req.file) {
-      return res.status(400).json({ message: "No file uploaded" });
-    }
+    const workbook = XLSX.read(req.file.buffer, { type: "buffer", cellDates: true })
+    const sheetName = workbook.SheetNames[0]
+    const sheet = workbook.Sheets[sheetName]
+    const data = XLSX.utils.sheet_to_json(sheet, { raw: false, dateNF: "yyyy-mm-dd" })
 
-    const filePath = req.file.path;
-    const { companyId, userId, appointmentDate } = req.body;
-
-    // Validate required fields
-    if (!companyId || !userId || !appointmentDate) {
-      return res.status(400).json({
-        message: "companyId, userId and appointmentDate are required"
-      });
-    }
-
-    // Validate ObjectIds
-    if (!mongoose.Types.ObjectId.isValid(companyId)) {
-      return res.status(400).json({ message: "Invalid companyId" });
-    }
-
-    if (!mongoose.Types.ObjectId.isValid(userId)) {
-      return res.status(400).json({ message: "Invalid userId" });
-    }
-
-    // =====================
-    // Read Excel file
-    // =====================
-    const workbook = xlsx.readFile(filePath);
-
-    const sheetName = workbook.SheetNames[0];
-    const sheet = workbook.Sheets[sheetName];
-
-    const data = xlsx.utils.sheet_to_json(sheet);
-
-    if (!data || data.length === 0) {
-      return res.status(400).json({
-        message: "Excel file is empty"
-      });
-    }
-
-    // =====================
-    // Save upload history
-    // =====================
-    const upload = new Upload({
-      companyId: new mongoose.Types.ObjectId(companyId),
-      uploadedBy: new mongoose.Types.ObjectId(userId),
-      fileName: req.file.filename,
+    const uploadHistory = new Upload({
+      fileName: req.file.originalname,
       recordsCount: data.length,
-      appointmentDate: new Date(appointmentDate)
-    });
-
-    await upload.save();
-
-    // =====================
-    // Convert Excel rows to patients
-    // =====================
-    const patients = data.map((row) => ({
-
-      uploadId: upload._id,
-
-      companyId: new mongoose.Types.ObjectId(companyId),
-
-      name: row.Name || "",
-
-      gender: row.Gender || "",
-
-      age: row.Age ? Number(row.Age) : null,
-
-      date: row.Date ? new Date(row.Date) : null,
-
-      appointmentDate: new Date(appointmentDate),
-
-      address: row.Address || "",
-
-      pincode: row.Pincode || "",
-
-      phone: row.Mobile || "",
-
-      email: row.Email || "",
-
-      status: "pending"
-
-    }));
-
-    // =====================
-    // Insert patients
-    // =====================
-    await Patient.insertMany(patients);
-
-    res.json({
-      message: "Excel uploaded successfully",
-      uploadId: upload._id,
-      recordsInserted: patients.length
-    });
-
-  } catch (error) {
-
-    console.error("Excel Upload Error:", error);
-
-    res.status(500).json({
-      message: "Error uploading Excel",
-      error: error.message
-    });
-
-  }
-
-};
-
-
-// ================================
-// Get Upload History
-// ================================
-exports.getUploadHistory = async (req, res) => {
-
-  try {
-
-    const companyId = req.query.companyId;
-
-    if (!companyId) {
-      return res.status(400).json({
-        message: "companyId is required"
-      });
-    }
-
-    if (!mongoose.Types.ObjectId.isValid(companyId)) {
-      return res.status(400).json({
-        message: "Invalid companyId"
-      });
-    }
-
-    const uploads = await Upload.find({
-      companyId: new mongoose.Types.ObjectId(companyId)
+      uploadedAt: new Date(),
+      status: "pending",
+      companyId: req.user?.companyId,
+      uploadedBy: req.user?._id
     })
-      .populate("companyId", "name")
-      .sort({ createdAt: -1 });
+    await uploadHistory.save()
 
-    res.json(uploads);
+    const now = new Date()
+    const yy = String(now.getFullYear()).substring(2, 4)
+    const mm = String(now.getMonth() + 1).padStart(2, "0")
+    const prefix = `${yy}${mm}00P`
 
+    const lastPatient = await Patient.findOne({
+      patientIdString: { $regex: new RegExp(`^${prefix}`) }
+    }).sort({ patientIdString: -1 })
+
+    let startSeq = 1
+    if (lastPatient && lastPatient.patientIdString) {
+      const seqStr = lastPatient.patientIdString.replace(prefix, "")
+      const seqNum = parseInt(seqStr, 10)
+      if (!isNaN(seqNum)) {
+        startSeq = seqNum + 1
+      }
+    }
+
+    const companyId = req.user?.companyId || null
+
+    // Fetch all dynamic profiles from MongoDB Atlas
+    const dbProfiles = await Profile.find()
+
+    const patients = data.map((row, index) => {
+      const rawDate = row["Date"] || row["date"] || row["DATE"] ||
+                      row["Joining Date"] || row["joining date"]
+      const joiningDate = parseExcelDate(rawDate)
+
+      const employeeId = String(row["Employee ID"] || row["employee id"] || row["EmployeeId"] || row["employeeId"] || "").trim()
+      const rawProfile = row["Test Profile"] || row["test profile"] || row["TestProfile"] || row["testProfile"] || ""
+      
+      const normalizedRaw = normalizeProfileName(rawProfile)
+      let matchedProfile = dbProfiles.find(p => normalizeProfileName(p.name) === normalizedRaw)
+
+      let testProfileName = ""
+      let tests = []
+      let fastingRequired = false
+
+      if (rawProfile.trim()) {
+        if (matchedProfile) {
+          testProfileName = matchedProfile.name
+          tests = matchedProfile.tests
+          fastingRequired = matchedProfile.fastingRequired
+        } else {
+          // Fallback regex check for backward compatibility (e.g. "Profile 1" -> "Pre employment Profile-1")
+          const normalized = String(rawProfile).trim().replace(/\s+/g, " ")
+          let fallbackKey = null
+          if (/profile-?1/i.test(normalized)) {
+            fallbackKey = "preemploymentprofile1"
+          } else if (/profile-?2/i.test(normalized)) {
+            fallbackKey = "preemploymentprofile2"
+          } else if (/profile-?3/i.test(normalized)) {
+            fallbackKey = "preemploymentprofile3"
+          }
+
+          if (fallbackKey) {
+            matchedProfile = dbProfiles.find(p => normalizeProfileName(p.name) === fallbackKey)
+          }
+
+          if (matchedProfile) {
+            testProfileName = matchedProfile.name
+            tests = matchedProfile.tests
+            fastingRequired = matchedProfile.fastingRequired
+          } else {
+            testProfileName = String(rawProfile).trim()
+            tests = []
+            fastingRequired = false
+          }
+        }
+      } else {
+        testProfileName = "General Health Checkup"
+        tests = ["Standard Physical Exam"]
+        fastingRequired = false
+      }
+
+      const currentSeq = startSeq + index
+      const patientIdString = `${prefix}${String(currentSeq).padStart(2, "0")}`
+
+      return {
+        uploadId: uploadHistory._id,
+        companyId,
+        name: row.Name || row.name || row["Patient Name"],
+        gender: row.Gender || row.gender,
+        age: row.Age || row.age,
+        phone: row.Mobile || row.mobile || row.Phone || row.phone || row["Phone Number"],
+        email: row.Email || row.email,
+        address: row.Address || row.address,
+        pincode: row.Pincode || row.pincode,
+        joiningDate,
+        appointmentDate: null,
+        status: "pending",
+        employeeId,
+        patientIdString,
+        testProfile: testProfileName,
+        tests: tests,
+        fastingRequired: fastingRequired
+      }
+    })
+
+    await Patient.insertMany(patients)
+
+    res.json({ message: "Upload successful", records: patients.length })
   } catch (error) {
-
-    res.status(500).json({
-      message: error.message
-    });
-
+    console.error("Upload Controller Error:", error)
+    res.status(500).json({ message: error.message })
   }
+}
 
-};
+exports.getUploads = async (req, res) => {
+  try {
+    const companyId = req.user?.companyId || null
+    const uploads = await Upload.find({ companyId }).sort({ uploadedAt: -1 })
+    res.json(uploads)
+  } catch (error) {
+    res.status(500).json({ message: error.message })
+  }
+}
+
+exports.getPatients = async (req, res) => {
+  try {
+    const companyId = req.user?.companyId || null
+    const patients = await Patient
+      .find({ companyId })
+      .populate("assignedCenterId", "name phone address pincode")
+      .sort({ createdAt: -1 })
+    res.json(patients)
+  } catch (error) {
+    res.status(500).json({ message: error.message })
+  }
+}
+
+exports.getPatientsByUpload = async (req, res) => {
+  try {
+    const { uploadId } = req.params
+    const companyId = req.user?.companyId || null
+    const patients = await Patient
+      .find({ uploadId, companyId })
+      .populate("assignedCenterId", "name phone address pincode")
+    res.json(patients)
+  } catch (error) {
+    res.status(500).json({ message: error.message })
+  }
+}

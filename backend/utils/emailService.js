@@ -1,0 +1,460 @@
+require("dotenv").config()
+const SibApiV3Sdk = require("sib-api-v3-sdk")
+
+const client = SibApiV3Sdk.ApiClient.instance
+const apiKey = client.authentications["api-key"]
+apiKey.apiKey = process.env.BREVO_API_KEY
+
+const tranEmailApi = new SibApiV3Sdk.TransactionalEmailsApi()
+client.basePath = "https://api.brevo.com/v3"
+
+exports.sendConfirmationEmail = async ({
+  toEmail,
+  employeeName,
+  companyName,
+  centerName,
+  centerAddress,
+  centerEmail,
+  appointmentDate,
+  appointmentTime,
+  loginId,
+  tempPassword,
+  isExistingUser,
+  isReschedule = false,
+  rescheduleApproved = false,
+  employeeId = "",
+  patientIdString = "",
+  testProfile = "",
+  tests = [],
+  fastingRequired = false,
+  patientPhone = ""
+}) => {
+
+  const testsListHtml = tests && tests.length > 0
+    ? `<ul style="margin:6px 0;padding-left:20px;color:#2d3748;">` + 
+      tests.map(t => `<li style="margin:4px 0;">${t}</li>`).join("") + 
+      `</ul>`
+    : `<span style="color:#718096;">General Evaluation</span>`
+
+  const fastingText = fastingRequired
+    ? `<div style="background:#fff3cd;border-left:4px solid #ffc107;padding:12px;margin:12px 0;border-radius:4px;color:#856404;font-size:14px;">
+         ⚠️ <strong>Fasting Instruction:</strong> Need 12 hrs. fasting prior to test
+       </div>`
+    : `<div style="background:#d4edda;border-left:4px solid #28a745;padding:12px;margin:12px 0;border-radius:4px;color:#155724;font-size:14px;">
+         🟢 <strong>Fasting Instruction:</strong> No Need of fasting
+       </div>`
+
+  if (isReschedule) {
+    const subject = rescheduleApproved
+      ? `✅ Reschedule Approved — ${companyName} Health Checkup`
+      : `❌ Reschedule Rejected — ${companyName} Health Checkup`
+
+    const html = `
+      <div style="font-family:Arial,sans-serif;max-width:600px;margin:auto;
+                  border:1px solid #e2e8f0;border-radius:8px;overflow:hidden;">
+        <div style="background:linear-gradient(135deg,#667eea,#764ba2);
+                    padding:24px;color:white;">
+          <h2 style="margin:0;">
+            ${rescheduleApproved ? "✅ Reschedule Approved" : "❌ Reschedule Rejected"}
+          </h2>
+          <p style="margin:6px 0 0;opacity:0.9;">${companyName} — Health Checkup Program</p>
+        </div>
+        <div style="padding:24px;">
+          <p>Dear <strong>${employeeName}</strong>,</p>
+          ${rescheduleApproved
+            ? `<p>Your reschedule request has been <strong>approved</strong>.
+                Your updated appointment details are below.</p>`
+            : `<p>Your reschedule request has been <strong>rejected</strong>.
+                Your original appointment date remains unchanged.</p>`
+          }
+          <div style="background:#f7fafc;border-left:4px solid #667eea;
+                      padding:16px;margin:16px 0;border-radius:4px;">
+            <h3 style="margin:0 0 12px;color:#4a5568;">📅 Appointment Details</h3>
+            <p style="margin:5px 0;"><strong>Patient ID:</strong> ${patientIdString || "N/A"}</p>
+            ${employeeId ? `<p style="margin:5px 0;"><strong>Employee ID:</strong> ${employeeId}</p>` : ''}
+            <p style="margin:5px 0;"><strong>Center Name:</strong> ${centerName}</p>
+            <p style="margin:5px 0;"><strong>Center Address:</strong> ${centerAddress}</p>
+            <p style="margin:5px 0;"><strong>Appointment Date:</strong> ${appointmentDate}</p>
+            <p style="margin:5px 0;"><strong>Time:</strong> ${appointmentTime || "10:00 AM"}</p>
+            <p style="margin:5px 0;"><strong>Test Profile:</strong> ${testProfile || "N/A"}</p>
+            <div style="margin-top:10px;">
+              <strong>Included Tests:</strong>
+              ${testsListHtml}
+            </div>
+            ${fastingText}
+          </div>
+          <p style="margin:12px 0 0;">
+            <a href="https://healthlink-diagnostics.netlify.app/Solutions/corp_sol/corp_solsignup.html"
+               style="background:#667eea;color:white;padding:10px 20px;
+                      border-radius:4px;text-decoration:none;font-size:14px;">
+              View Dashboard →
+            </a>
+          </p>
+        </div>
+        <div style="background:#f7fafc;padding:12px 24px;
+                    font-size:12px;color:#a0aec0;text-align:center;">
+          This is an automated email — please do not reply.
+        </div>
+      </div>
+    `
+
+    await tranEmailApi.sendTransacEmail({
+      sender: {
+        email: "info@healthlinkdiagnostics.in",
+        name: "HealthLink Diagnostics"
+      },
+      to: [{ email: toEmail }],
+      subject: subject,
+      htmlContent: html
+    })
+    return
+  }
+
+  const loginSection = isExistingUser
+    ? `
+      <p>You already have a login account. Please use your <strong>existing password</strong> to sign in.</p>
+      <p><strong>Login Email:</strong> ${loginId}</p>
+    `
+    : `
+      <p>A login account has been created for you:</p>
+      <table style="border-collapse:collapse;margin:8px 0;">
+        <tr>
+          <td style="padding:4px 16px 4px 0;"><strong>Login Email:</strong></td>
+          <td>${loginId}</td>
+        </tr>
+        <tr>
+          <td style="padding:4px 16px 4px 0;"><strong>Temporary Password:</strong></td>
+          <td style="font-family:monospace;font-size:15px;letter-spacing:1px;">${tempPassword}</td>
+        </tr>
+      </table>
+      <p style="color:#c53030;font-size:13px;">
+        ⚠️ Please change your password after your first login.
+      </p>
+    `
+
+  const html = `
+    <div style="font-family:Arial,sans-serif;max-width:600px;margin:auto;
+                border:1px solid #e2e8f0;border-radius:8px;overflow:hidden;">
+      <div style="background:linear-gradient(135deg,#667eea,#764ba2);
+                  padding:24px;color:white;">
+        <h2 style="margin:0;">✅ Appointment Confirmed</h2>
+        <p style="margin:6px 0 0;opacity:0.9;">${companyName} — Health Checkup Program</p>
+      </div>
+      <div style="padding:24px;">
+        <p>Dear <strong>${employeeName}</strong>,</p>
+        <p>Your health checkup appointment has been confirmed by the admin.
+           Please find your appointment and login details below.</p>
+        <div style="background:#f7fafc;border-left:4px solid #667eea;
+                    padding:16px;margin:16px 0;border-radius:4px;">
+          <h3 style="margin:0 0 12px;color:#4a5568;">📅 Appointment Details</h3>
+          <p style="margin:5px 0;"><strong>Patient ID:</strong> ${patientIdString || "N/A"}</p>
+          ${employeeId ? `<p style="margin:5px 0;"><strong>Employee ID:</strong> ${employeeId}</p>` : ''}
+          <p style="margin:5px 0;"><strong>Center Name:</strong> ${centerName}</p>
+          <p style="margin:5px 0;"><strong>Center Address:</strong> ${centerAddress}</p>
+          <p style="margin:5px 0;"><strong>Appointment Date:</strong> ${appointmentDate}</p>
+          <p style="margin:5px 0;"><strong>Time:</strong> ${appointmentTime || "10:00 AM"}</p>
+          <p style="margin:5px 0;"><strong>Test Profile:</strong> ${testProfile || "N/A"}</p>
+          <div style="margin-top:10px;">
+            <strong>Included Tests:</strong>
+            ${testsListHtml}
+          </div>
+          ${fastingText}
+        </div>
+        <div style="background:#f0fff4;border-left:4px solid #38a169;
+                    padding:16px;margin:16px 0;border-radius:4px;">
+          <h3 style="margin:0 0 12px;color:#276749;">🔐 Your Login Details</h3>
+          ${loginSection}
+          <p style="margin:12px 0 0;">
+            <a href="https://healthlink-diagnostics.netlify.app/Solutions/corp_sol/corp_solsignup.html"
+               style="background:#667eea;color:white;padding:10px 20px;
+                      border-radius:4px;text-decoration:none;font-size:14px;">
+              Login to Dashboard →
+            </a>
+          </p>
+        </div>
+        <p style="color:#718096;font-size:13px;margin-top:20px;">
+          Please carry a valid ID proof on the day of your appointment.<br>
+          For any queries, contact your HR or company admin.
+        </p>
+      </div>
+      <div style="background:#f7fafc;padding:12px 24px;
+                  font-size:12px;color:#a0aec0;text-align:center;">
+        This is an automated email — please do not reply.
+      </div>
+    </div>
+  `
+
+  await tranEmailApi.sendTransacEmail({
+    sender: {
+      email: "info@healthlinkdiagnostics.in",
+      name: "HealthLink Diagnostics"
+    },
+    to: [{ email: toEmail }],
+    subject: `✅ Appointment Confirmed — ${companyName} Health Checkup`,
+    htmlContent: html
+  })
+
+  if (centerEmail) {
+    const centerHtml = `
+      <div style="font-family:Arial,sans-serif;max-width:600px;margin:auto;
+                  border:1px solid #e2e8f0;border-radius:8px;overflow:hidden;">
+        <div style="background:linear-gradient(135deg,#667eea,#764ba2);
+                    padding:24px;color:white;">
+          <h2 style="margin:0;">📋 New Appointment Confirmed</h2>
+          <p style="margin:6px 0 0;opacity:0.9;">${companyName} — Health Checkup Program</p>
+        </div>
+        <div style="padding:24px;">
+          <p>Dear <strong>${centerName}</strong>,</p>
+          <p>A new health checkup appointment has been confirmed at your center.</p>
+          <div style="background:#f7fafc;border-left:4px solid #667eea;
+                      padding:16px;margin:16px 0;border-radius:4px;">
+            <h3 style="margin:0 0 12px;color:#4a5568;">📅 Appointment Details</h3>
+            <p style="margin:5px 0;"><strong>Patient Name:</strong> ${employeeName}</p>
+            <p style="margin:5px 0;"><strong>Patient ID:</strong> ${patientIdString || "N/A"}</p>
+            ${employeeId ? `<p style="margin:5px 0;"><strong>Employee ID:</strong> ${employeeId}</p>` : ''}
+            <p style="margin:5px 0;"><strong>Mobile No:</strong> ${patientPhone || "N/A"}</p>
+            <p style="margin:5px 0;"><strong>Company:</strong> ${companyName}</p>
+            <p style="margin:5px 0;"><strong>Date:</strong> ${appointmentDate}</p>
+            <p style="margin:5px 0;"><strong>Time:</strong> ${appointmentTime || "10:00 AM"}</p>
+            <p style="margin:5px 0;"><strong>Test Profile:</strong> ${testProfile || "N/A"}</p>
+            <div style="margin-top:10px;">
+              <strong>Included Tests:</strong>
+              ${testsListHtml}
+            </div>
+            ${fastingText}
+          </div>
+          <p style="color:#718096;font-size:13px;margin-top:20px;">
+            Please ensure the patient is attended to at the scheduled time.
+          </p>
+        </div>
+        <div style="background:#f7fafc;padding:12px 24px;
+                    font-size:12px;color:#a0aec0;text-align:center;">
+          This is an automated email — please do not reply.
+        </div>
+      </div>
+    `
+    await tranEmailApi.sendTransacEmail({
+      sender: {
+        email: "info@healthlinkdiagnostics.in",
+        name: "HealthLink Diagnostics"
+      },
+      to: [{ email: centerEmail }],
+      subject: `📋 New Appointment — ${employeeName} on ${appointmentDate}`,
+      htmlContent: centerHtml
+    })
+  }
+}
+
+// ── Date Change Notification
+// Sent to: employee when admin approves/rejects, HR when employee makes a request
+// action: "requested" | "approved" | "rejected"
+// requestedBy: "hr" | "employee"
+exports.sendDateChangeNotification = async ({
+  toEmail,
+  recipientName,
+  employeeName,
+  currentDate,
+  requestedDate,
+  action,
+  requestedBy
+}) => {
+  const formattedCurrent = currentDate
+    ? new Date(currentDate).toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" })
+    : "-"
+  const formattedRequested = requestedDate
+    ? new Date(requestedDate).toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" })
+    : "-"
+
+  let subject, headerColor, headerTitle, bodyText
+
+  if (action === "requested") {
+    subject = `📅 Date Change Request — ${employeeName}`
+    headerColor = "#f59e0b"
+    headerTitle = "📅 Date Change Requested"
+    bodyText = `
+      <p><strong>${employeeName}</strong> has submitted a date change request.</p>
+      <p>Please review it in the admin panel.</p>
+    `
+  } else if (action === "approved") {
+    subject = `✅ Date Change Approved — Your Appointment`
+    headerColor = "#10b981"
+    headerTitle = "✅ Date Change Approved"
+    bodyText = `
+      <p>Your date change request has been <strong>approved</strong> by the admin.</p>
+      <p>Your appointment date has been updated.</p>
+    `
+  } else {
+    subject = `❌ Date Change Rejected — Your Appointment`
+    headerColor = "#ef4444"
+    headerTitle = "❌ Date Change Rejected"
+    bodyText = `
+      <p>Your date change request has been <strong>rejected</strong> by the admin.</p>
+      <p>Your original appointment date remains unchanged.</p>
+    `
+  }
+
+  const html = `
+    <div style="font-family:Arial,sans-serif;max-width:600px;margin:auto;
+                border:1px solid #e2e8f0;border-radius:8px;overflow:hidden;">
+      <div style="background:${headerColor};padding:24px;color:white;">
+        <h2 style="margin:0;">${headerTitle}</h2>
+        <p style="margin:6px 0 0;opacity:0.9;">HealthLink Health Checkup Program</p>
+      </div>
+      <div style="padding:24px;">
+        <p>Dear <strong>${recipientName}</strong>,</p>
+        ${bodyText}
+        <div style="background:#f7fafc;border-left:4px solid ${headerColor};
+                    padding:16px;margin:16px 0;border-radius:4px;">
+          <h3 style="margin:0 0 12px;color:#4a5568;">📅 Date Details</h3>
+          <p style="margin:5px 0;"><strong>Employee:</strong> ${employeeName}</p>
+          <p style="margin:5px 0;"><strong>Current Date:</strong> ${formattedCurrent}</p>
+          <p style="margin:5px 0;"><strong>Requested Date:</strong> ${formattedRequested}</p>
+        </div>
+        <p style="margin:12px 0 0;">
+          <a href="https://healthlink-diagnostics.netlify.app/Solutions/corp_sol/corp_solsignup.html"
+             style="background:#667eea;color:white;padding:10px 20px;
+                    border-radius:4px;text-decoration:none;font-size:14px;">
+            View Dashboard →
+          </a>
+        </p>
+      </div>
+      <div style="background:#f7fafc;padding:12px 24px;
+                  font-size:12px;color:#a0aec0;text-align:center;">
+        This is an automated email — please do not reply.
+      </div>
+    </div>
+  `
+
+ await tranEmailApi.sendTransacEmail({
+  sender: {
+    email: "info@healthlinkdiagnostics.in", // MUST be your verified Brevo sender
+    name: "Health Checkup System"
+  },
+  to: [
+    { email: toEmail }
+  ],
+  subject: subject,
+  htmlContent: html
+})
+  
+}
+
+exports.sendPasswordResetEmail = async ({ toEmail, userName, resetToken, role }) => {
+  const resetUrl = `https://healthlink-diagnostics.netlify.app/Solutions/corp_sol/reset_password.html?token=${resetToken}&role=${role}`
+
+  const html = `
+    <div style="font-family:Arial,sans-serif;max-width:600px;margin:auto;
+                border:1px solid #e2e8f0;border-radius:8px;overflow:hidden;">
+      <div style="background:linear-gradient(135deg,#667eea,#764ba2);
+                  padding:24px;color:white;">
+        <h2 style="margin:0;">🔐 Password Reset Request</h2>
+        <p style="margin:6px 0 0;opacity:0.9;">HealthLink System</p>
+      </div>
+      <div style="padding:24px;">
+        <p>Dear <strong>${userName}</strong>,</p>
+        <p>We received a request to reset your password. Click the button below to set a new password:</p>
+        <p style="margin:24px 0;">
+          <a href="${resetUrl}"
+             style="background:#667eea;color:white;padding:12px 24px;
+                    border-radius:6px;text-decoration:none;font-size:15px;font-weight:600;">
+            Reset My Password →
+          </a>
+        </p>
+        <p style="color:#718096;font-size:13px;">
+          This link expires in <strong>1 hour</strong>.<br>
+          If you did not request this, ignore this email — your password will not change.
+        </p>
+      </div>
+      <div style="background:#f7fafc;padding:12px 24px;
+                  font-size:12px;color:#a0aec0;text-align:center;">
+        This is an automated email — please do not reply.
+      </div>
+    </div>
+  `
+
+  await tranEmailApi.sendTransacEmail({
+  sender: {
+    email: "info@healthlinkdiagnostics.in",
+    name: "HealthLink Diagnostics"
+  },
+  to: [{ email: toEmail }],
+  subject: "🔐 Password Reset — HealthLink System",
+  htmlContent: html
+})
+}
+exports.sendRejectionEmail = async ({ toEmail, employeeName, companyName }) => {
+  const html = `
+    <div style="font-family:Arial,sans-serif;max-width:600px;margin:auto;
+                border:1px solid #e2e8f0;border-radius:8px;overflow:hidden;">
+      
+      <div style="background:#ef4444;padding:24px;color:white;">
+        <h2 style="margin:0;">❌ Appointment Rejected</h2>
+        <p style="margin:6px 0 0;opacity:0.9;">${companyName} — Health Checkup Program</p>
+      </div>
+
+      <div style="padding:24px;">
+        <p>Dear <strong>${employeeName}</strong>,</p>
+
+        <p>Your health checkup request has been <strong>rejected</strong> by the admin.</p>
+
+        <div style="background:#fef2f2;border-left:4px solid #ef4444;
+                    padding:16px;margin:16px 0;border-radius:4px;">
+          <p style="margin:0;color:#991b1b;">
+            ❗ Please contact your HR or admin for further details.
+          </p>
+        </div>
+
+        <p style="margin-top:20px;">
+          If you have any questions, please reach out to your company HR.
+        </p>
+      </div>
+
+      <div style="background:#f7fafc;padding:12px 24px;
+                  font-size:12px;color:#a0aec0;text-align:center;">
+        This is an automated email — please do not reply.
+      </div>
+
+    </div>
+  `
+
+  await tranEmailApi.sendTransacEmail({
+  sender: {
+    email: "info@healthlinkdiagnostics.in",
+    name: "HealthLink Diagnostics"
+  },
+  to: [{ email: toEmail }],
+  subject: `❌ Appointment Rejected — ${companyName}`,
+  htmlContent: html
+})
+}
+exports.sendReportUploadEmail = async ({
+  toEmail,
+  employeeName,
+  companyName,
+  reportUrl
+}) => {
+
+  const fullUrl = `https://healthllink-website-1.onrender.com${reportUrl}`
+
+  const html = `
+    <div style="font-family:Arial,sans-serif;">
+      <h2>📄 Report Available</h2>
+      <p>Dear ${employeeName},</p>
+      <p>Your health report is ready.</p>
+
+      <a href="${fullUrl}" target="_blank">
+        View Report
+      </a>
+    </div>
+  `
+
+  await tranEmailApi.sendTransacEmail({
+  sender: {
+    email: "info@healthlinkdiagnostics.in",
+    name: "HealthLink Diagnostics"
+  },
+  to: [{ email: toEmail }],
+  subject: `Report Ready - ${companyName}`,
+  htmlContent: html
+})
+}

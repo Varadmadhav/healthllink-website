@@ -1,1008 +1,1124 @@
-// ===== Global Data Storage =====
-let uploadedFiles = []; // Array of uploaded Excel files with their data
-let centersData = [];
-let companiesData = [];
-let selectedFileId = null; // Currently selected file for viewing
+// ===== API Base =====
+const API_BASE = window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1"
+  ? "http://localhost:5000/api"
+  : "https://healthllink-website-1.onrender.com/api"
 
-// ===== Initialize Application =====
-document.addEventListener('DOMContentLoaded', function() {
-    initializeTabs();
-    initializeFileUpload();
-    initializeDragAndDrop();
-    loadDummyData();
-    renderAllTables();
-});
+// ===== Global State =====
+let uploadedFiles = []
+let centersData = []
+let companiesData = []
+let selectedFileId = null
+let allPatients = []
+let confirmedPatientsForReports = []
+let preselectedCenterMap = {}
+let dateChangeRequests = []
+let profilesData = []
 
-// ===== Tab Navigation =====
+// ===== Init =====
+document.addEventListener('DOMContentLoaded', function () {
+  initializeTabs()
+  fetchCompanies()
+  fetchCenters()
+  fetchUploads()
+  fetchDateChangeRequests()
+  fetchProfiles()
+})
+
+// ===== Tabs =====
 function initializeTabs() {
-    const tabs = document.querySelectorAll('.nav-tab');
-    const contents = document.querySelectorAll('.tab-content');
-    
-    tabs.forEach(tab => {
-        tab.addEventListener('click', () => {
-            const targetId = tab.dataset.tab;
-            
-            // Update active tab
-            tabs.forEach(t => t.classList.remove('active'));
-            tab.classList.add('active');
-            
-            // Update active content
-            contents.forEach(content => {
-                content.classList.remove('active');
-                if (content.id === targetId) {
-                    content.classList.add('active');
-                }
-            });
-            
-            // Refresh data when switching tabs
-            refreshTabData(targetId);
-        });
-    });
+  const tabs = document.querySelectorAll('.nav-tab')
+  const contents = document.querySelectorAll('.tab-content')
+  tabs.forEach(tab => {
+    tab.addEventListener('click', () => {
+      const targetId = tab.dataset.tab
+      tabs.forEach(t => t.classList.remove('active'))
+      tab.classList.add('active')
+      contents.forEach(c => {
+        c.classList.remove('active')
+        if (c.id === targetId) c.classList.add('active')
+      })
+      refreshTabData(targetId)
+    })
+  })
 }
 
 function refreshTabData(tabId) {
-    switch(tabId) {
-        case 'review-requests':
-            renderExcelFilesGrid();
-            break;
-        case 'make-confirmation':
-            renderConfirmationTable();
-            renderConfirmedTable();
-            updateStats();
-            break;
-        case 'reports':
-            renderReportsTable();
-            break;
-        case 'add-centers':
-            renderCentersTable();
-            break;
-        case 'add-companies':
-            renderCompaniesTable();
-            break;
-    }
+  switch (tabId) {
+    case 'review-requests':   fetchUploads(); break
+    case 'make-confirmation': fetchAllPatientsForConfirmation(); fetchDateChangeRequests(); break
+    case 'reports':           fetchConfirmedPatientsForReports(); break
+    case 'add-centers':       renderCentersTable(); break
+    case 'add-companies':     renderCompaniesTable(); break
+    case 'manage-profiles':   fetchProfiles(); break
+  }
 }
 
-// ===== File Upload Handling =====
-function initializeFileUpload() {
-    const fileInput = document.getElementById('excel-upload');
-    
-    fileInput.addEventListener('change', function(e) {
-        const file = e.target.files[0];
-        if (file) {
-            handleExcelUpload(file);
-        }
-    });
+// =====================================================================
+// REVIEW REQUESTS
+// =====================================================================
+
+async function fetchUploads() {
+  try {
+    const res = await fetch(API_BASE + "/admin/uploads")
+    const data = await res.json()
+    uploadedFiles = data.map(u => ({
+      id: u._id,
+      fileName: u.fileName,
+      uploadDate: new Date(u.uploadedAt).toLocaleString(),
+      uploadTimestamp: new Date(u.uploadedAt).getTime(),
+      records: u.recordsCount,
+      status: u.status,
+      company: u.companyId ? u.companyId.name : "",
+      pendingCount: u.pendingCount || 0,
+      confirmedCount: u.confirmedCount || 0,
+      employees: []
+    }))
+    renderExcelFilesGrid()
+  } catch (err) {
+    console.error("fetchUploads:", err)
+    showToast("Could not load upload files", "error")
+  }
 }
 
-function initializeDragAndDrop() {
-    const uploadZone = document.getElementById('upload-zone');
-    
-    uploadZone.addEventListener('dragover', (e) => {
-        e.preventDefault();
-        uploadZone.classList.add('dragover');
-    });
-    
-    uploadZone.addEventListener('dragleave', () => {
-        uploadZone.classList.remove('dragover');
-    });
-    
-    uploadZone.addEventListener('drop', (e) => {
-        e.preventDefault();
-        uploadZone.classList.remove('dragover');
-        
-        const file = e.dataTransfer.files[0];
-        if (file && (file.name.endsWith('.xlsx') || file.name.endsWith('.xls'))) {
-            handleExcelUpload(file);
-        } else {
-            showToast('Please upload a valid Excel file (.xlsx or .xls)', 'error');
-        }
-    });
-    
-    uploadZone.addEventListener('click', (e) => {
-        if (e.target.tagName !== 'BUTTON') {
-            document.getElementById('excel-upload').click();
-        }
-    });
-}
-
-function handleExcelUpload(file) {
-    // Show progress
-    document.getElementById('upload-zone').style.display = 'none';
-    document.getElementById('upload-progress').style.display = 'block';
-    document.getElementById('upload-status').style.display = 'none';
-    
-    const reader = new FileReader();
-    
-    reader.onload = function(e) {
-        try {
-            const data = new Uint8Array(e.target.result);
-            const workbook = XLSX.read(data, { type: 'array' });
-            const firstSheet = workbook.Sheets[workbook.SheetNames[0]];
-            const jsonData = XLSX.utils.sheet_to_json(firstSheet);
-            
-            // Create file object with employees
-            const fileId = Date.now();
-            const processedEmployees = jsonData.map((row, index) => ({
-                id: fileId + '_' + index,
-                employeeName: row['Employee Name'] || row['Name'] || row['EmployeeName'] || row['employee_name'] || '',
-                employeeId: row['Employee ID'] || row['EmployeeID'] || row['EmpID'] || row['employee_id'] || `EMP${1000 + index}`,
-                age: row['Age'] || row['age'] || Math.floor(Math.random() * 30) + 25,
-                gender: row['Gender'] || row['gender'] || (Math.random() > 0.5 ? 'Male' : 'Female'),
-                phone: row['Phone'] || row['Mobile'] || row['Contact'] || row['phone'] || generatePhone(),
-                company: row['Company'] || row['CompanyName'] || row['company'] || 'Unknown Company',
-                pincode: String(row['Pincode'] || row['PIN'] || row['ZipCode'] || row['pincode'] || generatePincode()),
-                status: 'pending',
-                assignedCenter: null,
-                reports: []
-            }));
-            
-            const uploadedFile = {
-                id: fileId,
-                fileName: file.name,
-                uploadDate: new Date().toLocaleString(),
-                uploadTimestamp: Date.now(),
-                records: processedEmployees.length,
-                employees: processedEmployees,
-                status: 'new'
-            };
-            
-            uploadedFiles.push(uploadedFile);
-            
-            // Hide progress, show success
-            setTimeout(() => {
-                document.getElementById('upload-progress').style.display = 'none';
-                document.getElementById('upload-status').style.display = 'flex';
-                document.getElementById('upload-file-name').textContent = file.name;
-                document.getElementById('upload-record-count').textContent = `${processedEmployees.length} records processed`;
-                
-                // Render tables
-                renderUploadHistory();
-                renderExcelFilesGrid();
-                
-                showToast(`Successfully uploaded ${processedEmployees.length} records from ${file.name}!`, 'success');
-            }, 1500);
-            
-        } catch (error) {
-            console.error('Error parsing Excel file:', error);
-            document.getElementById('upload-progress').style.display = 'none';
-            document.getElementById('upload-zone').style.display = 'flex';
-            showToast('Error parsing Excel file. Please check the format.', 'error');
-        }
-    };
-    
-    reader.readAsArrayBuffer(file);
-}
-
-function goToReviewRequests() {
-    document.querySelector('[data-tab="review-requests"]').click();
-    // Reset upload UI
-    document.getElementById('upload-zone').style.display = 'flex';
-    document.getElementById('upload-status').style.display = 'none';
-    document.getElementById('excel-upload').value = '';
-}
-
-// ===== Dummy Data =====
-function loadDummyData() {
-    // Dummy Centers
-    centersData = [
-        { id: 1, name: 'Apollo Diagnostics', email: 'apollo@diagnostics.com', phone: '9876543210', address: '123 Health Street, Mumbai', pincode: '400001' },
-        { id: 2, name: 'Metropolis Labs', email: 'info@metropolis.com', phone: '9876543211', address: '456 Medical Lane, Mumbai', pincode: '400002' },
-        { id: 3, name: 'Dr. Lal PathLabs', email: 'contact@lalpathlab.com', phone: '9876543212', address: '789 Wellness Road, Mumbai', pincode: '400003' },
-        { id: 4, name: 'Thyrocare', email: 'support@thyrocare.com', phone: '9876543213', address: '321 Diagnostic Ave, Delhi', pincode: '110001' },
-        { id: 5, name: 'SRL Diagnostics', email: 'help@srl.com', phone: '9876543214', address: '654 Test Street, Delhi', pincode: '110002' },
-        { id: 6, name: 'Healthians', email: 'care@healthians.com', phone: '9876543215', address: '987 Check-up Lane, Bangalore', pincode: '560001' },
-        { id: 7, name: 'Practo Clinics', email: 'info@practo.com', phone: '9876543216', address: '147 Medical Park, Bangalore', pincode: '560002' },
-        { id: 8, name: 'Max Healthcare', email: 'contact@maxhealthcare.com', phone: '9876543217', address: '258 Hospital Road, Chennai', pincode: '600001' }
-    ];
-    
-    // Dummy Companies
-    companiesData = [
-        { id: 1, name: 'Tech Corp Ltd', address: '100 Innovation Park, Mumbai', email: 'hr@techcorp.com', phone: '9988776655', pincode: '400001' },
-        { id: 2, name: 'Global Solutions Inc', address: '200 Business Hub, Delhi', email: 'admin@globalsol.com', phone: '9988776656', pincode: '110001' },
-        { id: 3, name: 'Digital Dynamics', address: '300 Tech Tower, Bangalore', email: 'contact@digitaldyn.com', phone: '9988776657', pincode: '560001' },
-        { id: 4, name: 'Innovate Systems', address: '400 Corporate Center, Chennai', email: 'hr@innovatesys.com', phone: '9988776658', pincode: '600001' },
-        { id: 5, name: 'Future Enterprises', address: '500 Commerce Complex, Pune', email: 'info@futureent.com', phone: '9988776659', pincode: '411001' }
-    ];
-    
-    // Sample uploaded files with employee data
-    const sampleFile1 = {
-        id: Date.now() - 86400000, // 1 day ago
-        fileName: 'TechCorp_Employees_Jan2024.xlsx',
-        uploadDate: new Date(Date.now() - 86400000).toLocaleString(),
-        uploadTimestamp: Date.now() - 86400000,
-        records: 3,
-        status: 'processed',
-        employees: [
-            { id: '1_0', employeeName: 'John Doe', employeeId: 'TC001', age: 32, gender: 'Male', phone: '9123456781', company: 'Tech Corp Ltd', pincode: '400001', status: 'pending', assignedCenter: null, reports: [] },
-            { id: '1_1', employeeName: 'Jane Smith', employeeId: 'TC002', age: 28, gender: 'Female', phone: '9123456782', company: 'Tech Corp Ltd', pincode: '400002', status: 'pending', assignedCenter: null, reports: [] },
-            { id: '1_2', employeeName: 'Mike Johnson', employeeId: 'TC003', age: 35, gender: 'Male', phone: '9123456783', company: 'Tech Corp Ltd', pincode: '400001', status: 'pending', assignedCenter: null, reports: [] }
-        ]
-    };
-    
-    const sampleFile2 = {
-        id: Date.now() - 172800000, // 2 days ago
-        fileName: 'GlobalSolutions_Feb2024.xlsx',
-        uploadDate: new Date(Date.now() - 172800000).toLocaleString(),
-        uploadTimestamp: Date.now() - 172800000,
-        records: 2,
-        status: 'new',
-        employees: [
-            { id: '2_0', employeeName: 'Emily Brown', employeeId: 'GS001', age: 29, gender: 'Female', phone: '9123456784', company: 'Global Solutions Inc', pincode: '110001', status: 'pending', assignedCenter: null, reports: [] },
-            { id: '2_1', employeeName: 'Robert Wilson', employeeId: 'GS002', age: 41, gender: 'Male', phone: '9123456785', company: 'Global Solutions Inc', pincode: '110002', status: 'pending', assignedCenter: null, reports: [] }
-        ]
-    };
-    
-    uploadedFiles = [sampleFile1, sampleFile2];
-}
-
-// ===== Render Functions =====
-function renderAllTables() {
-    renderExcelFilesGrid();
-    renderConfirmationTable();
-    renderConfirmedTable();
-    renderReportsTable();
-    renderCentersTable();
-    renderCompaniesTable();
-    renderUploadHistory();
-    updateStats();
-}
-
-// ===== Excel Files Grid =====
 function renderExcelFilesGrid() {
-    const grid = document.getElementById('excel-files-grid');
-    const emptyState = document.getElementById('excel-empty');
-    const countBadge = document.getElementById('file-count-badge');
-    
-    countBadge.textContent = `${uploadedFiles.length} File${uploadedFiles.length !== 1 ? 's' : ''}`;
-    
-    if (uploadedFiles.length === 0) {
-        grid.style.display = 'none';
-        emptyState.style.display = 'flex';
-        return;
-    }
-    
-    grid.style.display = 'grid';
-    emptyState.style.display = 'none';
-    
-    // Sort files by upload date (newest first)
-    const sortedFiles = [...uploadedFiles].sort((a, b) => b.uploadTimestamp - a.uploadTimestamp);
-    
-    grid.innerHTML = sortedFiles.map(file => {
-        const pendingCount = file.employees.filter(e => e.status === 'pending').length;
-        const confirmedCount = file.employees.filter(e => e.status === 'confirmed').length;
-        
-        return `
-            <div class="excel-file-card ${selectedFileId === file.id ? 'selected' : ''}" onclick="openFileView(${file.id})">
-                <span class="excel-file-badge ${file.status}">${file.status === 'new' ? '🆕 New' : '✓ Processed'}</span>
-                <div class="excel-file-icon">📊</div>
-                <h3>${file.fileName}</h3>
-                <div class="excel-file-meta">
-                    <span>👥 ${file.records} employees</span>
-                    <span>📅 ${file.uploadDate}</span>
-                    <span>⏳ ${pendingCount} pending • ✅ ${confirmedCount} confirmed</span>
-                </div>
-                <div class="file-actions">
-                    <button class="btn btn-primary btn-sm" onclick="event.stopPropagation(); openFileView(${file.id})">
-                        View Data →
-                    </button>
-                    <button class="btn btn-danger btn-sm" onclick="event.stopPropagation(); deleteFile(${file.id})">
-                        🗑️
-                    </button>
-                </div>
-            </div>
-        `;
-    }).join('');
+  const grid = document.getElementById('excel-files-grid')
+  const emptyState = document.getElementById('excel-empty')
+  const countBadge = document.getElementById('file-count-badge')
+  countBadge.textContent = `${uploadedFiles.length} File${uploadedFiles.length !== 1 ? 's' : ''}`
+  if (uploadedFiles.length === 0) {
+    grid.style.display = 'none'
+    emptyState.style.display = 'flex'
+    return
+  }
+  grid.style.display = 'grid'
+  emptyState.style.display = 'none'
+  const sorted = [...uploadedFiles].sort((a, b) => b.uploadTimestamp - a.uploadTimestamp)
+  grid.innerHTML = sorted.map(file => {
+    const statusClass = file.status === 'approved' ? 'processed' : file.status === 'rejected' ? 'rejected' : 'new'
+    const statusLabel = file.status === 'approved' ? '✓ Approved' : file.status === 'rejected' ? '✗ Rejected' : '🆕 Pending'
+    return `
+      <div class="excel-file-card ${selectedFileId === file.id ? 'selected' : ''}" onclick="openFileView('${file.id}')">
+        <span class="excel-file-badge ${statusClass}">${statusLabel}</span>
+        <div class="excel-file-icon">📊</div>
+        <h3>${file.fileName}</h3>
+        <div class="excel-file-meta">
+          <span>👥 ${file.records} employees</span>
+          <span>📅 ${file.uploadDate}</span>
+          ${file.company ? `<span>🏢 ${file.company}</span>` : ''}
+          <span>⏳ ${file.pendingCount} pending • ✅ ${file.confirmedCount} confirmed</span>
+        </div>
+        <div class="file-actions">
+          <button class="btn btn-primary btn-sm" onclick="event.stopPropagation(); openFileView('${file.id}')">View Data →</button>
+        </div>
+      </div>
+    `
+  }).join('')
 }
 
-function openFileView(fileId) {
-    selectedFileId = fileId;
-    const file = uploadedFiles.find(f => f.id === fileId);
-    
-    if (!file) return;
-    
-    // Update file status to processed
-    file.status = 'processed';
-    
-    // Hide files grid, show selected file card
-    document.getElementById('selected-file-card').style.display = 'block';
-    document.getElementById('selected-file-name').textContent = file.fileName;
-    document.getElementById('selected-file-meta').textContent = `${file.records} records • Uploaded on ${file.uploadDate}`;
-    
-    // Render employees table
-    renderEmployeesTable(file);
-    
-    // Show center matching
-    renderCenterMatchingForFile(file);
-    
-    // Update the grid to show selected state
-    renderExcelFilesGrid();
+async function openFileView(fileId) {
+  selectedFileId = fileId
+  const file = uploadedFiles.find(f => f.id === fileId)
+  if (!file) return
+  document.getElementById('selected-file-card').style.display = 'block'
+  document.getElementById('selected-file-name').textContent = file.fileName
+  document.getElementById('selected-file-meta').textContent = `${file.records} records • Uploaded on ${file.uploadDate}`
+  document.getElementById('review-table-body').innerHTML =
+    `<tr><td colspan="12" style="text-align:center;padding:30px;color:var(--text-tertiary);">Loading...</td></tr>`
+  document.getElementById('center-matching-card').style.display = 'none'
+  try {
+    const res = await fetch(`${API_BASE}/admin/uploads/${fileId}/patients`)
+    const patients = await res.json()
+    file.employees = patients.map(normalisePatient)
+    renderEmployeesTable(file)
+    renderCenterMatchingForFile(file)
+  } catch (err) {
+    console.error("openFileView:", err)
+    showToast("Could not load employee data", "error")
+  }
+  renderExcelFilesGrid()
+
+  setTimeout(() => {
+    const card = document.getElementById('selected-file-card')
+    if (card) card.scrollIntoView({ behavior: 'smooth', block: 'start' })
+  }, 100)
 }
 
 function closeFileView() {
-    selectedFileId = null;
-    document.getElementById('selected-file-card').style.display = 'none';
-    document.getElementById('center-matching-card').style.display = 'none';
-    renderExcelFilesGrid();
+  selectedFileId = null
+  document.getElementById('selected-file-card').style.display = 'none'
+  document.getElementById('center-matching-card').style.display = 'none'
+  renderExcelFilesGrid()
+}
+
+function normalisePatient(p) {
+  const rawStatus = (p.status || "pending").toLowerCase()
+  return {
+    id: p._id,
+    employeeName: p.name || "",
+    employeeId: p.employeeId || "",
+    patientIdString: p.patientIdString || "",
+    testProfile: p.testProfile || "",
+    tests: p.tests || [],
+    fastingRequired: p.fastingRequired || false,
+    age: p.age || "",
+    gender: p.gender || "",
+    phone: p.phone || "",
+    email: p.email || "",
+    company: p.companyId ? p.companyId.name : "",
+    address: p.address || "",
+    pincode: p.pincode || "",
+    appointmentDate: p.appointmentDate || null,
+    appointmentTime: p.appointmentTime || "10:00",
+    status: rawStatus,
+    dateChangeRequest: p.dateChangeRequest || null,
+    assignedCenter: p.assignedCenterId ? {
+      id: p.assignedCenterId._id || p.assignedCenterId,
+      name: p.assignedCenterId.name || "",
+      phone: p.assignedCenterId.phone || "",
+      pincode: p.assignedCenterId.pincode || "",
+      address: p.assignedCenterId.address || ""
+    } : null,
+    reportUrls: p.reportUrls && p.reportUrls.length > 0
+      ? p.reportUrls
+      : (p.reportUrl ? [{ url: p.reportUrl, originalName: 'Report', uploadedAt: null }] : [])
+  }
 }
 
 function renderEmployeesTable(file) {
-    const tbody = document.getElementById('review-table-body');
-    
-    tbody.innerHTML = file.employees.map(emp => `
-        <tr>
-            <td>
-                <input type="checkbox" class="employee-checkbox" data-id="${emp.id}" ${emp.status === 'confirmed' ? 'disabled' : ''}>
-            </td>
-            <td><strong>${emp.employeeName}</strong></td>
-            <td><span class="badge badge-info">${emp.employeeId}</span></td>
-            <td>${emp.age}</td>
-            <td>${emp.gender}</td>
-            <td>${emp.phone}</td>
-            <td>${emp.company}</td>
-            <td><span class="badge badge-warning">${emp.pincode}</span></td>
-            <td>
-                <span class="badge badge-${emp.status === 'confirmed' ? 'success' : 'pending'}">
-                    ${emp.status === 'confirmed' ? '✅ Confirmed' : '⏳ Pending'}
-                </span>
-            </td>
-        </tr>
-    `).join('');
+  const tbody = document.getElementById('review-table-body')
+  tbody.innerHTML = file.employees.map(emp => {
+    const dcr = emp.dateChangeRequest
+    const displayDate = (dcr && dcr.status === 'approved' && dcr.requestedDate)
+      ? new Date(dcr.requestedDate).toLocaleDateString()
+      : (emp.appointmentDate ? new Date(emp.appointmentDate).toLocaleDateString() : 'Not assigned yet')
+
+    return `
+    <tr>
+      <td><input type="checkbox" class="employee-checkbox" data-id="${emp.id}" ${emp.status === 'confirmed' ? 'disabled' : ''}></td>
+      <td>
+        <strong>${emp.employeeName}</strong><br>
+        <span style="font-size:11px;color:#007bff;font-weight:600;">Pt ID: ${emp.patientIdString || '-'}</span><br>
+        ${emp.testProfile ? `<span style="font-size:11px;background:#e2e8f0;padding:2px 6px;border-radius:4px;color:#4a5568;">${emp.testProfile}</span>` : ''}
+      </td>
+      <td><span class="badge badge-info">${emp.employeeId || '-'}</span></td>
+      <td>${emp.age || '-'}</td>
+      <td>${emp.gender || '-'}</td>
+      <td>${emp.phone || '-'}</td>
+      <td>${emp.email || '-'}</td>
+      <td>${emp.company || '-'}</td>
+      <td>${emp.address || '-'}</td>
+      <td><span class="badge badge-warning">${emp.pincode || '-'}</span></td>
+      <td>
+  ${displayDate}<br>
+  <span style="font-size:12px;color:#555;">${emp.appointmentTime || "10:00"}</span>
+</td>
+      <td>
+        <span class="badge ${
+          emp.status === 'confirmed' ? 'badge-success'
+          : emp.status === 'rejected' ? 'badge-danger'
+          : emp.status === 'requested' ? 'badge-info'
+          : emp.status === 'approved' ? 'badge-warning'
+          : 'badge-pending'
+        }">
+          ${emp.status === 'confirmed' ? '✅ Confirmed'
+          : emp.status === 'rejected' ? '❌ Rejected'
+          : emp.status === 'requested' ? '📝 Requested'
+          : emp.status === 'approved' ? '👍 Approved'
+          : '⏳ Pending'}
+        </span>
+      </td>
+    </tr>
+  `}).join('')
 }
 
-function renderCenterMatchingForFile(file) {
-    const card = document.getElementById('center-matching-card');
-    const tbody = document.getElementById('center-matching-body');
-    
-    const pendingEmployees = file.employees.filter(emp => emp.status === 'pending');
-    
-    if (pendingEmployees.length === 0) {
-        card.style.display = 'none';
-        return;
-    }
-    
-    card.style.display = 'block';
-    
-    tbody.innerHTML = pendingEmployees.map(emp => {
-        const nearbyCenters = findNearbyCenters(emp.pincode);
-        return `
-            <tr>
-                <td><strong>${emp.employeeName}</strong></td>
-                <td><span class="badge badge-warning">${emp.pincode}</span></td>
-                <td>
-                    ${nearbyCenters[0] ? `
-                        <div class="center-info">
-                            <div class="center-name">${nearbyCenters[0].name}</div>
-                            <div class="center-phone">📞 ${nearbyCenters[0].phone}</div>
-                        </div>
-                    ` : '<span style="color: var(--text-tertiary);">No center found</span>'}
-                </td>
-                <td>
-                    ${nearbyCenters[1] ? `
-                        <div class="center-info">
-                            <div class="center-name">${nearbyCenters[1].name}</div>
-                            <div class="center-phone">📞 ${nearbyCenters[1].phone}</div>
-                        </div>
-                    ` : '<span style="color: var(--text-tertiary);">-</span>'}
-                </td>
-                <td>
-                    ${nearbyCenters[2] ? `
-                        <div class="center-info">
-                            <div class="center-name">${nearbyCenters[2].name}</div>
-                            <div class="center-phone">📞 ${nearbyCenters[2].phone}</div>
-                        </div>
-                    ` : '<span style="color: var(--text-tertiary);">-</span>'}
-                </td>
-                <td>
-                    <button class="btn btn-primary btn-sm" onclick="sendToConfirmation('${emp.id}')">
-                        Assign →
-                    </button>
-                </td>
-            </tr>
-        `;
-    }).join('');
+async function renderCenterMatchingForFile(file) {
+  const card = document.getElementById('center-matching-card')
+  const tbody = document.getElementById('center-matching-body')
+  const pendingEmployees = file.employees.filter(emp => emp.status === 'pending')
+  if (pendingEmployees.length === 0) { card.style.display = 'none'; return }
+  card.style.display = 'block'
+  tbody.innerHTML = `<tr><td colspan="7" style="text-align:center;padding:20px;color:var(--text-tertiary);">🔍 Finding nearby centres...</td></tr>`
+  const rows = await Promise.all(pendingEmployees.map(async (emp) => {
+    const nearby = await fetchNearbyCenters(emp.pincode, 3)
+    return { emp, nearby }
+  }))
+  tbody.innerHTML = rows.map(({ emp, nearby }) => `
+    <tr>
+      <td><strong>${emp.employeeName}</strong></td>
+      <td><span style="color:#999;font-size:0.85rem;">Not assigned yet</span></td>
+      <td><span class="badge badge-warning">${emp.pincode || '-'}</span></td>
+      <td>${renderCenterCell(nearby[0])}</td>
+      <td>${renderCenterCell(nearby[1])}</td>
+      <td>${renderCenterCell(nearby[2])}</td>
+      <td><button class="btn btn-primary btn-sm" onclick="document.querySelector('[data-tab=make-confirmation]').click()">Assign →</button></td>
+    </tr>
+  `).join('')
+}
+
+function renderCenterCell(center) {
+  if (!center) return '<span style="color:var(--text-tertiary);">-</span>'
+  return `<div class="center-info"><div class="center-name">${center.name}</div><div class="center-phone">📞 ${center.phone}</div></div>`
+}
+
+async function fetchNearbyCenters(pincode, limit = 3) {
+  if (!pincode || String(pincode).trim() === "") return []
+  try {
+    const res = await fetch(`${API_BASE}/admin/centers/nearby?pincode=${encodeURIComponent(pincode)}&limit=${limit}`)
+    const data = await res.json()
+    return Array.isArray(data) ? data : []
+  } catch (err) { console.error("fetchNearbyCenters:", err); return [] }
 }
 
 function toggleSelectAll(checkbox) {
-    const checkboxes = document.querySelectorAll('.employee-checkbox:not(:disabled)');
-    checkboxes.forEach(cb => cb.checked = checkbox.checked);
+  document.querySelectorAll('.employee-checkbox:not(:disabled)').forEach(cb => cb.checked = checkbox.checked)
 }
 
-function processAllEmployees() {
-    const file = uploadedFiles.find(f => f.id === selectedFileId);
-    if (!file) return;
-    
-    const pendingEmployees = file.employees.filter(emp => emp.status === 'pending');
-    
-    if (pendingEmployees.length === 0) {
-        showToast('No pending employees to process!', 'warning');
-        return;
+async function processAllEmployees() {
+  const file = uploadedFiles.find(f => f.id === selectedFileId)
+  if (!file) return
+  const pending = file.employees.filter(e => e.status === 'pending')
+  if (pending.length === 0) { showToast('No pending employees to process!', 'warning'); return }
+  showToast('Finding nearest centres for all employees...', 'success')
+  await Promise.all(pending.map(async (emp) => {
+    const nearby = await fetchNearbyCenters(emp.pincode, 1)
+    if (nearby.length > 0) emp._preselectedCenterId = String(nearby[0]._id)
+  }))
+  preselectedCenterMap = {}
+  pending.forEach(emp => { if (emp._preselectedCenterId) preselectedCenterMap[emp.id] = emp._preselectedCenterId })
+  await fetchAllPatientsForConfirmation()
+  showToast(`${pending.length} employees ready — nearest centre pre-selected!`, 'success')
+  document.querySelector('[data-tab="make-confirmation"]').click()
+}
+
+// =====================================================================
+// MAKE CONFIRMATION
+// =====================================================================
+
+async function fetchAllPatientsForConfirmation() {
+  try {
+    const res = await fetch(`${API_BASE}/admin/patients`)
+    const data = await res.json()
+    allPatients = data.map(normalisePatient)
+    renderConfirmationTable()
+    renderConfirmedTable()
+    updateStats()
+  } catch (err) {
+    console.error("fetchAllPatientsForConfirmation:", err)
+    showToast("Could not load patient data", "error")
+  }
+}
+
+async function renderConfirmationTable() {
+  const tbody = document.getElementById('confirmation-table-body')
+  const emptyState = document.getElementById('confirmation-empty')
+
+  const pending = allPatients.filter(emp => emp.status === 'pending')
+
+  if (pending.length === 0) {
+    tbody.innerHTML = ''
+    emptyState.style.display = 'flex'
+    return
+  }
+  emptyState.style.display = 'none'
+  tbody.innerHTML = `<tr><td colspan="7" style="text-align:center;padding:20px;
+    color:var(--text-tertiary);">🔍 Loading centres...</td></tr>`
+
+  const rows = await Promise.all(pending.map(async (emp) => {
+    const nearby = await fetchNearbyCenters(emp.pincode, 3)
+    return { emp, nearby }
+  }))
+
+  // Min date for appointment picker — tomorrow
+  const tomorrow = new Date()
+  tomorrow.setDate(tomorrow.getDate() + 1)
+  const minDateStr = `${tomorrow.getFullYear()}-${String(tomorrow.getMonth()+1).padStart(2,'0')}-${String(tomorrow.getDate()).padStart(2,'0')}`
+  tbody.innerHTML = rows.map(({ emp, nearby }) => {
+    const autoSelectId = preselectedCenterMap[emp.id] || (nearby.length > 0 ? String(nearby[0]._id) : '')
+
+    const dcr = emp.dateChangeRequest
+    let dcrBadge = ''
+    if (dcr && dcr.status === 'pending') {
+      dcrBadge = `<br><span style="font-size:11px;background:#fff3cd;color:#856404;
+        padding:1px 6px;border-radius:8px;white-space:nowrap;">
+        ⏳ Req: ${new Date(dcr.requestedDate).toLocaleDateString()}
+      </span>`
     }
+
+    const preFillDate = (dcr && dcr.requestedDate)
+      ? new Date(dcr.requestedDate).toISOString().split('T')[0]
+      : ''
+
+    return `
+      <tr>
+        <td>
+          <strong>${emp.employeeName}</strong><br>
+          <span style="font-size:11px;color:#007bff;font-weight:600;">Pt ID: ${emp.patientIdString || '-'}</span><br>
+          ${emp.testProfile ? `<span style="font-size:11px;background:#e2e8f0;padding:2px 6px;border-radius:4px;color:#4a5568;">${emp.testProfile}</span>` : ''}
+        </td>
+        <td>${emp.phone || '-'}</td>
+        <td>${emp.company || '-'}</td>
+        <td>${emp.pincode || '-'}</td>
+     <td style="white-space:nowrap;">
+  <div style="display:flex;flex-direction:column;gap:6px;">
     
-    showToast(`${pendingEmployees.length} employees ready for confirmation!`, 'success');
-    document.querySelector('[data-tab="make-confirmation"]').click();
+    <input type="date" 
+      id="date-${emp.id}" 
+      min="${minDateStr}" 
+      value="${preFillDate}"
+      style="width:150px;padding:6px;border:1px solid #ccc;border-radius:6px;">
+    
+    <input type="time"
+      id="time-${emp.id}"
+      value="${emp.appointmentTime || '10:00'}"
+      style="width:150px;padding:6px;border:1px solid #ccc;border-radius:6px;">
+  
+  </div>
+
+  ${dcrBadge}
+</td>
+
+<td>
+  <div style="display:flex;flex-direction:column;gap:4px;">
+    <select class="center-select" id="select-${emp.id}"
+      style="width:220px;padding:6px;border-radius:6px;border:1px solid #ccc;box-sizing:border-box;">
+      ${nearby.map(c =>
+        `<option value="${c._id}" ${String(c._id) === autoSelectId ? 'selected' : ''}>
+          ${c.name} (${c.pincode})
+        </option>`
+      ).join('')}
+    </select>
+    
+    <input type="text" id="tests-${emp.id}" 
+      value="${(emp.tests || []).join(', ')}" 
+      placeholder="Tests (comma separated)" 
+      style="width:220px;padding:6px;border-radius:6px;border:1px solid #ccc;box-sizing:border-box;"
+      title="Finalized list of tests">
+
+    <select id="fasting-${emp.id}" 
+      style="width:220px;padding:6px;border-radius:6px;border:1px solid #ccc;box-sizing:border-box;">
+      <option value="true" ${emp.fastingRequired ? 'selected' : ''}>Fasting Required (12 hours)</option>
+      <option value="false" ${!emp.fastingRequired ? 'selected' : ''}>Non-Fasting (No Fasting)</option>
+    </select>
+  </div>
+</td>
+        <td>
+          <button class="btn btn-success btn-sm"
+              onclick="confirmAssignment('${emp.id}')">✓ Confirm</button>
+          <button class="btn btn-danger btn-sm"
+              onclick="rejectPatient('${emp.id}')">✗ Reject</button>
+        </td>
+      </tr>
+    `
+  }).join('')
+
+  updateStats()
 }
 
-function sendToConfirmation(employeeId) {
-    showToast('Employee ready for center assignment!', 'success');
-    document.querySelector('[data-tab="make-confirmation"]').click();
+// =====================================================================
+// DATE CHANGE REQUESTS
+// =====================================================================
+
+async function fetchDateChangeRequests() {
+  try {
+    const res = await fetch(`${API_BASE}/admin/patients/date-change-requests`)
+    const data = await res.json()
+    dateChangeRequests = data.map(normalisePatient)
+    renderDateChangeRequestsTable()
+  } catch (err) {
+    console.error("fetchDateChangeRequests:", err)
+  }
 }
 
-function deleteFile(fileId) {
-    const file = uploadedFiles.find(f => f.id === fileId);
-    if (!file) return;
-    
-    if (confirm(`Are you sure you want to delete "${file.fileName}"?\nThis will remove all ${file.records} employee records.`)) {
-        uploadedFiles = uploadedFiles.filter(f => f.id !== fileId);
-        
-        if (selectedFileId === fileId) {
-            closeFileView();
-        }
-        
-        renderExcelFilesGrid();
-        renderUploadHistory();
-        renderConfirmationTable();
-        showToast('File deleted successfully!', 'success');
-    }
-}
+function renderDateChangeRequestsTable() {
+  const container = document.getElementById('date-change-requests-section')
+  if (!container) return
 
-function findNearbyCenters(pincode) {
-    const prefix = pincode.toString().substring(0, 3);
-    let matches = centersData.filter(c => c.pincode.startsWith(prefix));
-    
-    if (matches.length === 0) {
-        matches = centersData.slice(0, 3);
-    }
-    
-    return matches.slice(0, 3);
-}
+  if (dateChangeRequests.length === 0) {
+    container.innerHTML = ''
+    return
+  }
 
-// ===== Get All Employees =====
-function getAllEmployees() {
-    let allEmployees = [];
-    uploadedFiles.forEach(file => {
-        allEmployees = allEmployees.concat(file.employees);
-    });
-    return allEmployees;
-}
-
-// ===== Confirmation Table =====
-function renderConfirmationTable() {
-    const tbody = document.getElementById('confirmation-table-body');
-    const emptyState = document.getElementById('confirmation-empty');
-    
-    const allEmployees = getAllEmployees();
-    const pendingEmployees = allEmployees.filter(emp => emp.status === 'pending');
-    
-    if (pendingEmployees.length === 0) {
-        tbody.innerHTML = '';
-        emptyState.style.display = 'flex';
-        return;
-    }
-    
-    emptyState.style.display = 'none';
-    
-    tbody.innerHTML = pendingEmployees.map(emp => {
-        const nearbyCenters = findNearbyCenters(emp.pincode);
-        return `
+  container.innerHTML = `
+    <div class="card">
+      <div class="card-header">
+        <h2>📅 Date Change Requests</h2>
+        <span class="badge badge-warning">${dateChangeRequests.length} pending</span>
+      </div>
+      <div class="table-container">
+        <table class="data-table">
+          <thead>
             <tr>
-                <td><strong>${emp.employeeName}</strong></td>
-                <td>${emp.phone}</td>
-                <td>${emp.company}</td>
-                <td><span class="badge badge-warning">${emp.pincode}</span></td>
-                <td>
-                    <select class="center-select" id="select-${emp.id}">
-                        <option value="">Select a center...</option>
-                        ${nearbyCenters.map(c => `
-                            <option value="${c.id}">${c.name} (${c.pincode})</option>
-                        `).join('')}
-                        <option disabled>──────────</option>
-                        ${centersData.filter(c => !nearbyCenters.includes(c)).map(c => `
-                            <option value="${c.id}">${c.name} (${c.pincode})</option>
-                        `).join('')}
-                    </select>
-                </td>
-                <td>
-                    <button class="btn btn-success btn-sm" onclick="confirmAssignment('${emp.id}')">
-                        ✓ Confirm
-                    </button>
-                </td>
+              <th>Employee</th>
+              <th>Current Date</th>
+              <th>Requested Date</th>
+              <th>Requested By</th>
+              <th>Assign Center</th>
+              <th>Actions</th>
             </tr>
-        `;
-    }).join('');
-    
-    updateStats();
+          </thead>
+          <tbody>
+            ${dateChangeRequests.map(p => {
+              const dcr = p.dateChangeRequest
+             const currentDate = p.appointmentDate
+  ? `${new Date(p.appointmentDate).toLocaleDateString('en-IN')} (${p.appointmentTime || "10:00"})`
+  : 'Not assigned yet'
+              const requestedDate = dcr?.requestedDate
+                ? new Date(dcr.requestedDate).toLocaleDateString('en-IN') : '-'
+              const requestedBy = dcr ? (dcr.requestedByName || dcr.requestedBy) : '-'
+              const requestedAt = dcr?.requestedAt
+                ? new Date(dcr.requestedAt).toLocaleDateString('en-IN') : ''
+
+              const reqDateObj = dcr?.requestedDate ? new Date(dcr.requestedDate) : null
+              const hoursUntilReq = reqDateObj ? (reqDateObj - new Date()) / (1000 * 60 * 60) : 999
+              const canApprove = hoursUntilReq > 48
+              const centerId = `dcr-center-${p.id}`
+
+              return `
+                <tr>
+                  <td><strong>${p.employeeName}</strong><br><span style="font-size:12px;color:var(--text-tertiary);">${p.company || '-'}</span></td>
+                  <td>${currentDate}</td>
+                  <td><span style="color:var(--primary-color);font-weight:600;">${requestedDate}</span><br><span style="font-size:11px;color:var(--text-tertiary);">requested ${requestedAt}</span></td>
+                  <td><span class="badge badge-info" style="text-transform:capitalize;">${requestedBy}</span></td>
+                  <td>
+                    <select class="center-select" id="${centerId}" style="min-width:160px;max-width:200px;">
+                      <option value="">Loading...</option>
+                    </select>
+                  </td>
+                  <td>
+                    <div class="action-btns">
+                      ${canApprove
+                        ? `<button class="btn btn-success btn-sm" onclick="reviewDateRequest('${p.id}', 'approve', '${centerId}')">✓ Approve</button>`
+                        : `<button class="btn btn-secondary btn-sm" disabled style="opacity:0.4;cursor:not-allowed;" title="Requested date is less than 48 hours away">✓ Approve</button>`
+                      }
+                      <button class="btn btn-danger btn-sm" onclick="reviewDateRequest('${p.id}', 'reject', null)">✗ Reject</button>
+                    </div>
+                  </td>
+                </tr>
+              `
+            }).join('')}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  `
+
+  dateChangeRequests.forEach(async (p) => {
+    const selectEl = document.getElementById(`dcr-center-${p.id}`)
+    if (!selectEl) return
+    const nearby = await fetchNearbyCenters(p.pincode, 3)
+    const nearbyIds = new Set(nearby.map(c => String(c._id)))
+    const otherCenters = centersData.filter(c => !nearbyIds.has(String(c.id)))
+    const autoSelectId = nearby.length > 0 ? String(nearby[0]._id) : ''
+    selectEl.innerHTML = `
+      <option value="">Select a center...</option>
+      ${nearby.map(c =>
+        `<option value="${c._id}" ${String(c._id) === autoSelectId ? 'selected' : ''}>
+          ${c.name} (${c.pincode})
+        </option>`
+      ).join('')}
+      ${otherCenters.length > 0 ? `<option disabled>──── Other centres ────</option>` : ''}
+      ${otherCenters.map(c =>
+        `<option value="${c.id}">${c.name} (${c.pincode})</option>`
+      ).join('')}
+    `
+  })
 }
 
-function confirmAssignment(employeeId) {
-    const selectElement = document.getElementById(`select-${employeeId}`);
-    const centerId = selectElement.value;
-    
-    if (!centerId) {
-        showToast('Please select a center first!', 'warning');
-        return;
+async function reviewDateRequest(patientId, action, centerSelectId) {
+  try {
+    let centerId = null
+    if (action === 'approve') {
+      if (centerSelectId) {
+        const selectEl = document.getElementById(centerSelectId)
+        centerId = selectEl ? selectEl.value : null
+      }
+      if (!centerId) {
+        showToast('Please select a center before approving', 'warning')
+        return
+      }
     }
-    
-    // Find employee in uploaded files
-    let employee = null;
-    let file = null;
-    
-    for (const f of uploadedFiles) {
-        employee = f.employees.find(e => e.id === employeeId);
-        if (employee) {
-            file = f;
-            break;
-        }
+
+    const res = await fetch(`${API_BASE}/admin/patients/${patientId}/review-date`, {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ action, centerId })
+    })
+
+    if (!res.ok) {
+      const d = await res.json()
+      showToast(d.message || "Failed to review request", "error")
+      return
     }
-    
-    const center = centersData.find(c => c.id === parseInt(centerId));
-    
-    if (employee && center) {
-        employee.status = 'confirmed';
-        employee.assignedCenter = center;
-        
-        renderConfirmationTable();
-        renderConfirmedTable();
-        renderReportsTable();
-        updateStats();
-        
-        // Update file view if open
-        if (selectedFileId === file.id) {
-            renderEmployeesTable(file);
-            renderCenterMatchingForFile(file);
-        }
-        
-        showToast(`${employee.employeeName} assigned to ${center.name}!`, 'success');
+
+    showToast(
+      action === 'approve' ? 'Date change approved & patient confirmed!' : 'Date change request rejected.',
+      action === 'approve' ? 'success' : 'warning'
+    )
+
+    fetchAllPatientsForConfirmation()
+    fetchDateChangeRequests()
+  } catch (err) {
+    console.error("reviewDateRequest:", err)
+    showToast("Server error", "error")
+  }
+}
+
+async function confirmAssignment(patientId) {
+  const selectEl = document.getElementById(`select-${patientId}`)
+  const dateEl = document.getElementById(`date-${patientId}`)
+  const centerId = selectEl ? selectEl.value : ''
+  const timeEl = document.getElementById(`time-${patientId}`)
+  const time = timeEl ? timeEl.value : "10:00"
+
+  const appointmentDate = dateEl ? dateEl.value : ''
+  const appointmentTime = time
+
+  const testsEl = document.getElementById(`tests-${patientId}`)
+  const fastingEl = document.getElementById(`fasting-${patientId}`)
+
+  const tests = testsEl ? testsEl.value : ""
+  const fastingRequired = fastingEl ? (fastingEl.value === "true") : false
+
+  if (!centerId) { showToast('Please select a center first!', 'warning'); return }
+  if (!appointmentDate) { showToast('Please select an appointment date!', 'warning'); return }
+
+  try {
+    const res = await fetch(`${API_BASE}/admin/patients/${patientId}/assign`, {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ 
+        centerId, 
+        appointmentDate,
+        appointmentTime,
+        tests,
+        fastingRequired
+      })
+    })
+    if (!res.ok) throw new Error("Assignment failed")
+
+    const updated = await res.json()
+    const normUpdated = normalisePatient(updated)
+
+    const idx = allPatients.findIndex(p => p.id === patientId)
+    if (idx !== -1) allPatients[idx] = normUpdated
+
+    if (selectedFileId) {
+      const file = uploadedFiles.find(f => f.id === selectedFileId)
+      if (file) {
+        const ei = file.employees.findIndex(e => e.id === patientId)
+        if (ei !== -1) file.employees[ei] = normUpdated
+        renderEmployeesTable(file)
+        renderCenterMatchingForFile(file)
+      }
     }
+
+    delete preselectedCenterMap[patientId]
+
+    renderConfirmationTable()
+    renderConfirmedTable()
+    updateStats()
+    fetchDateChangeRequests()
+
+    showToast(`${normUpdated.employeeName} confirmed — appointment set for ${new Date(appointmentDate).toLocaleDateString()}!`, 'success')
+  } catch (err) {
+    console.error("confirmAssignment:", err)
+    showToast("Error assigning center", "error")
+  }
 }
 
 function renderConfirmedTable() {
-    const tbody = document.getElementById('confirmed-table-body');
-    const countBadge = document.getElementById('confirmed-count');
-    
-    const allEmployees = getAllEmployees();
-    const confirmedEmployees = allEmployees.filter(emp => emp.status === 'confirmed');
-    
-    countBadge.textContent = `${confirmedEmployees.length} Confirmed`;
-    
-    if (confirmedEmployees.length === 0) {
-        tbody.innerHTML = `
-            <tr>
-                <td colspan="5" style="text-align: center; padding: 40px; color: var(--text-tertiary);">
-                    No confirmed assignments yet
-                </td>
-            </tr>
-        `;
-        return;
-    }
-    
-    tbody.innerHTML = confirmedEmployees.map(emp => `
-        <tr>
-            <td><strong>${emp.employeeName}</strong></td>
-            <td><span class="badge badge-info">${emp.employeeId}</span></td>
-            <td>${emp.assignedCenter ? emp.assignedCenter.name : 'N/A'}</td>
-            <td>${emp.assignedCenter ? emp.assignedCenter.phone : 'N/A'}</td>
-            <td><span class="badge badge-success">✓ Confirmed</span></td>
-        </tr>
-    `).join('');
+  const tbody = document.getElementById('confirmed-table-body')
+  const countBadge = document.getElementById('confirmed-count')
+
+  const confirmed = allPatients.filter(emp => emp.status === 'confirmed')
+  countBadge.textContent = `${confirmed.length} Confirmed`
+
+  if (confirmed.length === 0) {
+    tbody.innerHTML = `<tr><td colspan="6" style="text-align:center;padding:40px;
+      color:var(--text-tertiary);">No confirmed assignments yet</td></tr>`
+    return
+  }
+
+  tbody.innerHTML = confirmed.map(emp => `
+    <tr>
+      <td><strong>${emp.employeeName}</strong></td>
+      <td><span class="badge badge-info">${emp.id.toString().slice(-6)}</span></td>
+      <td>${emp.assignedCenter ? emp.assignedCenter.name : 'N/A'}</td>
+      <td>${emp.assignedCenter ? emp.assignedCenter.phone : 'N/A'}</td>
+      <td>
+  ${emp.appointmentDate 
+    ? `${new Date(emp.appointmentDate).toLocaleDateString('en-IN')}<br>
+       <span style="font-size:12px;color:#555;">${emp.appointmentTime || "10:00"}</span>`
+    : '<span style="color:#999;">Not assigned yet</span>'}
+</td>
+      <td><span class="badge badge-success">✓ Confirmed</span></td>
+    </tr>
+  `).join('')
 }
 
 function updateStats() {
-    const allEmployees = getAllEmployees();
-    const pendingCount = allEmployees.filter(emp => emp.status === 'pending').length;
-    const confirmedCount = allEmployees.filter(emp => emp.status === 'confirmed').length;
-    const totalCount = allEmployees.length;
-    
-    document.getElementById('pending-count').textContent = pendingCount;
-    document.getElementById('confirmed-count-stat').textContent = confirmedCount;
-    document.getElementById('total-count').textContent = totalCount;
+  const confirmed = allPatients.filter(e => e.status === 'confirmed').length
+  const pending = allPatients.filter(e => e.status === 'pending').length
+  document.getElementById('pending-count').textContent = pending
+  document.getElementById('confirmed-count-stat').textContent = confirmed
+  document.getElementById('total-count').textContent = allPatients.length
 }
 
-// ===== Reports Table =====
+// =====================================================================
+// REPORTS
+// =====================================================================
+
+async function fetchConfirmedPatientsForReports() {
+  try {
+    const res = await fetch(`${API_BASE}/admin/patients`)
+    const data = await res.json()
+    confirmedPatientsForReports = data.filter(p => p.status === "confirmed").map(normalisePatient)
+    renderReportsTable()
+  } catch (err) {
+    console.error("fetchConfirmedPatientsForReports:", err)
+    showToast("Could not load reports data", "error")
+  }
+}
+
 function renderReportsTable() {
-    const tbody = document.getElementById('reports-table-body');
-    const emptyState = document.getElementById('reports-empty');
-    
-    const allEmployees = getAllEmployees();
-    const confirmedEmployees = allEmployees.filter(emp => emp.status === 'confirmed');
-    
-    if (confirmedEmployees.length === 0) {
-        tbody.innerHTML = '';
-        emptyState.style.display = 'flex';
-        return;
-    }
-    
-    emptyState.style.display = 'none';
-    
-    tbody.innerHTML = confirmedEmployees.map(emp => `
-        <tr>
-            <td><strong>${emp.employeeName}</strong></td>
-            <td><span class="badge badge-info">${emp.employeeId}</span></td>
-            <td>${emp.company}</td>
-            <td>${emp.assignedCenter ? emp.assignedCenter.name : 'N/A'}</td>
-            <td>
-                <div class="file-upload-cell">
-                    <label class="file-input-label">
-                        📎 Upload PDF
-                        <input type="file" accept=".pdf" multiple onchange="handleReportUpload('${emp.id}', this.files)">
-                    </label>
-                </div>
-            </td>
-            <td>
-                ${emp.reports && emp.reports.length > 0 ? `
-                    <button class="btn btn-sm btn-secondary" onclick="viewReports('${emp.id}')">
-                        📁 View (${emp.reports.length})
-                    </button>
-                ` : '<span style="color: var(--text-tertiary);">No reports</span>'}
-            </td>
-        </tr>
-    `).join('');
+  const tbody = document.getElementById('reports-table-body')
+  const emptyState = document.getElementById('reports-empty')
+  if (confirmedPatientsForReports.length === 0) {
+    tbody.innerHTML = ''; emptyState.style.display = 'flex'; return
+  }
+  emptyState.style.display = 'none'
+  tbody.innerHTML = confirmedPatientsForReports.map(emp => `
+    <tr>
+      <td><strong>${emp.employeeName}</strong></td>
+      <td><span class="badge badge-info">${emp.id.toString().slice(-6)}</span></td>
+      <td>${emp.company}</td>
+      <td>${emp.assignedCenter ? emp.assignedCenter.name : 'N/A'}</td>
+      <td>
+        <div class="file-upload-cell">
+          <label class="file-input-label">📎 Upload PDF<input type="file" accept=".pdf" onchange="handleReportUpload('${emp.id}', this)"></label>
+        </div>
+      </td>
+      <td>
+        ${emp.reportUrls && emp.reportUrls.length > 0 ? `
+          <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
+            <select class="center-select" id="report-select-${emp.id}" style="min-width:150px;font-size:12px;padding:6px 8px;">
+              ${emp.reportUrls.map((r, i) => `<option value="${r.url}">${r.originalName || 'Report ' + (i + 1)}</option>`).join('')}
+            </select>
+            <button class="btn btn-sm btn-secondary" onclick="viewSelectedReport('${emp.id}')">👁 View</button>
+            <button class="btn btn-sm btn-danger" onclick="removeSelectedReport('${emp.id}')">🗑 Remove</button>
+            <span class="badge badge-info">${emp.reportUrls.length} file${emp.reportUrls.length > 1 ? 's' : ''}</span>
+          </div>` : '<span style="color:var(--text-tertiary);">No reports</span>'}
+      </td>
+    </tr>
+  `).join('')
 }
 
-function handleReportUpload(employeeId, files) {
-    let employee = null;
-    
-    for (const file of uploadedFiles) {
-        employee = file.employees.find(e => e.id === employeeId);
-        if (employee) break;
-    }
-    
-    if (employee && files.length > 0) {
-        if (!employee.reports) {
-            employee.reports = [];
-        }
-        
-        Array.from(files).forEach(file => {
-            employee.reports.push({
-                name: file.name,
-                uploadedAt: new Date().toLocaleString(),
-                size: formatFileSize(file.size)
-            });
-        });
-        
-        renderReportsTable();
-        showToast(`${files.length} report(s) uploaded for ${employee.employeeName}!`, 'success');
-    }
+async function handleReportUpload(patientId, inputEl) {
+  const file = inputEl.files[0]
+  if (!file) return
+  const formData = new FormData()
+  formData.append("report", file)
+  try {
+    const res = await fetch(`${API_BASE}/admin/patients/${patientId}/report`, { method: "POST", body: formData })
+    if (!res.ok) throw new Error("Upload failed")
+    const data = await res.json()
+    const idx = confirmedPatientsForReports.findIndex(p => p.id === patientId)
+    if (idx !== -1) confirmedPatientsForReports[idx].reportUrls.push(data.reportEntry)
+    renderReportsTable()
+    showToast(`Report "${file.name}" uploaded successfully!`, 'success')
+  } catch (err) { console.error("handleReportUpload:", err); showToast("Error uploading report", "error") }
 }
 
-function viewReports(employeeId) {
-    let employee = null;
-    
-    for (const file of uploadedFiles) {
-        employee = file.employees.find(e => e.id === employeeId);
-        if (employee) break;
-    }
-    
-    const reportsList = document.getElementById('reports-list');
-    
-    if (employee && employee.reports && employee.reports.length > 0) {
-        reportsList.innerHTML = `
-            <h4 style="margin-bottom: 16px; color: var(--text-secondary);">Reports for ${employee.employeeName}</h4>
-            ${employee.reports.map(report => `
-                <div class="report-item">
-                    <div class="report-info">
-                        <span class="report-icon">📄</span>
-                        <div>
-                            <div class="report-name">${report.name}</div>
-                            <div class="report-date">${report.uploadedAt} • ${report.size}</div>
-                        </div>
-                    </div>
-                    <button class="btn btn-sm btn-primary">Download</button>
-                </div>
-            `).join('')}
-        `;
-    } else {
-        reportsList.innerHTML = '<p style="text-align: center; color: var(--text-tertiary);">No reports uploaded</p>';
-    }
-    
-    openModal('reports-modal');
+function viewSelectedReport(patientId) {
+  const select = document.getElementById(`report-select-${patientId}`)
+  if (!select || !select.value) return
+  window.open(`https://healthllink-website-1.onrender.com${select.value}`, '_blank')
 }
 
-// ===== Upload History =====
-function renderUploadHistory() {
-    const tbody = document.getElementById('upload-history-body');
-    
-    if (uploadedFiles.length === 0) {
-        tbody.innerHTML = `
-            <tr>
-                <td colspan="5" style="text-align: center; padding: 40px; color: var(--text-tertiary);">
-                    No upload history yet
-                </td>
-            </tr>
-        `;
-        return;
-    }
-    
-    const sortedFiles = [...uploadedFiles].sort((a, b) => b.uploadTimestamp - a.uploadTimestamp);
-    
-    tbody.innerHTML = sortedFiles.map(file => `
-        <tr>
-            <td><strong>${file.fileName}</strong></td>
-            <td>${file.uploadDate}</td>
-            <td>${file.records}</td>
-            <td><span class="badge badge-success">✓ Success</span></td>
-            <td>
-                <div class="action-btns">
-                    <button class="btn btn-sm btn-secondary" onclick="document.querySelector('[data-tab=review-requests]').click(); setTimeout(() => openFileView(${file.id}), 100);">
-                        View
-                    </button>
-                    <button class="btn btn-sm btn-danger" onclick="deleteFile(${file.id})">
-                        Delete
-                    </button>
-                </div>
-            </td>
-        </tr>
-    `).join('');
+async function removeSelectedReport(patientId) {
+  const select = document.getElementById(`report-select-${patientId}`)
+  if (!select || !select.value) return
+  if (!confirm('Remove this report?')) return
+  const reportUrl = select.value
+  try {
+    const res = await fetch(`${API_BASE}/admin/patients/${patientId}/report`, {
+      method: "DELETE",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ reportUrl })
+    })
+    if (!res.ok) throw new Error("Delete failed")
+    const idx = confirmedPatientsForReports.findIndex(p => p.id === patientId)
+    if (idx !== -1) confirmedPatientsForReports[idx].reportUrls = confirmedPatientsForReports[idx].reportUrls.filter(r => r.url !== reportUrl)
+    renderReportsTable()
+    showToast('Report removed successfully!', 'success')
+  } catch (err) { console.error("removeSelectedReport:", err); showToast("Error removing report", "error") }
 }
 
-// ===== Centers Table =====
+// =====================================================================
+// CENTERS
+// =====================================================================
+
+async function fetchCenters() {
+  try {
+    const res = await fetch(API_BASE + "/admin/centers")
+    const data = await res.json()
+    centersData = data.map(c => ({ id: c._id, name: c.name, email: c.email || "", phone: c.phone || "", address: c.address || "", pincode: c.pincode || "" }))
+    renderCentersTable()
+  } catch (err) { console.error(err) }
+}
+
 function renderCentersTable() {
-    const tbody = document.getElementById('centers-table-body');
-    
-    if (centersData.length === 0) {
-        tbody.innerHTML = `
-            <tr>
-                <td colspan="6" style="text-align: center; padding: 40px; color: var(--text-tertiary);">
-                    No centers added yet. Click "+ Add Center" to get started.
-                </td>
-            </tr>
-        `;
-        return;
-    }
-    
-    tbody.innerHTML = centersData.map(center => `
-        <tr>
-            <td><strong>${center.name}</strong></td>
-            <td>${center.email}</td>
-            <td>${center.phone}</td>
-            <td>${center.address}</td>
-            <td><span class="badge badge-info">${center.pincode}</span></td>
-            <td>
-                <div class="action-btns">
-                    <button class="btn btn-sm btn-secondary" onclick="editCenter(${center.id})">✏️</button>
-                    <button class="btn btn-sm btn-danger" onclick="deleteCenter(${center.id})">🗑️</button>
-                </div>
-            </td>
-        </tr>
-    `).join('');
+  const tbody = document.getElementById('centers-table-body')
+  if (centersData.length === 0) {
+    tbody.innerHTML = `<tr><td colspan="6" style="text-align:center;padding:40px;color:var(--text-tertiary);">No centers added yet.</td></tr>`
+    return
+  }
+  tbody.innerHTML = centersData.map(center => `
+    <tr>
+      <td><strong>${center.name}</strong></td>
+      <td>${center.email}</td><td>${center.phone}</td><td>${center.address}</td>
+      <td><span class="badge badge-info">${center.pincode}</span></td>
+      <td><div class="action-btns">
+        <button class="btn btn-sm btn-secondary" onclick="editCenter('${center.id}')">✏️</button>
+        <button class="btn btn-sm btn-danger" onclick="deleteCenter('${center.id}')">🗑️</button>
+      </div></td>
+    </tr>
+  `).join('')
 }
 
-// ===== Companies Table =====
-function renderCompaniesTable() {
-    const tbody = document.getElementById('companies-table-body');
-    
-    if (companiesData.length === 0) {
-        tbody.innerHTML = `
-            <tr>
-                <td colspan="6" style="text-align: center; padding: 40px; color: var(--text-tertiary);">
-                    No companies added yet. Click "+ Add Company" to get started.
-                </td>
-            </tr>
-        `;
-        return;
-    }
-    
-    tbody.innerHTML = companiesData.map(company => `
-        <tr>
-            <td><strong>${company.name}</strong></td>
-            <td>${company.address}</td>
-            <td>${company.email}</td>
-            <td>${company.phone}</td>
-            <td><span class="badge badge-info">${company.pincode}</span></td>
-            <td>
-                <div class="action-btns">
-                    <button class="btn btn-sm btn-secondary" onclick="editCompany(${company.id})">✏️</button>
-                    <button class="btn btn-sm btn-danger" onclick="deleteCompany(${company.id})">🗑️</button>
-                </div>
-            </td>
-        </tr>
-    `).join('');
+async function saveCenter(event) {
+  event.preventDefault()
+  const center = {
+    name: document.getElementById('center-name').value, email: document.getElementById('center-email').value,
+    phone: document.getElementById('center-phone').value, address: document.getElementById('center-address').value,
+    pincode: document.getElementById('center-pincode').value
+  }
+  try {
+    const res = await fetch(API_BASE + "/admin/centers", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(center) })
+    const data = await res.json()
+    centersData.push({ id: data._id, name: data.name, email: data.email || "", phone: data.phone || "", address: data.address || "", pincode: data.pincode || "" })
+    renderCentersTable(); closeModal('center-modal'); showToast("Center added successfully!", "success")
+  } catch (err) { showToast("Error adding center", "error") }
 }
 
-// ===== Modal Functions =====
-function openModal(modalId) {
-    document.getElementById(modalId).classList.add('active');
-    document.body.style.overflow = 'hidden';
-}
-
-function closeModal(modalId) {
-    document.getElementById(modalId).classList.remove('active');
-    document.body.style.overflow = '';
-    
-    const form = document.getElementById(modalId.replace('-modal', '-form'));
-    if (form) {
-        form.reset();
-    }
-}
-
-// Close modal on outside click
-document.querySelectorAll('.modal').forEach(modal => {
-    modal.addEventListener('click', (e) => {
-        if (e.target === modal) {
-            closeModal(modal.id);
-        }
-    });
-});
-
-// Close modal on Escape key
-document.addEventListener('keydown', (e) => {
-    if (e.key === 'Escape') {
-        document.querySelectorAll('.modal.active').forEach(modal => {
-            closeModal(modal.id);
-        });
-    }
-});
-
-// ===== Save Functions =====
-function saveCenter(event) {
-    event.preventDefault();
-    
-    const center = {
-        id: Date.now(),
-        name: document.getElementById('center-name').value,
-        email: document.getElementById('center-email').value,
-        phone: document.getElementById('center-phone').value,
-        address: document.getElementById('center-address').value,
-        pincode: document.getElementById('center-pincode').value
-    };
-    
-    centersData.push(center);
-    renderCentersTable();
-    closeModal('center-modal');
-    showToast('Center added successfully!', 'success');
-}
-
-function saveCompany(event) {
-    event.preventDefault();
-    
-    const company = {
-        id: Date.now(),
-        name: document.getElementById('company-name').value,
-        address: document.getElementById('company-address').value,
-        email: document.getElementById('company-email').value,
-        phone: document.getElementById('company-phone').value,
-        pincode: document.getElementById('company-pincode').value
-    };
-    
-    companiesData.push(company);
-    renderCompaniesTable();
-    closeModal('company-modal');
-    showToast('Company added successfully!', 'success');
-}
-
-// ===== Delete Functions =====
-function deleteCenter(id) {
-    if (confirm('Are you sure you want to delete this center?')) {
-        centersData = centersData.filter(c => c.id !== id);
-        renderCentersTable();
-        showToast('Center deleted successfully!', 'success');
-    }
-}
-
-function deleteCompany(id) {
-    if (confirm('Are you sure you want to delete this company?')) {
-        companiesData = companiesData.filter(c => c.id !== id);
-        renderCompaniesTable();
-        showToast('Company deleted successfully!', 'success');
-    }
-}
-
-// ===== Edit Functions =====
 function editCenter(id) {
-    const center = centersData.find(c => c.id === id);
-    if (center) {
-        document.getElementById('center-name').value = center.name;
-        document.getElementById('center-email').value = center.email;
-        document.getElementById('center-phone').value = center.phone;
-        document.getElementById('center-address').value = center.address;
-        document.getElementById('center-pincode').value = center.pincode;
-        
-        centersData = centersData.filter(c => c.id !== id);
-        
-        openModal('center-modal');
-    }
+  const c = centersData.find(x => x.id === id)
+  if (c) {
+    document.getElementById('center-name').value = c.name; document.getElementById('center-email').value = c.email
+    document.getElementById('center-phone').value = c.phone; document.getElementById('center-address').value = c.address
+    document.getElementById('center-pincode').value = c.pincode
+    centersData = centersData.filter(x => x.id !== id); openModal('center-modal')
+  }
+}
+
+function deleteCenter(id) {
+  if (confirm('Are you sure you want to delete this center?')) {
+    centersData = centersData.filter(c => c.id !== id); renderCentersTable(); showToast('Center deleted successfully!', 'success')
+  }
+}
+
+// =====================================================================
+// COMPANIES
+// =====================================================================
+
+async function fetchCompanies() {
+  try {
+    const res = await fetch(API_BASE + "/admin/companies")
+    const data = await res.json()
+    companiesData = data.map(c => ({ id: c._id, name: c.name, address: c.address || "", email: c.email || "", phone: c.phone || "", pincode: c.pincode || "" }))
+    renderCompaniesTable()
+  } catch (err) { console.error(err) }
+}
+
+function renderCompaniesTable() {
+  const tbody = document.getElementById('companies-table-body')
+  if (companiesData.length === 0) {
+    tbody.innerHTML = `<tr><td colspan="6" style="text-align:center;padding:40px;color:var(--text-tertiary);">No companies added yet.</td></tr>`
+    return
+  }
+  tbody.innerHTML = companiesData.map(company => `
+    <tr>
+      <td><strong>${company.name}</strong></td>
+      <td>${company.address}</td><td>${company.email}</td><td>${company.phone}</td>
+      <td><span class="badge badge-info">${company.pincode}</span></td>
+      <td><div class="action-btns">
+        <button class="btn btn-sm btn-secondary" onclick="editCompany('${company.id}')">✏️</button>
+        <button class="btn btn-sm btn-danger" onclick="deleteCompany('${company.id}')">🗑️</button>
+      </div></td>
+    </tr>
+  `).join('')
+}
+
+async function saveCompany(event) {
+  event.preventDefault()
+  const company = {
+    name: document.getElementById('company-name').value, address: document.getElementById('company-address').value,
+    email: document.getElementById('company-email').value, phone: document.getElementById('company-phone').value,
+    pincode: document.getElementById('company-pincode').value
+  }
+  try {
+    const res = await fetch(API_BASE + "/admin/companies", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(company) })
+    const data = await res.json()
+    companiesData.push({ id: data._id, name: data.name, address: data.address || "", email: data.email || "", phone: data.phone || "", pincode: data.pincode || "" })
+    renderCompaniesTable(); closeModal('company-modal'); showToast("Company added successfully!", "success")
+  } catch (err) { showToast("Error adding company", "error") }
 }
 
 function editCompany(id) {
-    const company = companiesData.find(c => c.id === id);
-    if (company) {
-        document.getElementById('company-name').value = company.name;
-        document.getElementById('company-address').value = company.address;
-        document.getElementById('company-email').value = company.email;
-        document.getElementById('company-phone').value = company.phone;
-        document.getElementById('company-pincode').value = company.pincode;
-        
-        companiesData = companiesData.filter(c => c.id !== id);
-        
-        openModal('company-modal');
-    }
+  const c = companiesData.find(x => x.id === id)
+  if (c) {
+    document.getElementById('company-name').value = c.name; document.getElementById('company-address').value = c.address
+    document.getElementById('company-email').value = c.email; document.getElementById('company-phone').value = c.phone
+    document.getElementById('company-pincode').value = c.pincode
+    companiesData = companiesData.filter(x => x.id !== id); openModal('company-modal')
+  }
 }
 
-// ===== Table Functions =====
+function deleteCompany(id) {
+  if (confirm('Are you sure you want to delete this company?')) {
+    companiesData = companiesData.filter(c => c.id !== id); renderCompaniesTable(); showToast('Company deleted successfully!', 'success')
+  }
+}
+
+// =====================================================================
+// HR
+// =====================================================================
+
+function populateCompanyDropdown() {
+  const select = document.getElementById("hr-company")
+  select.innerHTML = companiesData.map(c => `<option value="${c.id}">${c.name}</option>`).join("")
+}
+
+async function createHR(event) {
+  event.preventDefault()
+  const hr = {
+    name: document.getElementById("hr-name").value, email: document.getElementById("hr-email").value,
+    password: document.getElementById("hr-password").value, companyId: document.getElementById("hr-company").value
+  }
+  try {
+    await fetch(API_BASE + "/hr/create", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(hr) })
+    closeModal("hr-modal"); showToast("HR account created successfully", "success")
+  } catch (err) { showToast("Error creating HR", "error") }
+}
+
+// =====================================================================
+// PROFILES
+// =====================================================================
+
+async function fetchProfiles() {
+  try {
+    const res = await fetch(API_BASE + "/admin/profiles")
+    if (!res.ok) throw new Error("Failed to fetch profiles")
+    const data = await res.json()
+    profilesData = data.map(p => ({
+      id: p._id,
+      name: p.name,
+      tests: p.tests || [],
+      fastingRequired: p.fastingRequired
+    }))
+    renderProfilesTable()
+  } catch (err) {
+    console.error("fetchProfiles:", err)
+    showToast("Error loading profiles", "error")
+  }
+}
+
+function renderProfilesTable() {
+  const tbody = document.getElementById('profiles-table-body')
+  if (!tbody) return
+  if (profilesData.length === 0) {
+    tbody.innerHTML = `<tr><td colspan="4" style="text-align:center;padding:40px;color:var(--text-tertiary);">No profiles added yet.</td></tr>`
+    return
+  }
+  tbody.innerHTML = profilesData.map(profile => `
+    <tr>
+      <td><strong>${profile.name}</strong></td>
+      <td>${profile.tests.join(', ')}</td>
+      <td>
+        <span class="badge ${profile.fastingRequired ? 'badge-warning' : 'badge-success'}">
+          ${profile.fastingRequired ? '⚠️ Fasting (12 hrs)' : '🟢 Non-Fasting'}
+        </span>
+      </td>
+      <td>
+        <div class="action-btns">
+          <button class="btn btn-sm btn-secondary" onclick="editProfile('${profile.id}')">✏️</button>
+          <button class="btn btn-sm btn-danger" onclick="deleteProfile('${profile.id}')">🗑️</button>
+        </div>
+      </td>
+    </tr>
+  `).join('')
+}
+
+function openProfileAddModal() {
+  document.getElementById('profile-id').value = ''
+  document.getElementById('profile-modal-title').textContent = 'Add New Profile'
+  document.getElementById('profile-form').reset()
+  openModal('profile-modal')
+}
+
+async function saveProfile(event) {
+  event.preventDefault()
+  const id = document.getElementById('profile-id').value
+  const name = document.getElementById('profile-name').value
+  const testsRaw = document.getElementById('profile-tests').value
+  const fastingRequired = document.getElementById('profile-fasting').value === "true"
+
+  const payload = { name, tests: testsRaw, fastingRequired }
+
+  try {
+    let res
+    if (id) {
+      res = await fetch(`${API_BASE}/admin/profiles/${id}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload)
+      })
+    } else {
+      res = await fetch(`${API_BASE}/admin/profiles`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload)
+      })
+    }
+
+    if (!res.ok) {
+      const errData = await res.json()
+      throw new Error(errData.message || "Failed to save profile")
+    }
+
+    showToast(id ? "Profile updated successfully!" : "Profile added successfully!", "success")
+    closeModal('profile-modal')
+    fetchProfiles()
+  } catch (err) {
+    console.error("saveProfile:", err)
+    showToast(err.message || "Error saving profile", "error")
+  }
+}
+
+function editProfile(id) {
+  const p = profilesData.find(x => x.id === id)
+  if (p) {
+    document.getElementById('profile-id').value = p.id
+    document.getElementById('profile-modal-title').textContent = 'Edit Profile'
+    document.getElementById('profile-name').value = p.name
+    document.getElementById('profile-tests').value = p.tests.join(', ')
+    document.getElementById('profile-fasting').value = String(p.fastingRequired)
+    openModal('profile-modal')
+  }
+}
+
+async function deleteProfile(id) {
+  if (confirm('Are you sure you want to delete this profile?')) {
+    try {
+      const res = await fetch(`${API_BASE}/admin/profiles/${id}`, {
+        method: "DELETE"
+      })
+      if (!res.ok) throw new Error("Delete failed")
+      showToast('Profile deleted successfully!', 'success')
+      fetchProfiles()
+    } catch (err) {
+      console.error("deleteProfile:", err)
+      showToast("Error deleting profile", "error")
+    }
+  }
+}
+
+// =====================================================================
+// MODALS
+// =====================================================================
+
+function openModal(modalId) {
+  document.getElementById(modalId).classList.add('active')
+  document.body.style.overflow = 'hidden'
+  if (modalId === "hr-modal") populateCompanyDropdown()
+}
+
+function closeModal(modalId) {
+  document.getElementById(modalId).classList.remove('active')
+  document.body.style.overflow = ''
+  const form = document.getElementById(modalId.replace('-modal', '-form'))
+  if (form) form.reset()
+}
+
+document.querySelectorAll('.modal').forEach(modal => {
+  modal.addEventListener('click', (e) => { if (e.target === modal) closeModal(modal.id) })
+})
+
+document.addEventListener('keydown', (e) => {
+  if (e.key === 'Escape') document.querySelectorAll('.modal.active').forEach(m => closeModal(m.id))
+})
+
+// =====================================================================
+// TABLE UTILITIES
+// =====================================================================
+
 function sortTable(tableId, columnIndex) {
-    const table = document.getElementById(tableId);
-    const tbody = table.querySelector('tbody');
-    const rows = Array.from(tbody.querySelectorAll('tr'));
-    
-    if (rows.length === 0 || rows[0].cells.length <= columnIndex) return;
-    
-    const isAscending = table.dataset.sortColumn !== String(columnIndex) || table.dataset.sortDirection !== 'asc';
-    
-    rows.sort((a, b) => {
-        const aValue = a.cells[columnIndex]?.textContent.trim().toLowerCase() || '';
-        const bValue = b.cells[columnIndex]?.textContent.trim().toLowerCase() || '';
-        
-        const aNum = parseFloat(aValue);
-        const bNum = parseFloat(bValue);
-        
-        if (!isNaN(aNum) && !isNaN(bNum)) {
-            return isAscending ? aNum - bNum : bNum - aNum;
-        }
-        
-        return isAscending ? aValue.localeCompare(bValue) : bValue.localeCompare(aValue);
-    });
-    
-    table.dataset.sortColumn = columnIndex;
-    table.dataset.sortDirection = isAscending ? 'asc' : 'desc';
-    
-    rows.forEach(row => tbody.appendChild(row));
+  const table = document.getElementById(tableId)
+  const tbody = table.querySelector('tbody')
+  const rows = Array.from(tbody.querySelectorAll('tr'))
+  if (rows.length === 0 || rows[0].cells.length <= columnIndex) return
+  const isAsc = table.dataset.sortColumn !== String(columnIndex) || table.dataset.sortDirection !== 'asc'
+  rows.sort((a, b) => {
+    const av = a.cells[columnIndex]?.textContent.trim().toLowerCase() || ''
+    const bv = b.cells[columnIndex]?.textContent.trim().toLowerCase() || ''
+    const an = parseFloat(av); const bn = parseFloat(bv)
+    if (!isNaN(an) && !isNaN(bn)) return isAsc ? an - bn : bn - an
+    return isAsc ? av.localeCompare(bv) : bv.localeCompare(av)
+  })
+  table.dataset.sortColumn = columnIndex
+  table.dataset.sortDirection = isAsc ? 'asc' : 'desc'
+  rows.forEach(row => tbody.appendChild(row))
 }
 
 function searchTable(tableId, searchTerm) {
-    const table = document.getElementById(tableId);
-    const tbody = table.querySelector('tbody');
-    const rows = tbody.querySelectorAll('tr');
-    
-    const term = searchTerm.toLowerCase();
-    
-    rows.forEach(row => {
-        const text = row.textContent.toLowerCase();
-        row.style.display = text.includes(term) ? '' : 'none';
-    });
+  const table = document.getElementById(tableId)
+  const rows = table.querySelector('tbody').querySelectorAll('tr')
+  const term = searchTerm.toLowerCase()
+  rows.forEach(row => { row.style.display = row.textContent.toLowerCase().includes(term) ? '' : 'none' })
 }
 
-// ===== Toast Notification =====
+// =====================================================================
+// TOAST
+// =====================================================================
+
 function showToast(message, type = 'success') {
-    const toast = document.getElementById('toast');
-    const toastMessage = toast.querySelector('.toast-message');
-    const toastIcon = toast.querySelector('.toast-icon');
-    
-    toast.className = 'toast';
-    toast.classList.add(type);
-    
-    switch(type) {
-        case 'success':
-            toastIcon.textContent = '✓';
-            break;
-        case 'error':
-            toastIcon.textContent = '✕';
-            break;
-        case 'warning':
-            toastIcon.textContent = '⚠';
-            break;
-        default:
-            toastIcon.textContent = 'ℹ';
-    }
-    
-    toastMessage.textContent = message;
-    toast.classList.add('show');
-    
-    setTimeout(() => {
-        toast.classList.remove('show');
-    }, 3000);
-}
-
-// ===== Utility Functions =====
-function generatePhone() {
-    return '9' + Math.random().toString().slice(2, 11);
-}
-
-function generatePincode() {
-    const pincodes = ['400001', '400002', '110001', '110002', '560001', '560002', '600001', '411001'];
-    return pincodes[Math.floor(Math.random() * pincodes.length)];
+  const toast = document.getElementById('toast')
+  toast.className = 'toast ' + type
+  toast.querySelector('.toast-icon').textContent = type === 'success' ? '✓' : type === 'error' ? '✕' : '⚠'
+  toast.querySelector('.toast-message').textContent = message
+  toast.classList.add('show')
+  setTimeout(() => toast.classList.remove('show'), 3000)
 }
 
 function formatFileSize(bytes) {
-    if (bytes < 1024) return bytes + ' B';
-    if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(1) + ' KB';
-    return (bytes / (1024 * 1024)).toFixed(1) + ' MB';
+  if (bytes < 1024) return bytes + ' B'
+  if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(1) + ' KB'
+  return (bytes / (1024 * 1024)).toFixed(1) + ' MB'
+}
+
+async function rejectPatient(patientId) {
+  if (!confirm("Are you sure you want to reject this patient?")) return
+
+  try {
+    const res = await fetch(`${API_BASE}/admin/patients/${patientId}/reject`, {
+      method: "PUT"
+    })
+    if (!res.ok) throw new Error("Reject failed")
+
+    const updated = await res.json()
+    const normUpdated = normalisePatient(updated)
+
+    const idx = allPatients.findIndex(p => p.id === patientId)
+    if (idx !== -1) allPatients[idx] = normUpdated
+
+    renderConfirmationTable()
+    renderConfirmedTable()
+    updateStats()
+    fetchDateChangeRequests()
+
+    showToast("Patient rejected successfully", "success")
+  } catch (err) {
+    console.error(err)
+    showToast("Error rejecting patient", "error")
+  }
 }

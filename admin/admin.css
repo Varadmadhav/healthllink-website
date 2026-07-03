@@ -1230,3 +1230,59 @@ body {
         border: 1px solid #ddd;
     }
 }
+
+/* ===== Pending Assignments Table Fix ===== */
+#confirmation-table {
+    width: 100%;
+    table-layout: fixed;
+}
+
+#confirmation-table th,
+#confirmation-table td {
+    vertical-align: middle;
+}
+
+#confirmation-table th:nth-child(1),
+#confirmation-table td:nth-child(1) {
+    width: 18%;
+}
+
+#confirmation-table th:nth-child(2),
+#confirmation-table td:nth-child(2) {
+    width: 13%;
+}
+
+#confirmation-table th:nth-child(3),
+#confirmation-table td:nth-child(3) {
+    width: 13%;
+}
+
+#confirmation-table th:nth-child(4),
+#confirmation-table td:nth-child(4) {
+    width: 10%;
+}
+
+#confirmation-table th:nth-child(5),
+#confirmation-table td:nth-child(5) {
+    width: 12%;
+}
+
+#confirmation-table th:nth-child(6),
+#confirmation-table td:nth-child(6) {
+    width: 22%;
+}
+
+#confirmation-table th:nth-child(7),
+#confirmation-table td:nth-child(7) {
+    width: 12%;
+}
+
+#confirmation-table .center-select {
+    width: 100%;
+    min-width: 180px;
+    max-width: 260px;
+}
+
+#confirmation-table .btn {
+    white-space: nowrap;
+}

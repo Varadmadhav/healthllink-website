@@ -361,7 +361,7 @@
 
         // Go to Main Page
         function goToMainPage() {
-            window.location.href = '/Healthlink/Diagnostics/Patient/frontend/main.html';
+            window.location.href = '/Diagnostics/Patient/frontend/main.html';
         }
 
         // Check if user is already logged in
