@@ -132,7 +132,7 @@ exports.getMyDashboard = async (req, res) => {
         date: report.uploadedAt || p.updatedAt || p.createdAt,
         fileUrl: report.url.startsWith("http")
           ? report.url
-          : `https://healthllink-website-1.onrender.com${report.url}`
+          : `https://healthllink-website.onrender.com${report.url}`
       }))
  
       const singleReport = p.reportUrl
@@ -142,7 +142,7 @@ exports.getMyDashboard = async (req, res) => {
             date: p.updatedAt || p.createdAt,
             fileUrl: p.reportUrl.startsWith("http")
               ? p.reportUrl
-              : `https://healthllink-website-1.onrender.com${p.reportUrl}`
+              : `https://healthllink-website.onrender.com${p.reportUrl}`
           }]
         : []
  

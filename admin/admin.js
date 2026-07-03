@@ -1,7 +1,7 @@
 // ===== API Base =====
 const API_BASE = window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1"
   ? "http://localhost:5000/api"
-  : "https://healthllink-website-1.onrender.com/api"
+  : "https://healthllink-website.onrender.com/api"
 
 // ===== Global State =====
 let uploadedFiles = []
@@ -732,7 +732,7 @@ async function handleReportUpload(patientId, inputEl) {
 function viewSelectedReport(patientId) {
   const select = document.getElementById(`report-select-${patientId}`)
   if (!select || !select.value) return
-  window.open(`https://healthllink-website-1.onrender.com${select.value}`, '_blank')
+  window.open(`https://healthllink-website.onrender.com${select.value}`, '_blank')
 }
 
 async function removeSelectedReport(patientId) {
