@@ -322,6 +322,12 @@
                     <span class="detail-label">Test Profile</span>
                     <span class="detail-value" style="color:#ed8936;font-weight:600;">${apt.testProfile || "-"}</span>
                   </div>
+                  <div class="detail-item" style="grid-column: 1 / -1; margin-top: 5px;">
+                    <span class="detail-label">Included Tests</span>
+                    <span class="detail-value" style="font-size: 0.9em; color: #4a5568; line-height: 1.4;">
+                      ${apt.tests && apt.tests.length > 0 ? apt.tests.join(', ') : "No specific tests listed"}
+                    </span>
+                  </div>
                   <div class="detail-item">
                     <span class="detail-label">Fasting Req.</span>
                     <span class="detail-value" style="font-weight:600;">${apt.fastingRequired ? "⚠️ Fasting Required" : "🟢 Non-Fasting"}</span>
