@@ -38,7 +38,7 @@ const uploadSchema = new mongoose.Schema({
   // NEW FIELD → appointment date for this batch upload
   appointmentDate: {
     type: Date,
-    required: true
+    default: null
   },
 
   status: {
